@@ -125,6 +125,10 @@ button { font: inherit; color: inherit; }
 .cycle div.hot b { color: var(--ho); }
 .cycle b { font-family: var(--font-data); font-size: 16px; font-weight: 500; font-variant-numeric: tabular-nums; }
 .cycle span { font-size: 10.5px; color: var(--muted); line-height: 1.25; word-break: keep-all; }
+.icls { display: flex; flex-wrap: wrap; gap: 3px 12px; font-size: 12px; color: var(--muted); margin-top: 8px; }
+.icls b { font-family: var(--font-data); font-weight: 500; color: var(--fg); }
+.icls .c b { color: var(--ho); }
+.icls .lbl2 { width: 100%; color: var(--faint); font-size: 11px; }
 .alerts, .reqs { display: flex; flex-direction: column; gap: 8px; }
 .al { border: 1px solid var(--line); border-left: 4px solid var(--k); background: var(--panel-2); border-radius: 4px; padding: 7px 9px; display: grid; gap: 3px; }
 .al.crit { --k: var(--ho); } .al.warn { --k: var(--su); } .al.done { --k: var(--faint); }
@@ -135,8 +139,21 @@ button { font: inherit; color: inherit; }
 .chip { font-size: 11px; padding: 1px 7px; border-radius: 999px; border: 1px solid var(--line); color: var(--muted); white-space: nowrap; }
 .chip.open { color: var(--ho); border-color: color-mix(in srgb, var(--ho) 45%, transparent); }
 .chip.act { color: var(--fr); border-color: color-mix(in srgb, var(--fr) 45%, transparent); }
+.chip.cls { color: var(--ho); border-style: dashed; }
+.chip.shr { color: var(--l-surf); }
 .chip.done { color: var(--ne); border-color: color-mix(in srgb, var(--ne) 45%, transparent); }
 .empty { color: var(--muted); font-size: 12.5px; margin: 0; }
+.rfsum { display: flex; gap: 4px 12px; flex-wrap: wrap; font-size: 12px; color: var(--muted); margin-bottom: 6px; }
+.rfsum b { font-family: var(--font-data); font-weight: 500; color: var(--fg); }
+.rfsum .w b { color: var(--su); } .rfsum .m b { color: var(--ho); }
+.rftab { display: grid; gap: 2px; }
+.rfrow { display: grid; grid-template-columns: 44px minmax(0, 1fr) auto; gap: 8px; align-items: baseline; text-align: left; font-size: 12px; background: none; border: 0; border-radius: 3px; padding: 3px 4px; cursor: pointer; }
+.rfrow:hover { background: var(--panel-2); }
+.rfrow b { font-family: var(--font-data); font-weight: 500; }
+.rfrow span { min-width: 0; }
+.rfrow small { display: block; color: var(--muted); font-size: 11px; }
+.rfrow em { font-style: normal; font-size: 11px; white-space: nowrap; color: var(--muted); }
+.rfrow em.w { color: var(--su); font-weight: 600; } .rfrow em.m { color: var(--ho); font-weight: 600; }
 .req { display: flex; justify-content: space-between; gap: 10px; font-size: 12.5px; }
 .req span:first-child { min-width: 0; }
 .sel { background: var(--panel-2); border: 1px solid var(--line); border-radius: 4px; padding: 9px 11px; }
@@ -145,6 +162,9 @@ button { font: inherit; color: inherit; }
 .sel dl { display: grid; grid-template-columns: auto 1fr; gap: 3px 12px; margin: 6px 0 0; font-size: 12.5px; }
 .sel dt { color: var(--muted); }
 .sel dd { margin: 0; min-width: 0; font-variant-numeric: tabular-nums; }
+.sel .rfh { border-top: 1px dashed var(--line); padding-top: 4px; margin-top: 2px; color: var(--l-space); font-weight: 600; }
+.sel dt.rfh { font-weight: 400; }
+.sel dd.warn { color: var(--su); font-weight: 600; }
 .sel .acts { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
 .sel .acts:empty { display: none; }
 .log { list-style: none; margin: 0; padding: 0; font-size: 12px; display: grid; gap: 4px; max-height: 190px; overflow-y: auto; }
@@ -178,6 +198,7 @@ textarea.report { width: 100%; min-height: 150px; font: 12px/1.5 var(--font-data
 .rg.air { stroke: color-mix(in srgb, var(--l-air) 70%, transparent); fill: color-mix(in srgb, var(--l-air) 6%, transparent); }
 .rg.space { stroke: color-mix(in srgb, var(--l-space) 60%, transparent); fill: color-mix(in srgb, var(--l-space) 5%, transparent); }
 .rg.unc { stroke: var(--muted); fill: none; }
+.rfe { fill: color-mix(in srgb, var(--l-space) 10%, transparent); stroke: var(--l-space); stroke-width: 1; vector-effect: non-scaling-stroke; }
 .f-ground { fill: var(--l-ground); } .f-surf { fill: var(--l-surf); } .f-under { fill: var(--l-under); } .f-air { fill: var(--l-air); } .f-space { fill: var(--l-space); }
 .t-ground { fill: var(--l-ground); } .t-surf { fill: var(--l-surf); } .t-under { fill: var(--l-under); } .t-air { fill: var(--l-air); } .t-space { fill: var(--l-space); }
 .orbit { stroke: var(--l-space); fill: none; stroke-width: 1.1; opacity: .6; vector-effect: non-scaling-stroke; }
@@ -261,11 +282,16 @@ textarea.report { width: 100%; min-height: 150px; font: 12px/1.5 var(--font-data
     <section>
       <h2>MDA 순환</h2>
       <div class="cycle" id="cycle"></div>
+      <div class="icls" id="icls"></div>
     </section>
     <section id="selSec"></section>
     <section>
       <h2>이상징후와 조치 권고</h2>
       <div class="alerts" id="alerts"></div>
+    </section>
+    <section>
+      <h2>RF 위성 신호 정보</h2>
+      <div id="rfInfo"></div>
     </section>
     <section>
       <h2>수집 요청</h2>
@@ -371,32 +397,46 @@ const DOMS = {
   under: { nm: '수중정보', sub: '음향 탐지', types: [['fixed', '고정형'], ['buoy', '소노부이'], ['sonar', '함정 소나']] }
 };
 const DOMOF = {}; for (const [k, d] of Object.entries(DOMS)) for (const [t] of d.types) DOMOF[t] = k;
+// 해양영역정보 구분 (오경원 외 2024, Fig. 3): 비자연정보를 수집원에 따라 군사·기관·민간으로 나눈다
+const ICLASS = { ais: '민간', cctv: '기관' };
+const iclass = k => ICLASS[k] || '군사';
 const AFF = { F: '아군', H: '적성', S: '의심', U: '미상', N: '중립' };
 const layerOn = { space: true, surface: true, under: true, air: true, ground: true };
 const showB = { nll: true, kadiz: true, eez: true, mca: true };
 
-let rnd, T, targets, byId, tracks, alerts, reqs, logs, feeds, passes, buoys, mpa, uav, sel, stats, flags;
+// RF 위성이 잡는 방사원 종류
+const EMIT = {
+  nav: { type: '항해 레이더', band: 'X밴드 9.41GHz' },
+  navS: { type: '항해 레이더', band: 'S밴드 3.05GHz' },
+  mil: { type: '수상탐색 레이더(군용)', band: 'X밴드 9.2GHz · PRF 1,200Hz', mil: true },
+  vhf: { type: 'VHF 해상 무선', band: '156.8MHz (16채널)' },
+  air: { type: '항공기 탑재 레이더', band: 'X밴드 10.1GHz', mil: true }
+};
+let rnd, T, targets, byId, tracks, alerts, reqs, logs, feeds, passes, buoys, mpa, uav, sel, stats, flags, nid;
 
-function routeShip(route, i) {
+function routeShip(route, i, o = {}) {
   const w = route.slice(1);
   const seg = Math.floor(rnd() * (w.length - 1)), f = rnd();
   const a = w[seg], b = w[seg + 1];
   const fwd = rnd() < 0.5;
   const off = 0.04 * (rnd() - 0.5);
   const pos = [a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) * f + off];
-  const mid = ['440', '412', '431', '538', '636', '477'][Math.floor(rnd() * 6)];
-  return { kind: 'surface', truth: 'N', type: '상선', pos, hdg: 0, spd: 11 + rnd() * 7, ais: true, emit: true,
+  const mid = o.mid || ['440', '412', '431', '538', '636', '477'][Math.floor(rnd() * 6)];
+  return { kind: 'surface', truth: 'N', type: o.type || '상선', pos, hdg: 0, spd: (o.spd || 11) + rnd() * 7, ais: o.ais ?? true,
+    emitter: rnd() < 0.7 ? EMIT.nav : EMIT.navS, nk: !!o.nk,
     mode: 'route', wp: w.map(p => [p[0], p[1] + off]), wi: fwd ? seg + 1 : seg, dir: fwd ? 1 : -1,
     mmsi: mid + String(100000 + Math.floor(rnd() * 899999)), id: 'N' + (100 + i) };
 }
-function fishShip(cl, i) {
+function fishShip(cl, i, o = {}) {
   let pos;
   for (let k = 0; k < 40; k++) {
     pos = advance([cl[0], cl[1]], rnd() * 360, Math.sqrt(rnd()) * cl[3]);
     if (!isLand(pos[0], pos[1])) break;
   }
-  return { kind: 'surface', truth: 'N', type: '어선', pos, hdg: rnd() * 360, spd: 2 + rnd() * 4, ais: true, emit: false,
-    mode: 'fish', center: [cl[0], cl[1]], rad: cl[3], mmsi: (rnd() < 0.7 ? '440' : '412') + String(100000 + Math.floor(rnd() * 899999)), id: 'N' + (100 + i) };
+  const nk = !!o.nk;
+  return { kind: 'surface', truth: 'N', type: nk ? '북측 어선' : '어선', pos, hdg: rnd() * 360, spd: 2 + rnd() * 4, ais: !nk,
+    emitter: nk && rnd() < 0.6 ? EMIT.vhf : null, nk,
+    mode: 'fish', center: [cl[0], cl[1]], rad: cl[3], mmsi: nk ? null : (rnd() < 0.7 ? '440' : '412') + String(100000 + Math.floor(rnd() * 899999)), id: 'N' + (100 + i) };
 }
 
 function init() {
@@ -404,18 +444,26 @@ function init() {
   T = 0; targets = []; tracks = new Map(); alerts = []; reqs = []; logs = []; buoys = []; sel = null;
   feeds = { space: [], air: [], ground: [], surface: [], under: [] };
   stats = { shared: 0, decided: 0, evaluated: 0 };
-  flags = {};
-  SC.friendlies.forEach(([id, x, y]) => targets.push({ id, kind: 'surface', truth: 'F', type: '아군 함정', pos: [x, y], home: [x, y],
-    hdg: 0, spd: 12, ais: true, emit: true, mode: 'patrol', ph: rnd() * 360, orbitR: 14 + rnd() * 8 }));
+  flags = {}; nid = 0;
+  const friend = type => ([id, x, y]) => targets.push({ id, kind: 'surface', truth: 'F', type, pos: [x, y], home: [x, y],
+    hdg: 0, spd: 12, ais: true, emitter: EMIT.mil, mode: 'patrol', ph: rnd() * 360, orbitR: 14 + rnd() * 8 });
+  SC.friendlies.forEach(friend('아군 함정'));
+  SC.coastGuard.forEach(friend('해경 경비함'));
   let n = 0;
   SC.routes.forEach(rt => { for (let k = 0; k < rt[0]; k++) targets.push(routeShip(rt, n++)); });
+  SC.ferries.forEach(rt => { for (let k = 0; k < rt[0]; k++) targets.push(routeShip(rt, n++, { type: '연안 여객선', mid: '440', spd: 14 })); });
   SC.fishing.forEach(cl => { for (let k = 0; k < cl[2]; k++) targets.push(fishShip(cl, n++)); });
-  targets.push({ id: 'H201', kind: 'surface', truth: 'H', type: '북측 경비정', pos: SC.h201.start.slice(), hdg: 150, spd: 2, ais: false, emit: true, mode: 'h201', st: 'loiter' });
-  targets.push({ id: 'D301', kind: 'surface', truth: 'N', type: '상선', name: SC.d301.name, mmsi: SC.d301.mmsi, pos: SC.d301.start.slice(), hdg: 182, spd: 13, ais: true, emit: true, mode: 'd301', st: 'transit' });
-  targets.push({ id: 'D302', kind: 'surface', truth: 'N', type: '선박(AIS 미송출)', pos: SC.d302.start.slice(), hdg: 90, spd: 1.5, ais: false, emit: false, mode: 'd302' });
-  targets.push({ id: 'C501', kind: 'surface', truth: 'N', type: '외국 어선', name: SC.c501.name, mmsi: SC.c501.mmsi, pos: SC.c501.start.slice(), hdg: 80, spd: 7, ais: true, emit: false, mode: 'c501', st: 'approach' });
-  targets.push({ id: 'U402', kind: 'sub', truth: 'H', type: '잠수함', pos: SC.u402.path[0].slice(), hdg: 190, spd: 8, ais: false, emit: false, mode: 'path', wp: SC.u402.path, wi: 1, dir: 1, endHold: true });
-  targets.push({ id: 'U403', kind: 'air', truth: 'H', type: '외국 군용기', pos: SC.u403.start.slice(), hdg: 60, spd: 330, ais: false, emit: true, mode: 'path', wp: [SC.u403.start].concat(SC.u403.path), wi: 1, dir: 1, endHold: true, startAt: SC.u403.at });
+  // 북측 해역: 어선은 AIS 없이, 화물선은 절반만 AIS를 켠 채로 다닌다
+  SC.nkFishing.forEach(cl => { for (let k = 0; k < cl[2]; k++) targets.push(fishShip(cl, n++, { nk: true })); });
+  SC.nkRoutes.forEach(rt => { for (let k = 0; k < rt[0]; k++) targets.push(routeShip(rt, n++, { type: '북측 화물선', mid: '445', nk: true, ais: rnd() < 0.5, spd: 8 })); });
+  SC.nkPatrol.forEach(([id, x, y, r]) => targets.push({ id, kind: 'surface', truth: 'H', type: '북측 경비정', pos: [x, y], home: [x, y],
+    hdg: 0, spd: 12, ais: false, emitter: EMIT.mil, nk: true, mode: 'patrol', ph: rnd() * 360, orbitR: r }));
+  targets.push({ id: 'H201', kind: 'surface', truth: 'H', type: '북측 경비정', pos: SC.h201.start.slice(), hdg: 150, spd: 2, ais: false, emitter: EMIT.mil, nk: true, mode: 'h201', st: 'loiter' });
+  targets.push({ id: 'D301', kind: 'surface', truth: 'N', type: '상선', name: SC.d301.name, mmsi: SC.d301.mmsi, pos: SC.d301.start.slice(), hdg: 182, spd: 13, ais: true, emitter: EMIT.nav, mode: 'd301', st: 'transit' });
+  targets.push({ id: 'D302', kind: 'surface', truth: 'N', type: '선박(AIS 미송출)', pos: SC.d302.start.slice(), hdg: 90, spd: 1.5, ais: false, emitter: null, mode: 'd302' });
+  targets.push({ id: 'C501', kind: 'surface', truth: 'N', type: '외국 어선', name: SC.c501.name, mmsi: SC.c501.mmsi, pos: SC.c501.start.slice(), hdg: 80, spd: 7, ais: true, emitter: EMIT.vhf, mode: 'c501', st: 'approach' });
+  targets.push({ id: 'U402', kind: 'sub', truth: 'H', type: '잠수함', pos: SC.u402.path[0].slice(), hdg: 190, spd: 8, ais: false, emitter: null, mode: 'path', wp: SC.u402.path, wi: 1, dir: 1, endHold: true });
+  targets.push({ id: 'U403', kind: 'air', truth: 'H', type: '외국 군용기', pos: SC.u403.start.slice(), hdg: 60, spd: 330, ais: false, emitter: EMIT.air, mode: 'path', wp: [SC.u403.start].concat(SC.u403.path), wi: 1, dir: 1, endHold: true, startAt: SC.u403.at });
   byId = new Map(targets.map(t => [t.id, t]));
   mpa = { id: 'MPA', name: '해상초계기', pos: advance(SC.mpa.center, 0, SC.mpa.r), center: SC.mpa.center.slice(), r: SC.mpa.r, spd: 300, ph: 0, mode: 'orbit', hdg: 90, task: '동해 정찰 궤도' };
   uav = { id: 'UAV', name: '무인기', pos: advance(SC.uav.center, 0, SC.uav.r), center: SC.uav.center.slice(), r: SC.uav.r, spd: 80, ph: 0, mode: 'orbit', hdg: 90, task: '서해 정찰 궤도' };
@@ -423,7 +471,7 @@ function init() {
   for (let k = 0; k < 30; k++) {
     passes.push({ sat: 'sar', tc: 8 + k * 97, through: [121.8 + ((k * 3.7) % 9), 36.8], brg: 193, halfW: 50 });
     passes.push({ sat: 'eo', tc: 46 + k * 97, through: [126.6 + ((k * 5.3) % 6.5), 36.8], brg: 193, halfW: 30 });
-    passes.push({ sat: 'rf', tc: 72 + k * 97, through: [123.0 + ((k * 4.1) % 8), 36.8], brg: 193, halfW: 280 });
+    passes.push({ sat: 'rf', tc: 4 + k * 97, through: [127.0 - ((k * 4.1) % 5) + ((k * 2.3) % 3), 36.8], brg: 193, halfW: 280 });
   }
   addLog('훈련 시나리오 개시. 전 센서 출처 가동.');
   for (let i = 0; i < 30; i++) step(0.2);
@@ -489,7 +537,7 @@ function moveTarget(t, dt) {
       const d302 = byId.get('D302');
       if (t.st === 'transit') {
         t.spd = 13; t.hdg = 182; t.pos = advance(t.pos, t.hdg, KMMIN(t.spd) * dt);
-        if (T >= SC.d301.aisOff) { t.ais = false; t.emit = false; t.st = 'rdv'; }
+        if (T >= SC.d301.aisOff) { t.ais = false; t.emitter = null; t.st = 'rdv'; }
       } else if (t.st === 'rdv') { t.spd = 14; if (moveToward(t, advance(d302.pos, 0, 0.3), t.spd, dt)) { t.st = 'sts'; flags.sts = T; } }
       else { t.spd = 0.5; t.pos = advance(d302.pos, 0, 0.3); t.hdg = d302.hdg; }
       break;
@@ -534,7 +582,7 @@ function sense(t, friends, act, t0) {
   const s = [];
   if (t.truth === 'F') s.push('link');
   const near = list => list.some(x => dist(x.pos, t.pos) <= x.r);
-  const sat = (p, sid) => { s.push(sid); (p.seen = p.seen || new Set()).add(t.id); if (p.req && t.id === p.aim) p.aimHit = true; };
+  const sat = (p, sid) => { s.push(sid); (p.seen = p.seen || new Set()).add(t.id); if (sid === 'rf' && t.truth !== 'F') (p.rfIds = p.rfIds || new Set()).add(t.id); if (p.req && t.id === p.aim) p.aimHit = true; };
   if (t.kind === 'surface') {
     if (layerOn.surface && t.ais) s.push('ais');
     if (layerOn.ground && near(RADARS)) s.push('radar');
@@ -547,7 +595,7 @@ function sense(t, friends, act, t0) {
       if (dist(uav.pos, t.pos) <= UAV_R) s.push('uav');
     }
     if (layerOn.space) for (const p of act) {
-      if (p.sat === 'rf' && !t.emit) continue;
+      if (p.sat === 'rf' && !t.emitter) continue;
       if (!s.includes(p.sat) && swept(p, t.pos, t0, T)) sat(p, p.sat);
     }
   } else if (t.kind === 'air') {
@@ -576,6 +624,7 @@ function step(dt) {
     if (s.length) {
       if (!tr) { tr = { id: t.id, first: T, by: {}, affil: t.truth === 'F' ? 'F' : s.includes('ais') ? 'N' : 'U', contact: 0 }; tracks.set(t.id, tr); onNew(t, tr, s); }
       if (tr.lost) { tr.lost = false; onReacq(t, tr, s); }
+      if (s.includes('rf') && t.truth !== 'F') onRf(t, tr);
       for (const x of s) {
         if (tr.by[x] == null && x !== 'link' && tr.affil !== 'N' && tr.affil !== 'F' && DOMOF[x] !== 'space') feed(DOMOF[x], `${t.id} ${SN[x]} 신규 접촉`);
         tr.by[x] = T;
@@ -590,8 +639,12 @@ function step(dt) {
   for (const p of passes) {
     if (!p.through || p.done || (T - p.tc) * SAT_KMMIN < 1050) continue;
     p.done = true;
-    if (p.req && p.req.status === '예정') { p.req.status = p.aimHit ? '완료' : '미탐지'; addLog(`${SN[p.sat]} 긴급 촬영 ${p.aimHit ? '완료' : '종료 (목표 미탐지)'}.`); }
-    if (layerOn.space) feed('space', `${SN[p.sat]} 통과 완료 · 표적 ${p.seen ? p.seen.size : 0}개 ${p.sat === 'rf' ? '신호 수집' : '촬영'}`);
+    if (p.req && p.req.status === '예정') { p.req.status = p.aimHit ? '완료' : '미탐지'; addLog(`${SN[p.sat]} ${p.sat === 'rf' ? '신호 수집' : '긴급 촬영'} ${p.aimHit ? '완료' : '종료 (목표 미탐지)'}.`); }
+    if (p.req && p.req.status === '미탐지' && p.sat === 'rf') p.req.status = '신호 없음';
+    if (layerOn.space && p.sat === 'rf') {
+      const ids = [...(p.rfIds || [])], dark = ids.filter(id => !byId.get(id).ais).length;
+      feed('space', `RF 군집 통과 완료 · 신호 ${ids.length}개 · AIS 미대조 ${dark}개`);
+    } else if (layerOn.space) feed('space', `${SN[p.sat]} 통과 완료 · 표적 ${p.seen ? p.seen.size : 0}개 촬영`);
   }
   scenario();
 }
@@ -623,8 +676,38 @@ function onLost(t, tr) {
   if (t.id === 'H201') addLog('H201 추적 소실.');
 }
 
+// RF 위성 신호 수신: 신호 정보 기록, AIS 대조, 미식별 표적 분류
+function onRf(t, tr) {
+  const e = t.emitter;
+  const err = 3 + (t.id.charCodeAt(t.id.length - 1) % 8);
+  tr.rf = { t: T, type: e.type, band: e.band, mil: !!e.mil, err, ais: t.ais };
+  if (t.kind === 'air' || tr.affil !== 'U') return;
+  if (e.mil) {
+    tr.affil = 'H'; tr.note = tr.note || 'RF 식별: 군용 수상탐색 레이더';
+    addLog(`RF 위성, ${t.id} 군용 레이더 신호 식별. 적성 분류.`);
+    feed('space', `${t.id} 군용 레이더 신호 · 적성 분류`);
+  } else if (e === EMIT.vhf) {
+    tr.affil = 'N'; tr.note = 'RF: VHF 무선, 소형 어선 추정' + (t.nk ? ' (북측 해역)' : '');
+  } else {
+    tr.affil = 'S'; tr.note = 'AIS 미송출 상태로 항해 레이더 방사';
+    addLog(`RF 위성, ${t.id} AIS 미대조 항해 레이더 신호 수신. 암선 의심.`);
+    feed('space', `${t.id} AIS 미대조 항해 레이더 · 암선 의심`);
+  }
+}
+function taskRf(id) {
+  const r = addReq(`RF 위성 신호 수집 · ${id}`, '예정');
+  passes.push({ sat: 'rf', tc: T + 20, aim: id, brg: 193, halfW: 280, req: r });
+  feed('space', `${id} RF 신호 수집 과업 접수 · ${clock(T + 20).hm} 통과 예정`);
+}
+
+// IFC 방식의 사건 유형과 공유 범위: 민간·기관 정보로 만든 사건은 협력국과 공유, 군사 위협은 국내 한정
+const CAT = {
+  ais: ['이상 항적 (AIS 단절)', '국외 공유 가능'], sts: ['불법 환적·제재 위반 의심', '국외 공유 가능'],
+  eez: ['IUU 어업', '국외 공유 가능'], nll: ['군사 위협', '국내 한정'], sub: ['군사 위협', '국내 한정'], kadiz: ['군사 위협', '국내 한정']
+};
 function raise(a) {
   if (alerts.some(x => x.id === a.id)) return;
+  [a.cat, a.share] = CAT[a.id] || ['기타', '국내 한정'];
   a.t = T; a.status = 'open'; alerts.unshift(a); stats.shared++;
   addLog(`이상징후 공유: ${a.title} ${a.tgt}.`);
 }
@@ -894,8 +977,9 @@ function drawDyn() {
   for (const t of targets) {
     const tr = tracks.get(t.id); if (!tr) continue;
     const x = X(tr.pos[0]), y = Y(tr.pos[1]);
-    if (tr.lost) h += `<circle class="rg unc" cx="${f1(x)}" cy="${f1(y)}" r="${f1(Math.min(90, KMMIN(tr.spd || 8) * (T - tr.seen) + 5) * PXKM)}"${dash(z, 2.5, 3)}/>`;
+    if (tr.lost && tr.affil !== 'N') h += `<circle class="rg unc" cx="${f1(x)}" cy="${f1(y)}" r="${f1(Math.min(90, KMMIN(tr.spd || 8) * (T - tr.seen) + 5) * PXKM)}"${dash(z, 2.5, 3)}/>`;
     else h += leader(tr.affil, tr, x, y);
+    if (layerOn.space && tr.rf && tr.affil !== 'F' && T - tr.rf.t <= 15) h += `<ellipse class="rfe" cx="${f1(x)}" cy="${f1(y)}" rx="${f1(tr.rf.err * PXKM)}" ry="${f1(tr.rf.err * .55 * PXKM)}" transform="rotate(103 ${f1(x)} ${f1(y)})"${dash(z, 2, 2)}/>`;
     if (t.mode === 'intercept' && t.goal) { const g = t.goal(); if (g) h += `<line class="ic"${dash(z, 5, 4)} x1="${f1(x)}" y1="${f1(y)}" x2="${f1(X(g[0]))}" y2="${f1(Y(g[1]))}"/>`; }
     h += `<g${tr.lost ? ' class="lost"' : ''}>${sym(tr.affil, t.kind, x, y, z)}</g>`;
     if (tr.affil !== 'N') labels += `<g${tr.lost ? ' class="lost"' : ''}>` + txt('tid ' + tr.affil, x + 8 * z, y - 6 * z, 11 * z, t.id) + '</g>';
@@ -923,6 +1007,7 @@ function detCounts() {
   for (const k of Object.keys(DOMOF)) { det[k] = 0; for (const tr of tracks.values()) if (tr.by[k] != null && T - tr.by[k] <= 10) det[k]++; }
   return det;
 }
+function lastRf() { return passes.filter(p => p.sat === 'rf' && p.rfIds && p.rfIds.size).sort((a, b) => b.tc - a.tc)[0]; }
 function satStatus(sat) {
   const now = passes.find(p => p.sat === sat && p.through && Math.abs((T - p.tc) * SAT_KMMIN) < 1050);
   if (now) return now.req ? '긴급 촬영 중' : (sat === 'rf' ? '신호 수집 중' : '촬영 중');
@@ -931,7 +1016,12 @@ function satStatus(sat) {
 }
 function assets(dom) {
   switch (dom) {
-    case 'space': return [['SAR 위성', satStatus('sar')], ['EO 위성', satStatus('eo')], ['RF 위성 군집 (3기)', satStatus('rf')]];
+    case 'space': {
+      const lp = lastRf();
+      const ids = lp ? [...lp.rfIds] : [];
+      return [['SAR 위성', satStatus('sar')], ['EO 위성', satStatus('eo')], ['RF 위성 군집 (3기)', satStatus('rf')],
+        ['최근 RF 수집', lp ? `신호 ${ids.length} · AIS 미대조 ${ids.filter(id => !byId.get(id).ais).length}` : '–']];
+    }
     case 'air': return [['해상초계기', mpa.task], ['무인기', uav.task]];
     case 'ground': {
       const air = [...tracks.values()].filter(tr => !tr.lost && byId.get(tr.id).kind === 'air').length;
@@ -973,17 +1063,33 @@ function renderPanel() {
   renderBoxes(det);
   const collected = Object.values(det).reduce((a, b) => a + b, 0);
   const cyc = [[collected, '수집 감시'], [held, '융합'], [open, '분석'], [stats.shared, '공유'], [stats.decided, '결심'], [act, '조치'], [stats.evaluated, '평가']];
+  const ic = { 군사: 0, 기관: 0, 민간: 0 }; let classified = 0;
+  for (const tr of tracks.values()) {
+    const seen = new Set(Object.entries(tr.by).filter(([k, v]) => k !== 'link' && T - v <= 10).map(([k]) => iclass(k)));
+    for (const c of seen) ic[c]++;
+    const tt = byId.get(tr.id);
+    if (tt.nk || (tt.truth !== 'F' && 'HSU'.includes(tr.affil))) classified++;
+  }
+  setHTML($('icls'), 'icls', `<span class="lbl2">정보 구분별 표적 수 (최근 10분)</span><span>군사정보 <b>${ic.군사}</b></span><span>기관정보 <b>${ic.기관}</b></span><span>민간정보 <b>${ic.민간}</b></span><span class="c">비밀 취급(북측·주변국) <b>${classified}</b></span>`);
   setHTML($('cycle'), 'cycle', cyc.map(([v, n], i) => `<div class="${(i === 2 && open) ? 'hot' : ''}"><b>${v}</b><span>${n}</span></div>`).join(''));
 
   const t = sel && byId.get(sel), tr = sel && tracks.get(sel);
-  let sh = '<h2>선택 표적</h2>';
+  // 정보는 계속 갱신하되, 단추 줄은 선택 표적이 바뀔 때만 다시 그려 클릭이 끊기지 않게 한다
+  const wrapKey = t && tr ? 'sel-' + sel : 'none';
+  if (elCache.get('selwrap') !== wrapKey) {
+    elCache.set('selwrap', wrapKey); elCache.delete('selBody'); elCache.delete('selActs');
+    $('selSec').innerHTML = '<h2>선택 표적</h2>' + (t && tr ? '<div class="sel"><div id="selBody"></div><div class="acts" id="selActs"></div></div>'
+      : '<p class="empty">지도에서 표적 기호를 누르면 위치, 탐지 출처, 식별 상태를 보고 수집을 요청할 수 있습니다.</p>');
+  }
   if (t && tr) {
     const recent = Object.entries(tr.by).filter(([, v]) => T - v <= 10).map(([k]) => SN[k]);
     const known = tr.affil === 'N' || tr.affil === 'F' || !!tr.note;
-    const acts = tr.affil === 'F' ? '' : t.kind === 'sub'
+    const rfBtn = '<button class="btn" type="button" data-task="rf">RF 신호 수집 요청</button>';
+    const acts = tr.affil === 'F' ? '' : t.kind === 'air' ? rfBtn : t.kind === 'sub'
       ? '<button class="btn" type="button" data-task="buoy">소노부이 부설 요청</button>'
-      : t.kind === 'surface' ? '<button class="btn" type="button" data-task="sar">SAR 긴급 촬영</button><button class="btn" type="button" data-task="uav">무인기 근접 감시</button>' : '';
-    sh += `<div class="sel"><div class="hd"><b>${esc(t.id)}</b><span class="chip ${tr.lost ? '' : 'act'}">${AFF[tr.affil]} · ${{ surface: '수상', sub: '수중', air: '항공' }[t.kind]}${tr.lost ? ' · 추적 소실' : ''}</span></div><dl>
+      : t.kind === 'surface' ? '<button class="btn" type="button" data-task="sar">SAR 긴급 촬영</button><button class="btn" type="button" data-task="uav">무인기 근접 감시</button>' + rfBtn : '';
+    setHTML($('selActs'), 'selActs', acts);
+    setHTML($('selBody'), 'selBody', `<div class="hd"><b>${esc(t.id)}</b><span class="chip ${tr.lost ? '' : 'act'}">${AFF[tr.affil]} · ${{ surface: '수상', sub: '수중', air: '항공' }[t.kind]}${tr.lost ? ' · 추적 소실' : ''}</span></div><dl>
       <dt>종류</dt><dd>${esc(known ? t.type : '식별 중')}</dd>
       ${t.name && (t.ais || tr.affil === 'S') ? `<dt>선명</dt><dd>${esc(t.name)}</dd>` : ''}
       ${t.mmsi && tr.affil !== 'U' ? `<dt>MMSI</dt><dd>${t.mmsi}</dd>` : ''}
@@ -991,17 +1097,31 @@ function renderPanel() {
       <dt>침로·속력</dt><dd>${String(Math.round(tr.hdg)).padStart(3, '0')}° · ${f1(tr.spd)}kn</dd>
       <dt>탐지 출처</dt><dd>${recent.length ? recent.join(', ') : '없음'}</dd>
       <dt>최초·최종</dt><dd>${clock(tr.first).hm} · ${clock(tr.seen).hm}</dd>
-      ${tr.note ? `<dt>비고</dt><dd>${esc(tr.note)}</dd>` : ''}</dl><div class="acts">${acts}</div></div>`;
-  } else sh += '<p class="empty">지도에서 표적 기호를 누르면 위치, 탐지 출처, 식별 상태를 보고 수집을 요청할 수 있습니다.</p>';
-  setHTML($('selSec'), 'sel', sh);
+      ${tr.note ? `<dt>비고</dt><dd>${esc(tr.note)}</dd>` : ''}
+      ${tr.rf ? `<dt class="rfh">RF 신호</dt><dd class="rfh">${esc(tr.rf.type)}</dd><dt>주파수</dt><dd>${esc(tr.rf.band)}</dd>
+        <dt>RF 수신</dt><dd>${clock(tr.rf.t).hm} · 위치 오차 ±${tr.rf.err}km</dd>
+        <dt>AIS 대조</dt><dd class="${tr.rf.ais ? '' : 'warn'}">${tr.rf.ais ? `일치 (MMSI ${t.mmsi})` : 'AIS 미수신 · 신호원과 대조 불가'}</dd>` : ''}</dl>`);
+  }
 
   const stName = { open: '결심 대기', act: '조치 중', done: '평가 완료' };
   setHTML($('alerts'), 'alerts', alerts.length ? alerts.map(a => `<div class="al ${a.status === 'done' ? 'done' : a.sev}">
     <div class="t">${esc(a.title)}<span>${esc(a.tgt)}</span></div>
     <div class="r">${a.status === 'done' ? '평가: ' + esc(a.result) : '→ ' + esc(a.rec)}</div>
-    <div class="a"><span class="chip ${a.status}">${stName[a.status]}</span>${a.status === 'open' ? `<button class="btn go" type="button" data-approve="${a.id}">조치 승인</button>` : ''}<span class="empty">${clock(a.t).hm}</span></div></div>`).join('')
+    <div class="a"><span class="chip ${a.status}">${stName[a.status]}</span><span class="chip">${esc(a.cat)}</span><span class="chip ${a.share === '국내 한정' ? 'cls' : 'shr'}">${a.share}</span>${a.status === 'open' ? `<button class="btn go" type="button" data-approve="${a.id}">조치 승인</button>` : ''}<span class="empty">${clock(a.t).hm}</span></div></div>`).join('')
     : '<p class="empty">현재 이상징후가 없습니다. 시나리오가 진행되면 AIS 신호 소실, EEZ 침범, NLL 침범, 수중 접촉, KADIZ 진입이 차례로 나타납니다.</p>');
-  setHTML($('reqs'), 'reqs', reqs.length ? reqs.map(r => `<div class="req"><span>${esc(r.text)}</span><span class="chip ${r.status === '완료' ? 'done' : r.status === '미탐지' ? '' : 'act'}">${r.status}</span></div>`).join('') : '<p class="empty">없음</p>');
+  const lp = lastRf();
+  let rh = '<p class="empty">RF 위성 군집이 통과하면 수신한 신호와 AIS 대조 결과가 여기에 나옵니다.</p>';
+  if (lp) {
+    const rows = [...lp.rfIds].map(id => ({ id, t: byId.get(id), tr: tracks.get(id) })).filter(r => r.tr && r.tr.rf);
+    const dark = rows.filter(r => !r.t.ais), mil = rows.filter(r => r.tr.rf.mil);
+    const rank = r => (r.tr.rf.mil ? 0 : !r.t.ais ? 1 : 2);
+    const list = rows.filter(r => rank(r) < 2).sort((a, b) => rank(a) - rank(b)).slice(0, 10);
+    rh = `<div class="rfsum"><span>통과 <b>${clock(lp.tc).hm}</b></span><span>신호 <b>${rows.length}</b></span><span>AIS 일치 <b>${rows.length - dark.length}</b></span><span class="w">AIS 미대조 <b>${dark.length}</b></span><span class="m">군용 레이더 <b>${mil.length}</b></span></div>`
+      + (list.length ? `<div class="rftab">${list.map(r => `<button class="rfrow" type="button" data-sel="${r.id}"><b>${r.id}</b><span>${esc(r.tr.rf.type)}<small>${esc(r.tr.rf.band)} · ±${r.tr.rf.err}km</small></span><em class="${r.tr.rf.mil ? 'm' : 'w'}">${r.tr.rf.mil ? '군용' : 'AIS 미대조'}</em></button>`).join('')}</div>`
+        : '<p class="empty">이번 통과의 신호는 모두 AIS와 일치합니다.</p>');
+  }
+  setHTML($('rfInfo'), 'rf', rh);
+  setHTML($('reqs'), 'reqs', reqs.length ? reqs.map(r => `<div class="req"><span>${esc(r.text)}</span><span class="chip ${r.status === '완료' ? 'done' : (r.status === '미탐지' || r.status === '신호 없음') ? '' : 'act'}">${r.status}</span></div>`).join('') : '<p class="empty">없음</p>');
   setHTML($('log'), 'log', logs.slice(0, 40).map(l => `<li><time>${clock(l.t).hm}</time><span>${esc(l.text)}</span></li>`).join(''));
 }
 
@@ -1016,10 +1136,11 @@ function makeReport() {
     '2. 관심 표적:',
     ...(watch.length ? watch.map(tr => `   - ${tr.id} ${AFF[tr.affil]} · ${fmtPos(tr.pos)}${tr.note ? ' · ' + tr.note : ''}${tr.lost ? ' (추적 소실)' : ''}`) : ['   - 없음']),
     '3. 이상징후와 조치:',
-    ...(alerts.length ? alerts.map(a => `   - ${a.title} ${a.tgt}: ${st[a.status]} · ${a.status === 'done' ? a.result : a.rec}`) : ['   - 없음']),
+    ...(alerts.length ? alerts.map(a => `   - ${a.title} ${a.tgt} [${a.cat} · ${a.share}]: ${st[a.status]} · ${a.status === 'done' ? a.result : a.rec}`) : ['   - 없음']),
     '4. 수집 요청:',
     ...(reqs.length ? reqs.map(r => `   - ${r.text} (${r.status})`) : ['   - 없음']),
-    `5. 센서 출처: ${Object.entries(DOMS).map(([k, d]) => d.nm + (layerOn[k] ? ' 가동' : ' 중지')).join(', ')}`
+    `5. 센서 출처: ${Object.entries(DOMS).map(([k, d]) => d.nm + (layerOn[k] ? ' 가동' : ' 중지')).join(', ')}`,
+    `6. 공유 범위 (IFC 방식): 협력국 공유 가능 ${alerts.filter(a => a.share === '국외 공유 가능').length}건, 국내 한정 ${alerts.filter(a => a.share === '국내 한정').length}건`
   ].join('\n');
 }
 
@@ -1042,8 +1163,10 @@ if (!SC.mca) { $('bdMCA').disabled = true; $('bdMCA').checked = false; $('bdMCAw
 for (const k of ['nll', 'kadiz', 'eez', 'mca']) $('bd' + k.toUpperCase()).onchange = e => { showB[k] = e.target.checked; drawDyn(); };
 document.querySelector('.grid').addEventListener('click', e => {
   const a = e.target.closest('[data-approve]'); if (a) { approve(a.dataset.approve); renderPanel(); drawDyn(); return; }
+  const sr = e.target.closest('[data-sel]');
+  if (sr) { sel = sr.dataset.sel; renderPanel(); drawDyn(); return; }
   const tk = e.target.closest('[data-task]');
-  if (tk && sel) { ({ sar: taskSar, uav: taskUav, buoy: taskBuoy })[tk.dataset.task](sel); addLog(`수집 요청: ${sel} ${tk.textContent}.`); renderPanel(); drawDyn(); return; }
+  if (tk && sel) { ({ sar: taskSar, uav: taskUav, buoy: taskBuoy, rf: taskRf })[tk.dataset.task](sel); addLog(`수집 요청: ${sel} ${tk.textContent}.`); renderPanel(); drawDyn(); return; }
   const l = e.target.closest('[data-layer]');
   if (l) { const k = l.dataset.layer; layerOn[k] = !layerOn[k]; addLog(`${DOMS[k].nm} 출처 ${layerOn[k] ? '가동' : '중지'}.`); renderPanel(); drawDyn(); }
 });
