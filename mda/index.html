@@ -2,218 +2,261 @@
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <style>
-/* 레이아웃: 왼쪽은 확대·이동되는 해도, 오른쪽은 MDA 순환을 따라 위에서 아래로 읽는 상황 패널. 야간 상황실 화면에 맞춘 단일 어두운 테마. */
+/* 레이아웃: 해도를 가운데 두고 위(우주·항공), 왼쪽(지상), 오른쪽(수상), 아래(수중)에 출처별 센서 칸을 두르며, 맨 오른쪽 열은 MDA 순환·이상징후·일지. 밝은 해도 단일 테마. */
 :root {
-  color-scheme: dark;
-  --bg: #08121a;
-  --panel: #0d1a24;
-  --panel-2: #112230;
-  --line: #1d3445;
-  --sea: #0b1f30;
-  --land: #25323b;
-  --land-edge: #59707e;
-  --grid: #183044;
-  --fg: #d9e4ec;
-  --muted: #8199a9;
-  --faint: #56707f;
-  --fr: #4ea3ff;
-  --ho: #ff5a52;
-  --su: #ff9a3c;
-  --un: #ffd23f;
-  --ne: #3ddc84;
-  --l-space: #a78bfa;
-  --l-surf: #38c6d9;
-  --l-under: #7c8cff;
-  --l-air: #f472d0;
-  --l-ground: #c9a27a;
-  --nll: #ff6b5e;
-  --sea-label: #2f5770;
-  --font-ui: "Noto Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif;
+  color-scheme: light;
+  --bg: #e4eaee;
+  --panel: #f8fafb;
+  --panel-2: #eef2f5;
+  --line: #c9d3da;
+  --fg: #13232e;
+  --muted: #566a76;
+  --faint: #7f919d;
+  --sea: #d5e4ed;
+  --land: #efeadb;
+  --land-edge: #95a39b;
+  --grid: #bccfda;
+  --sea-label: #86a2b3;
+  --fr: #1e6bd0;
+  --ho: #d62f2f;
+  --su: #e2701e;
+  --un: #b8900a;
+  --ne: #1f9a55;
+  --l-space: #7a55e0;
+  --l-surf: #0e95a8;
+  --l-under: #3f4fd6;
+  --l-air: #c2459e;
+  --l-ground: #8a6236;
+  --nll: #c0392b;
+  --kadiz: #2f3e4c;
+  --eez: #0f5d8c;
+  --halo: #f8fafb;
+  --font-ui: "IBM Plex Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", system-ui, sans-serif;
   --font-data: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
 }
+*, *::before, *::after { box-sizing: border-box; }
 html, body { height: 100%; }
 body {
-  background: var(--bg); color: var(--fg); font-family: var(--font-ui); font-size: 14px;
+  background: var(--bg); color: var(--fg); font-family: var(--font-ui); font-size: 13px; line-height: 1.45;
   padding-left: max(16px, env(safe-area-inset-left, 0px));
   padding-right: max(16px, env(safe-area-inset-right, 0px));
-  padding-block: 14px; box-sizing: border-box;
+  padding-block: 10px; display: flex; flex-direction: column; gap: 10px;
 }
-.app { display: grid; grid-template-columns: minmax(0, 1fr) 380px; gap: 16px; height: 100%; }
-.mapwrap { position: relative; min-width: 0; min-height: 0; background: var(--bg); }
-#map { width: 100%; height: 100%; display: block; touch-action: none; cursor: grab; user-select: none; }
-#map.drag { cursor: grabbing; }
-.ctl { position: absolute; display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
-.ctl.tl { top: 8px; left: 52px; }
-.ctl.br { bottom: 34px; right: 16px; flex-direction: column; }
-.btn {
-  font: 500 12.5px/1 var(--font-ui); color: var(--fg); background: var(--panel-2);
-  border: 1px solid var(--line); border-radius: 4px; padding: 7px 10px; cursor: pointer; min-width: 32px;
-}
+button { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--fr); outline-offset: 2px; }
+
+/* 상단 막대 */
+.top { display: flex; align-items: center; gap: 10px 22px; flex-wrap: wrap; }
+.brand h1 { margin: 0; font-size: 18px; font-weight: 700; letter-spacing: -.01em; }
+.brand small { color: var(--muted); font-size: 12px; }
+.dtg { font-family: var(--font-data); font-size: 15px; font-weight: 500; font-variant-numeric: tabular-nums; }
+.dtg span { font-family: var(--font-ui); font-size: 12px; color: var(--muted); font-weight: 400; margin-left: 4px; }
+.counts { display: flex; gap: 4px 12px; flex-wrap: wrap; font-variant-numeric: tabular-nums; }
+.counts span { display: inline-flex; align-items: baseline; gap: 4px; color: var(--muted); }
+.counts b { font-family: var(--font-data); font-weight: 500; font-size: 14px; color: var(--fg); }
+.counts .h b { color: var(--ho); } .counts .s b { color: var(--su); } .counts .u b { color: var(--un); }
+.ctl { display: flex; gap: 6px; align-items: center; margin-left: auto; flex-wrap: wrap; }
+.btn { font-size: 12.5px; font-weight: 500; background: var(--panel); border: 1px solid var(--line); border-radius: 5px; padding: 5px 10px; cursor: pointer; }
 .btn:hover { border-color: var(--muted); }
-.btn:focus-visible, .layer:focus-visible { outline: 2px solid var(--fr); outline-offset: 1px; }
-.btn[aria-pressed="true"] { background: #17344a; border-color: var(--fr); color: #fff; }
+.btn.go { background: var(--fg); color: var(--panel); border-color: var(--fg); }
 .seg { display: inline-flex; }
 .seg .btn { border-radius: 0; margin-left: -1px; }
-.seg .btn:first-child { border-radius: 4px 0 0 4px; margin-left: 0; }
-.seg .btn:last-child { border-radius: 0 4px 4px 0; }
-.btn.go { background: #12405e; border-color: var(--fr); }
+.seg .btn:first-child { border-radius: 5px 0 0 5px; margin-left: 0; }
+.seg .btn:last-child { border-radius: 0 5px 5px 0; }
+.seg .btn[aria-pressed="true"] { background: var(--fg); color: var(--panel); border-color: var(--fg); }
 
-.panel {
-  min-width: 0; min-height: 0; overflow-y: auto; background: var(--panel); border: 1px solid var(--line);
-  padding: 18px 20px; display: flex; flex-direction: column; gap: 20px;
+/* 격자 배치 */
+.grid {
+  flex: 1; min-height: 0; display: grid; gap: 8px;
+  grid-template-columns: 228px minmax(0, 1fr) 228px 340px;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  grid-template-areas: "space space air mda" "ground map surface mda" "under under under mda";
 }
-h1 { font-size: 21px; font-weight: 700; margin: 0; letter-spacing: -0.01em; text-wrap: balance; }
-h2 { font-size: 14.5px; font-weight: 700; margin: 0 0 9px; color: var(--fg); }
-h2 small { font-weight: 400; color: var(--muted); font-size: 12px; margin-left: 4px; }
-.dtg { color: var(--muted); font-size: 13px; margin-top: 6px; font-variant-numeric: tabular-nums; }
-.dtg b { font-family: var(--font-data); font-weight: 500; color: var(--fg); }
-.counts { display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: 13.5px; font-variant-numeric: tabular-nums; }
-.counts b { font-family: var(--font-data); font-weight: 500; }
-.counts .k { color: var(--muted); }
-.counts .row { width: 100%; display: flex; flex-wrap: wrap; gap: 4px 12px; }
-.cycle { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; }
-.cycle div { display: flex; flex-direction: column; gap: 3px; padding: 6px 0 4px; border-top: 2px solid var(--line); }
-.cycle div.hot { border-top-color: var(--un); }
-.cycle b { font-family: var(--font-data); font-size: 17px; font-weight: 500; font-variant-numeric: tabular-nums; }
-.cycle span { font-size: 10.5px; color: var(--muted); line-height: 1.3; word-break: keep-all; }
-.layers { display: flex; flex-direction: column; gap: 3px; }
-.layer {
-  display: grid; grid-template-columns: 14px auto 1fr; gap: 9px; align-items: start; text-align: left;
-  font: 13px/1.45 var(--font-ui); color: var(--fg); background: none; border: 0; padding: 4px 2px; cursor: pointer; border-radius: 3px;
-}
-.layer:hover { background: var(--panel-2); }
-.layer i { width: 13px; height: 13px; margin-top: 3px; border-radius: 2px; }
-.layer .nm { font-weight: 500; white-space: nowrap; }
-.layer .v { color: var(--muted); font-variant-numeric: tabular-nums; }
-.layer .v b { color: var(--fg); font-family: var(--font-data); font-weight: 500; }
-.layer.off { opacity: .45; }
-.layer.off .nm { text-decoration: line-through; }
-.hint { color: var(--faint); font-size: 12px; margin: 6px 0 0; }
-.alerts, .reqs { display: flex; flex-direction: column; gap: 12px; }
-.al { display: grid; grid-template-columns: 11px 1fr; gap: 4px 9px; font-size: 13.5px; }
-.al i { width: 10px; height: 10px; margin-top: 5px; }
-.al .t { font-weight: 700; }
-.al .t span { font-family: var(--font-data); font-weight: 500; margin-left: 6px; }
-.al .r { grid-column: 2; color: var(--muted); font-size: 12.5px; }
-.al .a { grid-column: 2; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
-.chip { font-size: 11.5px; padding: 2px 7px; border-radius: 999px; border: 1px solid var(--line); color: var(--muted); }
-.chip.open { color: var(--un); border-color: color-mix(in srgb, var(--un) 50%, transparent); }
-.chip.act { color: var(--fr); border-color: color-mix(in srgb, var(--fr) 50%, transparent); }
+.box { background: var(--panel); border: 1px solid var(--line); border-top: 3px solid var(--c); min-width: 0; min-height: 0; overflow: auto; padding: 8px 11px 10px; }
+.box[data-dom="space"] { grid-area: space; --c: var(--l-space); }
+.box[data-dom="air"] { grid-area: air; --c: var(--l-air); }
+.box[data-dom="ground"] { grid-area: ground; --c: var(--l-ground); }
+.box[data-dom="surface"] { grid-area: surface; --c: var(--l-surf); }
+.box[data-dom="under"] { grid-area: under; --c: var(--l-under); }
+.box.off { opacity: .55; }
+.bh { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+.bh h2 { margin: 0; font-size: 14px; font-weight: 700; color: var(--c); }
+.bh small { color: var(--muted); font-size: 11.5px; }
+.sw { margin-left: auto; font-size: 11.5px; border: 1px solid var(--line); background: var(--panel-2); border-radius: 999px; padding: 2px 9px; cursor: pointer; }
+.sw[aria-pressed="true"] { background: var(--c); color: #fff; border-color: var(--c); }
+.bb { display: grid; gap: 8px; }
+.box[data-dom="space"], .box[data-dom="air"] { max-height: 21vh; }
+.box[data-dom="under"] { max-height: 19vh; }
+.box.wide .bb { grid-template-columns: auto minmax(0, 300px) minmax(0, 1fr); align-items: start; gap: 8px 18px; }
+.stats { display: flex; gap: 12px; flex-wrap: wrap; }
+.stats div { display: flex; flex-direction: column; min-width: 44px; }
+.stats b { font-family: var(--font-data); font-weight: 500; font-size: 19px; line-height: 1.15; font-variant-numeric: tabular-nums; }
+.stats span { font-size: 11px; color: var(--muted); white-space: nowrap; }
+.assets, .feed { list-style: none; margin: 0; padding: 0; display: grid; gap: 3px; font-size: 12px; }
+.assets li { display: flex; justify-content: space-between; gap: 8px; }
+.assets li span:first-child { color: var(--muted); white-space: nowrap; }
+.assets li span:last-child { text-align: right; font-variant-numeric: tabular-nums; }
+.feed li { display: grid; grid-template-columns: 38px 1fr; gap: 6px; }
+.feed time { font-family: var(--font-data); color: var(--faint); }
+.feed .none { display: block; color: var(--faint); }
+.box:not(.wide) .feed { border-top: 1px dashed var(--line); padding-top: 6px; }
+
+/* 해도 */
+.mapwrap { grid-area: map; position: relative; min-width: 0; min-height: 0; background: var(--sea); border: 1px solid var(--line); }
+#map { width: 100%; height: 100%; display: block; touch-action: none; cursor: grab; user-select: none; }
+#map.drag { cursor: grabbing; }
+.zoom { position: absolute; top: 8px; right: 8px; display: flex; flex-direction: column; gap: 4px; }
+.zoom .btn { width: 30px; height: 30px; padding: 0; font-size: 15px; }
+.bounds { position: absolute; left: 8px; bottom: 8px; display: flex; gap: 4px 12px; flex-wrap: wrap; align-items: center; background: color-mix(in srgb, var(--panel) 88%, transparent); border: 1px solid var(--line); border-radius: 5px; padding: 4px 9px; font-size: 12px; max-width: calc(100% - 16px); }
+.bounds label { display: inline-flex; gap: 5px; align-items: center; cursor: pointer; white-space: nowrap; }
+.bounds svg { flex: none; }
+.bounds b { font-weight: 600; color: var(--muted); }
+
+/* MDA 열 */
+.mda { grid-area: mda; min-width: 0; min-height: 0; contain: size; overflow-y: auto; background: var(--panel); border: 1px solid var(--line); border-top: 3px solid var(--fg); padding: 10px 14px 14px; display: flex; flex-direction: column; gap: 16px; }
+.mda h2 { font-size: 14px; font-weight: 700; margin: 0 0 8px; }
+.cycle { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; }
+.cycle div { display: flex; flex-direction: column; gap: 2px; padding: 5px 2px 4px; text-align: center; background: var(--panel-2); border: 1px solid var(--line); border-radius: 4px; }
+.cycle div.hot { border-color: var(--ho); }
+.cycle div.hot b { color: var(--ho); }
+.cycle b { font-family: var(--font-data); font-size: 16px; font-weight: 500; font-variant-numeric: tabular-nums; }
+.cycle span { font-size: 10.5px; color: var(--muted); line-height: 1.25; word-break: keep-all; }
+.alerts, .reqs { display: flex; flex-direction: column; gap: 8px; }
+.al { border: 1px solid var(--line); border-left: 4px solid var(--k); background: var(--panel-2); border-radius: 4px; padding: 7px 9px; display: grid; gap: 3px; }
+.al.crit { --k: var(--ho); } .al.warn { --k: var(--su); } .al.done { --k: var(--faint); }
+.al .t { font-weight: 700; display: flex; justify-content: space-between; gap: 8px; }
+.al .t span { font-family: var(--font-data); font-weight: 500; }
+.al .r { color: var(--muted); font-size: 12.5px; }
+.al .a { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.chip { font-size: 11px; padding: 1px 7px; border-radius: 999px; border: 1px solid var(--line); color: var(--muted); white-space: nowrap; }
+.chip.open { color: var(--ho); border-color: color-mix(in srgb, var(--ho) 45%, transparent); }
+.chip.act { color: var(--fr); border-color: color-mix(in srgb, var(--fr) 45%, transparent); }
 .chip.done { color: var(--ne); border-color: color-mix(in srgb, var(--ne) 45%, transparent); }
-.empty { color: var(--muted); font-size: 13px; }
-.req { display: flex; justify-content: space-between; gap: 10px; font-size: 13px; }
+.empty { color: var(--muted); font-size: 12.5px; margin: 0; }
+.req { display: flex; justify-content: space-between; gap: 10px; font-size: 12.5px; }
 .req span:first-child { min-width: 0; }
-.sel { background: var(--panel-2); border: 1px solid var(--line); padding: 12px 14px; font-size: 13px; }
-.sel dl { display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; margin: 8px 0 0; }
-.sel dt { color: var(--muted); }
-.sel dd { margin: 0; font-variant-numeric: tabular-nums; min-width: 0; }
+.sel { background: var(--panel-2); border: 1px solid var(--line); border-radius: 4px; padding: 9px 11px; }
 .sel .hd { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
 .sel .hd b { font-family: var(--font-data); font-size: 15px; font-weight: 500; }
-.log { font-size: 12.5px; display: flex; flex-direction: column; gap: 5px; max-height: 210px; overflow-y: auto; }
-.log div { display: grid; grid-template-columns: 44px 1fr; gap: 8px; color: var(--muted); }
+.sel dl { display: grid; grid-template-columns: auto 1fr; gap: 3px 12px; margin: 6px 0 0; font-size: 12.5px; }
+.sel dt { color: var(--muted); }
+.sel dd { margin: 0; min-width: 0; font-variant-numeric: tabular-nums; }
+.sel .acts { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+.sel .acts:empty { display: none; }
+.log { list-style: none; margin: 0; padding: 0; font-size: 12px; display: grid; gap: 4px; max-height: 190px; overflow-y: auto; }
+.log li { display: grid; grid-template-columns: 38px 1fr; gap: 6px; color: var(--muted); }
 .log time { font-family: var(--font-data); color: var(--faint); }
-.legend { display: grid; grid-template-columns: repeat(5, auto); gap: 6px 10px; font-size: 12.5px; align-items: center; justify-content: space-between; }
-.legend span { display: inline-flex; gap: 6px; align-items: center; white-space: nowrap; }
-.notes { color: var(--faint); font-size: 12px; line-height: 1.6; margin: 10px 0 0; }
+textarea.report { width: 100%; min-height: 150px; font: 12px/1.5 var(--font-data); color: var(--fg); background: var(--panel-2); border: 1px solid var(--line); border-radius: 4px; padding: 8px; resize: vertical; margin-top: 6px; }
+.row { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+.legend { display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: 12px; }
+.legend span { display: inline-flex; gap: 5px; align-items: center; }
+.notes { color: var(--faint); font-size: 11.5px; margin: 6px 0 0; line-height: 1.55; }
 
-/* 해도 SVG */
-.sea { fill: var(--sea); }
+/* SVG */
 .land { fill: var(--land); stroke: var(--land-edge); stroke-width: .8; vector-effect: non-scaling-stroke; }
-.gl { stroke: var(--grid); stroke-width: 1; vector-effect: non-scaling-stroke; fill: none; }
+.gl { stroke: var(--grid); stroke-width: 1; vector-effect: non-scaling-stroke; }
 .ax { fill: var(--muted); font-family: var(--font-data); }
-.frame { fill: none; stroke: var(--line); stroke-width: 1; vector-effect: non-scaling-stroke; }
 .city { fill: var(--muted); }
-.lbl { fill: var(--muted); font-family: var(--font-ui); paint-order: stroke; stroke: var(--sea); stroke-width: 3px; stroke-linejoin: round; }
-.sealbl { fill: var(--sea-label); font-family: var(--font-ui); font-weight: 700; letter-spacing: .05em; }
-.nll { stroke: var(--nll); fill: none; stroke-width: 2.2; vector-effect: non-scaling-stroke; }
-.nlltx { fill: var(--nll); font-weight: 700; font-family: var(--font-data); }
-.rg { fill: none; stroke-width: 1; vector-effect: non-scaling-stroke; }
-.rg.ground { stroke: color-mix(in srgb, var(--l-ground) 55%, transparent); fill: color-mix(in srgb, var(--l-ground) 5%, transparent); }
-.rg.surf { stroke: color-mix(in srgb, var(--l-surf) 60%, transparent); fill: color-mix(in srgb, var(--l-surf) 6%, transparent); }
-.rg.under { stroke: color-mix(in srgb, var(--l-under) 60%, transparent); fill: color-mix(in srgb, var(--l-under) 7%, transparent); }
+.lbl { fill: var(--muted); paint-order: stroke; stroke: var(--halo); stroke-width: 3px; stroke-linejoin: round; }
+.sealbl { fill: var(--sea-label); font-weight: 700; letter-spacing: .12em; }
+.nll { stroke: var(--nll); fill: none; stroke-width: 2; vector-effect: non-scaling-stroke; }
+.kadiz { stroke: var(--kadiz); fill: none; stroke-width: 1.6; vector-effect: non-scaling-stroke; }
+.eez { stroke: var(--eez); fill: none; stroke-width: 1.8; vector-effect: non-scaling-stroke; }
+.eez.u { stroke-width: 1.5; }
+.btx { font-weight: 700; font-family: var(--font-data); paint-order: stroke; stroke: var(--halo); stroke-width: 3px; stroke-linejoin: round; }
+.btx.nll { fill: var(--nll); } .btx.kadiz { fill: var(--kadiz); } .btx.eez { fill: var(--eez); }
+.rg { stroke-width: 1; vector-effect: non-scaling-stroke; }
+.rg.ground { stroke: color-mix(in srgb, var(--l-ground) 60%, transparent); fill: color-mix(in srgb, var(--l-ground) 5%, transparent); }
+.rg.ground.wide { fill: none; }
+.rg.surf { stroke: color-mix(in srgb, var(--l-surf) 65%, transparent); fill: color-mix(in srgb, var(--l-surf) 7%, transparent); }
+.rg.under { stroke: color-mix(in srgb, var(--l-under) 65%, transparent); fill: color-mix(in srgb, var(--l-under) 7%, transparent); }
 .rg.air { stroke: color-mix(in srgb, var(--l-air) 70%, transparent); fill: color-mix(in srgb, var(--l-air) 6%, transparent); }
+.rg.space { stroke: color-mix(in srgb, var(--l-space) 60%, transparent); fill: color-mix(in srgb, var(--l-space) 5%, transparent); }
 .rg.unc { stroke: var(--muted); fill: none; }
-.f-ground { fill: var(--l-ground); } .f-surf { fill: var(--l-surf); } .f-under { fill: var(--l-under); }
-.f-air { fill: var(--l-air); } .f-space { fill: var(--l-space); }
-.t-ground { fill: var(--l-ground); } .t-surf { fill: var(--l-surf); } .t-under { fill: var(--l-under); }
-.t-air { fill: var(--l-air); } .t-space { fill: var(--l-space); }
-.orbit { stroke: var(--l-space); fill: none; stroke-width: 1.1; opacity: .55; vector-effect: non-scaling-stroke; }
-.swath { fill: color-mix(in srgb, var(--l-space) 16%, transparent); stroke: color-mix(in srgb, var(--l-space) 45%, transparent); stroke-width: 1; vector-effect: non-scaling-stroke; }
+.f-ground { fill: var(--l-ground); } .f-surf { fill: var(--l-surf); } .f-under { fill: var(--l-under); } .f-air { fill: var(--l-air); } .f-space { fill: var(--l-space); }
+.t-ground { fill: var(--l-ground); } .t-surf { fill: var(--l-surf); } .t-under { fill: var(--l-under); } .t-air { fill: var(--l-air); } .t-space { fill: var(--l-space); }
+.orbit { stroke: var(--l-space); fill: none; stroke-width: 1.1; opacity: .6; vector-effect: non-scaling-stroke; }
+.swath { fill: color-mix(in srgb, var(--l-space) 13%, transparent); stroke: color-mix(in srgb, var(--l-space) 50%, transparent); stroke-width: 1; vector-effect: non-scaling-stroke; }
 .satbar { stroke: var(--l-space); stroke-width: 2.4; vector-effect: non-scaling-stroke; }
-.sy { stroke-width: 1.5; vector-effect: non-scaling-stroke; }
-.sy.F { fill: var(--fr); stroke: #cfe5ff; }
-.sy.H { fill: var(--ho); stroke: #ffd2cf; }
-.sy.S { fill: var(--su); stroke: #ffe1c4; }
-.sy.U { fill: var(--un); stroke: #fff2bf; }
-.sy.N { fill: var(--ne); stroke: #c9f6dc; }
-.sy.A { fill: var(--l-air); stroke: #ffd6f3; }
+.sy { stroke: var(--halo); stroke-width: 1.3; vector-effect: non-scaling-stroke; }
+.sy.F { fill: var(--fr); } .sy.H { fill: var(--ho); } .sy.S { fill: var(--su); } .sy.U { fill: var(--un); } .sy.N { fill: var(--ne); } .sy.A { fill: var(--l-air); }
 .ld { stroke-width: 1.3; vector-effect: non-scaling-stroke; }
-.ld.F { stroke: var(--fr); } .ld.H { stroke: var(--ho); } .ld.S { stroke: var(--su); } .ld.U { stroke: var(--un); } .ld.N { stroke: var(--ne); } .ld.A { stroke: var(--l-air); }
-.tid { font-family: var(--font-data); font-weight: 500; paint-order: stroke; stroke: var(--sea); stroke-width: 3px; stroke-linejoin: round; }
-.tid.F { fill: #9ccbff; } .tid.H { fill: var(--ho); } .tid.S { fill: var(--su); } .tid.U { fill: var(--un); } .tid.A { fill: var(--l-air); }
-.lost { opacity: .38; }
-.selring { fill: none; stroke: #fff; stroke-width: 1.4; vector-effect: non-scaling-stroke; }
+.ld.F { stroke: var(--fr); } .ld.H { stroke: var(--ho); } .ld.S { stroke: var(--su); } .ld.U { stroke: var(--un); } .ld.N { stroke: var(--ne); }
+.tid { font-family: var(--font-data); font-weight: 500; paint-order: stroke; stroke: var(--halo); stroke-width: 3px; stroke-linejoin: round; }
+.tid.F { fill: var(--fr); } .tid.H { fill: var(--ho); } .tid.S { fill: var(--su); } .tid.U { fill: var(--un); } .tid.A { fill: var(--l-air); }
+.lost { opacity: .4; }
+.selring { fill: none; stroke: var(--fg); stroke-width: 1.4; vector-effect: non-scaling-stroke; }
 .ic { stroke: var(--fr); stroke-width: 1.2; fill: none; vector-effect: non-scaling-stroke; opacity: .8; }
 
-@media (max-width: 900px) {
+@media (max-width: 1280px) {
   html, body { height: auto; }
-  .app { grid-template-columns: 1fr; height: auto; }
-  .mapwrap { aspect-ratio: 1058 / 1025; max-width: 100%; }
-  .ctl.tl { left: 8px; }
-  .ctl.br { right: 8px; bottom: 30px; }
-  .panel { overflow: visible; }
+  .grid { flex: none; grid-template-columns: 210px minmax(0, 1fr) 210px; grid-template-rows: auto minmax(560px, 1fr) auto auto;
+    grid-template-areas: "space space air" "ground map surface" "under under under" "mda mda mda"; }
+  .mda { overflow: visible; contain: none; }
+  .box { overflow: visible; }
+  .box[data-dom] { max-height: none; }
 }
-@media (max-width: 460px) {
-  .cycle b { font-size: 14px; }
-  .cycle span { font-size: 9.5px; }
-  .legend { grid-template-columns: repeat(3, auto); justify-content: start; }
+@media (max-width: 860px) {
+  .grid { grid-template-columns: minmax(0, 1fr); grid-template-rows: none;
+    grid-template-areas: "map" "space" "air" "surface" "ground" "under" "mda"; }
+  .mapwrap { aspect-ratio: 1058 / 1025; max-width: 100%; }
+  .box.wide .bb { grid-template-columns: minmax(0, 1fr); }
+  .ctl { margin-left: 0; }
 }
 </style>
 
-<div class="app">
+<header class="top">
+  <div class="brand">
+    <h1>해양영역인식 공통작전상황도</h1>
+    <small>가상 훈련 시나리오 · 다출처 센서 융합</small>
+  </div>
+  <div class="dtg" id="dtg"></div>
+  <div class="counts" id="counts"></div>
+  <div class="ctl">
+    <button class="btn" id="bPlay" type="button">❚❚ 정지</button>
+    <span class="seg" role="group" aria-label="모의 속도">
+      <button class="btn" type="button" data-speed="60">×60</button>
+      <button class="btn" type="button" data-speed="180">×180</button>
+      <button class="btn" type="button" data-speed="600">×600</button>
+    </span>
+    <button class="btn" id="bReset" type="button">시나리오 재시작</button>
+  </div>
+</header>
+
+<main class="grid">
+  <section class="box wide" data-dom="space"></section>
+  <section class="box" data-dom="air"></section>
+  <section class="box" data-dom="ground"></section>
   <div class="mapwrap">
     <svg id="map" viewBox="0 0 1058 1025" preserveAspectRatio="xMidYMid meet" role="img" aria-label="한반도 주변 해역 상황도">
       <defs><clipPath id="mclip"><rect id="mrect"></rect></clipPath></defs>
-      <rect id="seaRect" class="sea"></rect>
       <g clip-path="url(#mclip)">
         <g id="gStatic"></g>
         <g id="gDyn"></g>
       </g>
-      <rect id="frameRect" class="frame"></rect>
       <g id="gAxis"></g>
     </svg>
-    <div class="ctl tl">
-      <button class="btn" id="bPlay" type="button" aria-label="일시정지">❚❚ 정지</button>
-      <span class="seg" role="group" aria-label="모의 속도">
-        <button class="btn" type="button" data-speed="60">×60</button>
-        <button class="btn" type="button" data-speed="180">×180</button>
-        <button class="btn" type="button" data-speed="600">×600</button>
-      </span>
-      <button class="btn" id="bReset" type="button">시나리오 재시작</button>
-    </div>
-    <div class="ctl br">
+    <div class="zoom">
       <button class="btn" id="bZin" type="button" aria-label="확대">+</button>
       <button class="btn" id="bZout" type="button" aria-label="축소">−</button>
       <button class="btn" id="bZfit" type="button" aria-label="전체 보기">⤢</button>
     </div>
+    <div class="bounds">
+      <b>경계선</b>
+      <label><input type="checkbox" id="bdNLL" checked><svg width="22" height="6"><line x1="0" y1="3" x2="22" y2="3" class="nll" stroke-dasharray="6 3"/></svg>NLL</label>
+      <label><input type="checkbox" id="bdKADIZ" checked><svg width="22" height="6"><line x1="0" y1="3" x2="22" y2="3" class="kadiz" stroke-dasharray="8 3 2 3"/></svg>KADIZ</label>
+      <label><input type="checkbox" id="bdEEZ" checked><svg width="22" height="6"><line x1="0" y1="3" x2="22" y2="3" class="eez" stroke-dasharray="2 3"/></svg>EEZ</label>
+    </div>
   </div>
+  <section class="box" data-dom="surface"></section>
+  <section class="box wide" data-dom="under"></section>
 
-  <aside class="panel">
-    <header>
-      <h1>해양영역인식 공통작전상황도</h1>
-      <div class="dtg" id="dtg"></div>
-    </header>
-    <section><div class="counts" id="counts"></div></section>
+  <aside class="mda">
     <section>
       <h2>MDA 순환</h2>
       <div class="cycle" id="cycle"></div>
-    </section>
-    <section>
-      <h2>센서 레이어 <small>최근 10분 탐지 표적 수</small></h2>
-      <div class="layers" id="layers"></div>
-      <p class="hint">레이어를 누르면 해당 센서를 끄고 켭니다. 끄면 그 센서의 탐지도 융합에서 빠집니다.</p>
     </section>
     <section id="selSec"></section>
     <section>
@@ -226,7 +269,12 @@ h2 small { font-weight: 400; color: var(--muted); font-size: 12px; margin-left: 
     </section>
     <section>
       <h2>상황 일지</h2>
-      <div class="log" id="log"></div>
+      <ul class="log" id="log"></ul>
+    </section>
+    <section>
+      <h2>상황 공유</h2>
+      <div class="row"><button class="btn go" type="button" id="bReport">상황보고 생성</button><button class="btn" type="button" id="bCopy">복사</button><span class="empty" id="copyMsg"></span></div>
+      <textarea class="report" id="report" readonly placeholder="상황보고 생성을 누르면 현재 표적, 이상징후, 수집 요청 요약이 여기에 작성됩니다."></textarea>
     </section>
     <footer>
       <div class="legend">
@@ -236,10 +284,10 @@ h2 small { font-weight: 400; color: var(--muted); font-size: 12px; margin-left: 
         <span><svg width="16" height="16" viewBox="-8 -8 16 16"><path class="sy U" d="M-2.3,-6.5H2.3V-2.3H6.5V2.3H2.3V6.5H-2.3V2.3H-6.5V-2.3H-2.3Z"/></svg>미상</span>
         <span><svg width="14" height="14" viewBox="-7 -7 14 14"><rect class="sy N" x="-5" y="-5" width="10" height="10"/></svg>중립</span>
       </div>
-      <p class="notes">아래 반쪽 기호는 수중, 위 반쪽은 항공 표적입니다. 흐린 기호와 점선 원은 추적 소실 표적과 추정 위치 오차입니다. 선은 30분 뒤 예상 위치를 가리킵니다.<br>해안선과 NLL은 개략이며, 표적과 센서 배치는 모두 가상 훈련 시나리오입니다.</p>
+      <p class="notes">아래 반쪽 기호는 수중, 위 반쪽은 항공 표적입니다. 흐린 기호와 점선 원은 추적 소실 표적과 추정 위치 오차이고, 선은 30분 뒤 예상 위치입니다. 각 센서 칸의 가동 단추로 출처를 끄면 그 탐지가 융합에서 빠집니다.<br>해안선, NLL, KADIZ, EEZ는 개략이며 EEZ는 한·일 대륙붕 북부 경계 외에는 미획정 구간입니다. 표적과 센서 배치는 모두 가상입니다.</p>
     </footer>
   </aside>
-</div>
+</main>
 
 <script src="land.js"></script>
 <script src="scenario.js"></script>
@@ -265,17 +313,21 @@ function fromLocal(o, dx, dy) { return [o[0] + dx / (111.32 * Math.cos(o[1] * D2
 function bearing(a, b) { const d = toLocal(a, b); return (Math.atan2(d[0], d[1]) / D2R + 360) % 360; }
 function advance(p, hdg, km) { return fromLocal(p, km * Math.sin(hdg * D2R), km * Math.cos(hdg * D2R)); }
 const KMMIN = kn => kn * 1.852 / 60;
+const pathD = (line, close) => 'M' + line.map(([x, y]) => f1(X(x)) + ',' + f1(Y(y))).join('L') + (close ? 'Z' : '');
 
+function inRing(lon, lat, r) {
+  let ins = false;
+  for (let j = 0, k = r.length - 1; j < r.length; k = j++) {
+    const [xi, yi] = r[j], [xk, yk] = r[k];
+    if ((yi > lat) !== (yk > lat) && lon < (xk - xi) * (lat - yi) / (yk - yi) + xi) ins = !ins;
+  }
+  return ins;
+}
 const LANDB = LAND.map(r => { let a = 1e9, b = -1e9, c = 1e9, d = -1e9; for (const [x, y] of r) { a = Math.min(a, x); b = Math.max(b, x); c = Math.min(c, y); d = Math.max(d, y); } return [a, b, c, d]; });
 function isLand(lon, lat) {
   for (let i = 0; i < LAND.length; i++) {
-    const bb = LANDB[i]; if (lon < bb[0] || lon > bb[1] || lat < bb[2] || lat > bb[3]) continue;
-    const r = LAND[i]; let ins = false;
-    for (let j = 0, k = r.length - 1; j < r.length; k = j++) {
-      const [xi, yi] = r[j], [xk, yk] = r[k];
-      if ((yi > lat) !== (yk > lat) && lon < (xk - xi) * (lat - yi) / (yk - yi) + xi) ins = !ins;
-    }
-    if (ins) return true;
+    const bb = LANDB[i];
+    if (lon >= bb[0] && lon <= bb[1] && lat >= bb[2] && lat <= bb[3] && inRing(lon, lat, LAND[i])) return true;
   }
   return false;
 }
@@ -287,45 +339,56 @@ function nllLat(line, lon) {
   }
   return line[line.length - 1][1];
 }
+// 서해 EEZ 중간선의 위도별 경도 (경유점은 북→남 순서)
+const EEZW = SC.eez.undelimited[2];
+function eezWestLon(lat) {
+  for (let i = 0; i < EEZW.length - 1; i++) {
+    const a = EEZW[i], b = EEZW[i + 1];
+    if (lat <= a[1] && lat >= b[1]) return a[0] + (b[0] - a[0]) * (a[1] - lat) / (a[1] - b[1]);
+  }
+  return EEZW[lat > EEZW[0][1] ? 0 : EEZW.length - 1][0];
+}
+const inKadiz = p => inRing(p[0], p[1], SC.kadiz);
 function mulberry32(a) { return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
 
 // ── 센서·표적 정의 ──────────────────────────────────────
 const RADARS = SC.radars.map(([n, x, y]) => ({ name: n + ' 감시대', pos: [x, y], r: 70 }));
+const ADRADARS = SC.adRadars.map(([n, x, y]) => ({ name: n, pos: [x, y], r: 300 }));
 const PORTS = SC.ports.map(([n, x, y]) => ({ name: n, pos: [x, y], r: 12 }));
 const ARRAYS = SC.arrays.map(([n, x, y]) => ({ name: n, pos: [x, y], r: 30 }));
-const SHIP_R = 40, SONAR_R = 12, MPA_R = 120, UAV_R = 50, BUOY_R = 22, LOST_AFTER = 12, SAT_KMMIN = 420;
-const SN = { ais: 'AIS', sar: 'SAR 위성', eo: 'EO 위성', rf: 'RF 위성 군집', radar: '레이더 감시대', cctv: '해안 CCTV',
+const SHIP_R = 40, SHIP_AIR_R = 150, SONAR_R = 12, MPA_R = 120, UAV_R = 50, BUOY_R = 22, LOST_AFTER = 12, SAT_KMMIN = 420;
+const SN = { ais: 'AIS', sar: 'SAR 위성', eo: 'EO 위성', rf: 'RF 위성 군집', radar: '레이더 감시대', adradar: '방공 레이더', cctv: '해안 CCTV',
   shipradar: '함정 레이더', fixed: '고정형 수중감시', buoy: '소노부이', sonar: '함정 소나', mpa: '해상초계기', uav: '무인기', link: '전술데이터링크' };
-const LAYERS = [
-  { key: 'space', nm: '우주정보', col: 'var(--l-space)', types: [['sar', 'SAR 위성'], ['eo', 'EO 위성'], ['rf', 'RF 위성 군집']] },
-  { key: 'surface', nm: '수상정보', col: 'var(--l-surf)', types: [['ais', 'AIS'], ['shipradar', '함정 레이더'], ['cctv', '해안 CCTV']] },
-  { key: 'under', nm: '수중정보', col: 'var(--l-under)', types: [['fixed', '고정형 수중감시'], ['buoy', '소노부이'], ['sonar', '함정 소나']] },
-  { key: 'air', nm: '항공정보', col: 'var(--l-air)', types: [['mpa', '해상초계기'], ['uav', '무인기']] },
-  { key: 'ground', nm: '지상정보', col: 'var(--l-ground)', types: [['radar', '레이더감시대']] }
-];
+const DOMS = {
+  space: { nm: '우주정보', sub: '위성 영상·신호', types: [['sar', 'SAR'], ['eo', 'EO'], ['rf', 'RF 군집']] },
+  air: { nm: '항공정보', sub: '초계기·무인기', types: [['mpa', '해상초계기'], ['uav', '무인기']] },
+  ground: { nm: '지상정보', sub: '해안·방공 레이더', types: [['radar', '감시대'], ['adradar', '방공']] },
+  surface: { nm: '수상정보', sub: 'AIS·함정·CCTV', types: [['ais', 'AIS'], ['shipradar', '함정'], ['cctv', 'CCTV']] },
+  under: { nm: '수중정보', sub: '음향 탐지', types: [['fixed', '고정형'], ['buoy', '소노부이'], ['sonar', '함정 소나']] }
+};
+const DOMOF = {}; for (const [k, d] of Object.entries(DOMS)) for (const [t] of d.types) DOMOF[t] = k;
 const AFF = { F: '아군', H: '적성', S: '의심', U: '미상', N: '중립' };
 const layerOn = { space: true, surface: true, under: true, air: true, ground: true };
+const showB = { nll: true, kadiz: true, eez: true };
 
-let rnd, T, targets, byId, tracks, alerts, reqs, logs, passes, buoys, mpa, uav, sel, stats, flags;
+let rnd, T, targets, byId, tracks, alerts, reqs, logs, feeds, passes, buoys, mpa, uav, sel, stats, flags;
 
-function routeShip(route, i, rt) {
+function routeShip(route, i) {
   const w = route.slice(1);
   const seg = Math.floor(rnd() * (w.length - 1)), f = rnd();
   const a = w[seg], b = w[seg + 1];
   const fwd = rnd() < 0.5;
-  const pos = [a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) * f];
-  const lat = 0.04 * (rnd() - 0.5);
-  pos[1] += lat;
+  const off = 0.04 * (rnd() - 0.5);
+  const pos = [a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) * f + off];
   const mid = ['440', '412', '431', '538', '636', '477'][Math.floor(rnd() * 6)];
   return { kind: 'surface', truth: 'N', type: '상선', pos, hdg: 0, spd: 11 + rnd() * 7, ais: true, emit: true,
-    mode: 'route', wp: w.map(p => [p[0], p[1] + lat]), wi: fwd ? seg + 1 : seg, dir: fwd ? 1 : -1,
+    mode: 'route', wp: w.map(p => [p[0], p[1] + off]), wi: fwd ? seg + 1 : seg, dir: fwd ? 1 : -1,
     mmsi: mid + String(100000 + Math.floor(rnd() * 899999)), id: 'N' + (100 + i) };
 }
 function fishShip(cl, i) {
   let pos;
   for (let k = 0; k < 40; k++) {
-    const a = rnd() * 360, r = Math.sqrt(rnd()) * cl[3];
-    pos = advance([cl[0], cl[1]], a, r);
+    pos = advance([cl[0], cl[1]], rnd() * 360, Math.sqrt(rnd()) * cl[3]);
     if (!isLand(pos[0], pos[1])) break;
   }
   return { kind: 'surface', truth: 'N', type: '어선', pos, hdg: rnd() * 360, spd: 2 + rnd() * 4, ais: true, emit: false,
@@ -335,6 +398,7 @@ function fishShip(cl, i) {
 function init() {
   rnd = mulberry32(20261018);
   T = 0; targets = []; tracks = new Map(); alerts = []; reqs = []; logs = []; buoys = []; sel = null;
+  feeds = { space: [], air: [], ground: [], surface: [], under: [] };
   stats = { shared: 0, decided: 0, evaluated: 0 };
   flags = {};
   SC.friendlies.forEach(([id, x, y]) => targets.push({ id, kind: 'surface', truth: 'F', type: '아군 함정', pos: [x, y], home: [x, y],
@@ -344,18 +408,20 @@ function init() {
   SC.fishing.forEach(cl => { for (let k = 0; k < cl[2]; k++) targets.push(fishShip(cl, n++)); });
   targets.push({ id: 'H201', kind: 'surface', truth: 'H', type: '북측 경비정', pos: SC.h201.start.slice(), hdg: 150, spd: 2, ais: false, emit: true, mode: 'h201', st: 'loiter' });
   targets.push({ id: 'D301', kind: 'surface', truth: 'N', type: '상선', name: SC.d301.name, mmsi: SC.d301.mmsi, pos: SC.d301.start.slice(), hdg: 182, spd: 13, ais: true, emit: true, mode: 'd301', st: 'transit' });
-  targets.push({ id: 'D302', kind: 'surface', truth: 'N', type: '선박(AIS 미송출)', pos: SC.d302.start.slice(), hdg: 90, spd: 1.5, ais: false, emit: false, mode: 'd302', center: SC.d302.start.slice() });
+  targets.push({ id: 'D302', kind: 'surface', truth: 'N', type: '선박(AIS 미송출)', pos: SC.d302.start.slice(), hdg: 90, spd: 1.5, ais: false, emit: false, mode: 'd302' });
+  targets.push({ id: 'C501', kind: 'surface', truth: 'N', type: '외국 어선', name: SC.c501.name, mmsi: SC.c501.mmsi, pos: SC.c501.start.slice(), hdg: 80, spd: 7, ais: true, emit: false, mode: 'c501', st: 'approach' });
   targets.push({ id: 'U402', kind: 'sub', truth: 'H', type: '잠수함', pos: SC.u402.path[0].slice(), hdg: 190, spd: 8, ais: false, emit: false, mode: 'path', wp: SC.u402.path, wi: 1, dir: 1, endHold: true });
+  targets.push({ id: 'U403', kind: 'air', truth: 'H', type: '외국 군용기', pos: SC.u403.start.slice(), hdg: 60, spd: 330, ais: false, emit: true, mode: 'path', wp: [SC.u403.start].concat(SC.u403.path), wi: 1, dir: 1, endHold: true, startAt: SC.u403.at });
   byId = new Map(targets.map(t => [t.id, t]));
-  mpa = { id: 'MPA', name: '해상초계기', pos: advance(SC.mpa.center, 0, SC.mpa.r), center: SC.mpa.center.slice(), r: SC.mpa.r, spd: 300, ph: 0, mode: 'orbit', hdg: 90 };
-  uav = { id: 'UAV', name: '무인기', pos: advance(SC.uav.center, 0, SC.uav.r), center: SC.uav.center.slice(), r: SC.uav.r, spd: 80, ph: 0, mode: 'orbit', hdg: 90 };
+  mpa = { id: 'MPA', name: '해상초계기', pos: advance(SC.mpa.center, 0, SC.mpa.r), center: SC.mpa.center.slice(), r: SC.mpa.r, spd: 300, ph: 0, mode: 'orbit', hdg: 90, task: '동해 정찰 궤도' };
+  uav = { id: 'UAV', name: '무인기', pos: advance(SC.uav.center, 0, SC.uav.r), center: SC.uav.center.slice(), r: SC.uav.r, spd: 80, ph: 0, mode: 'orbit', hdg: 90, task: '서해 정찰 궤도' };
   passes = [];
   for (let k = 0; k < 30; k++) {
     passes.push({ sat: 'sar', tc: 8 + k * 97, through: [121.8 + ((k * 3.7) % 9), 36.8], brg: 193, halfW: 50 });
     passes.push({ sat: 'eo', tc: 46 + k * 97, through: [126.6 + ((k * 5.3) % 6.5), 36.8], brg: 193, halfW: 30 });
     passes.push({ sat: 'rf', tc: 72 + k * 97, through: [123.0 + ((k * 4.1) % 8), 36.8], brg: 193, halfW: 280 });
   }
-  addLog('훈련 시나리오 개시. 전 센서 레이어 가동.');
+  addLog('훈련 시나리오 개시. 전 센서 출처 가동.');
   for (let i = 0; i < 30; i++) step(0.2);
 }
 
@@ -368,34 +434,38 @@ function moveToward(o, dest, kn, dt) {
 }
 function orbit(o, dt) {
   o.ph = (o.ph + KMMIN(o.spd) * dt / o.r / D2R) % 360;
-  const p = advance(o.center, o.ph, o.r);
-  o.hdg = (o.ph + 90) % 360; o.pos = p;
+  o.pos = advance(o.center, o.ph, o.r); o.hdg = (o.ph + 90) % 360;
 }
-function predicted(t, min) { return advance(t.pos, t.hdg, KMMIN(t.spd) * min); }
+const predicted = (t, min) => advance(t.pos, t.hdg, KMMIN(t.spd) * min);
+const active = t => !(t.startAt && T < t.startAt) && !t.gone;
 
 function moveTarget(t, dt) {
+  if (!active(t)) return;
   switch (t.mode) {
-    case 'patrol': {
+    case 'patrol':
       t.ph = (t.ph + KMMIN(t.spd) * dt / t.orbitR / D2R) % 360;
       t.pos = advance(t.home, t.ph, t.orbitR); t.hdg = (t.ph + 90) % 360; t.spd = 12; break;
-    }
-    case 'intercept': {
-      t.spd = 24; const g = t.goal(); if (g) moveToward(t, g, t.spd, dt); break;
-    }
-    case 'return': {
-      t.spd = 18; const p = advance(t.home, t.ph, t.orbitR);
-      if (moveToward(t, p, t.spd, dt)) t.mode = 'patrol'; break;
-    }
+    case 'intercept': { t.spd = 24; const g = t.goal(); if (g) moveToward(t, g, t.spd, dt); break; }
+    case 'return': { t.spd = 18; if (moveToward(t, advance(t.home, t.ph, t.orbitR), t.spd, dt)) t.mode = 'patrol'; break; }
     case 'route': case 'path': {
-      const dest = t.wp[t.wi];
-      if (moveToward(t, dest, t.spd, dt)) {
+      if (moveToward(t, t.wp[t.wi], t.spd, dt)) {
         const nx = t.wi + t.dir;
-        if (nx < 0 || nx >= t.wp.length) { if (t.endHold) { t.mode = 'hold'; t.spd = 2; break; } t.dir *= -1; }
+        if (nx < 0 || nx >= t.wp.length) {
+          if (t.endHold) { t.mode = 'hold'; t.center = t.pos.slice(); t.ph = 0; if (t.kind === 'sub') t.spd = 2; break; }
+          t.dir *= -1;
+        }
         t.wi += t.dir;
       }
       break;
     }
-    case 'hold': { t.hdg = (t.hdg + dt * 6) % 360; t.pos = advance(t.pos, t.hdg, KMMIN(t.spd) * dt); break; }
+    case 'hold':
+      if (t.kind === 'air') { t.r = 25; orbit(t, dt); }
+      else { t.hdg = (t.hdg + dt * 6) % 360; t.pos = advance(t.pos, t.hdg, KMMIN(t.spd) * dt); }
+      break;
+    case 'exit':
+      t.hdg = 245; t.pos = advance(t.pos, t.hdg, KMMIN(t.spd) * dt);
+      if (t.pos[0] < LON0 + 0.2) t.gone = true;
+      break;
     case 'fish': {
       t.hdg = (t.hdg + (rnd() - 0.5) * 30 * dt + 360) % 360;
       if (dist(t.pos, t.center) > t.rad) t.hdg = bearing(t.pos, t.center);
@@ -405,35 +475,41 @@ function moveTarget(t, dt) {
     }
     case 'h201': {
       const nll = nllLat(SC.nllWest, t.pos[0]);
-      if (t.st === 'loiter') { t.spd = 2; t.hdg = (t.hdg + dt * 8) % 360; if (T >= 5 && !flags.h201Retreated) { t.st = 'south'; } }
-      else if (t.st === 'south') { t.spd = 10; t.hdg = 172; if (t.pos[1] < nll - 0.07) { t.st = 'hold'; } }
+      if (t.st === 'loiter') { t.spd = 2; t.hdg = (t.hdg + dt * 8) % 360; if (T >= 5 && !flags.h201Retreated) t.st = 'south'; }
+      else if (t.st === 'south') { t.spd = 10; t.hdg = 172; if (t.pos[1] < nll - 0.07) t.st = 'hold'; }
       else if (t.st === 'hold') { t.spd = 2; t.hdg = (t.hdg + dt * 10) % 360; if (t.pos[1] < nll - 0.1) t.hdg = 0; }
-      else if (t.st === 'retreat') { t.spd = 14; t.hdg = 345; if (t.pos[1] > 37.95) { t.st = 'loiter'; } }
+      else if (t.st === 'retreat') { t.spd = 14; t.hdg = 345; if (t.pos[1] > 37.95) t.st = 'loiter'; }
       t.pos = advance(t.pos, t.hdg, KMMIN(t.spd) * dt); break;
     }
     case 'd301': {
-      if (t.st === 'transit') { t.spd = 13; t.hdg = 182; t.pos = advance(t.pos, t.hdg, KMMIN(t.spd) * dt);
-        if (T >= SC.d301.aisOff) { t.ais = false; t.emit = false; t.st = 'rdv'; flags.d301off = T; } }
-      else if (t.st === 'rdv') { t.spd = 14; const d302 = byId.get('D302'); if (moveToward(t, advance(d302.pos, 0, 0.3), t.spd, dt)) { t.st = 'sts'; flags.sts = T; } }
-      else if (t.st === 'sts') { t.spd = 0.5; const d302 = byId.get('D302'); t.pos = advance(d302.pos, 0, 0.3); t.hdg = d302.hdg; }
+      const d302 = byId.get('D302');
+      if (t.st === 'transit') {
+        t.spd = 13; t.hdg = 182; t.pos = advance(t.pos, t.hdg, KMMIN(t.spd) * dt);
+        if (T >= SC.d301.aisOff) { t.ais = false; t.emit = false; t.st = 'rdv'; }
+      } else if (t.st === 'rdv') { t.spd = 14; if (moveToward(t, advance(d302.pos, 0, 0.3), t.spd, dt)) { t.st = 'sts'; flags.sts = T; } }
+      else { t.spd = 0.5; t.pos = advance(d302.pos, 0, 0.3); t.hdg = d302.hdg; }
       break;
     }
-    case 'd302': {
-      if (flags.sts) { t.spd = 0.5; t.hdg = (t.hdg + dt * 2) % 360; }
-      else { t.spd = 1.5; t.hdg = (t.hdg + dt * 6) % 360; }
+    case 'd302':
+      t.spd = flags.sts ? 0.5 : 1.5; t.hdg = (t.hdg + dt * (flags.sts ? 2 : 6)) % 360;
       t.pos = advance(t.pos, t.hdg, KMMIN(t.spd) * dt); break;
-    }
+    case 'c501':
+      if (t.st === 'approach') { t.spd = 7; t.hdg = 80; if (t.pos[0] > eezWestLon(t.pos[1]) + 0.2) t.st = 'fishing'; }
+      else if (t.st === 'fishing') { t.spd = 3; t.hdg = (t.hdg + dt * 9) % 360; }
+      else t.spd = 0;
+      t.pos = advance(t.pos, t.hdg, KMMIN(t.spd) * dt); break;
   }
 }
 function moveAir(a, dt) {
   if (a.mode === 'orbit') orbit(a, dt);
-  else if (a.mode === 'transit') {
-    const entry = advance(a.dest, a.ph, a.destR);
-    if (moveToward(a, entry, a.spd, dt)) { a.mode = 'orbit'; a.center = a.dest; a.r = a.destR; if (a.onArrive) { const f = a.onArrive; a.onArrive = null; f(); } }
+  else if (moveToward(a, advance(a.dest, a.ph, a.destR), a.spd, dt)) {
+    a.mode = 'orbit'; a.center = a.dest; a.r = a.destR; a.task = a.arriveTask;
+    if (a.onArrive) { const f = a.onArrive; a.onArrive = null; f(); }
   }
 }
-function sendAir(a, dest, r, onArrive) {
+function sendAir(a, dest, r, task, onArrive) {
   a.dest = dest.slice(); a.destR = r; a.ph = bearing(dest, a.pos); a.mode = 'transit'; a.onArrive = onArrive;
+  a.task = '이동 중 · ' + task; a.arriveTask = task;
 }
 
 // ── 위성 통과 ─────────────────────────────────────────
@@ -441,36 +517,42 @@ function passGeom(p) {
   if (!p.through && p.aim && T >= p.tc - 3) p.through = predicted(byId.get(p.aim), p.tc - T);
   return p.through;
 }
-function subpoint(p, t) { return advance(p.through, p.brg, (t - p.tc) * SAT_KMMIN); }
-function passActive(p) { return p.through && Math.abs((T - p.tc) * SAT_KMMIN) < 1050; }
+const subpoint = (p, t) => advance(p.through, p.brg, (t - p.tc) * SAT_KMMIN);
 function swept(p, pos, t0, t1) {
   const d = toLocal(p.through, pos), ux = Math.sin(p.brg * D2R), uy = Math.cos(p.brg * D2R);
   const along = d[0] * ux + d[1] * uy, cross = Math.abs(d[0] * uy - d[1] * ux);
-  if (p.sat === 'rf') { const a = (t1 - p.tc) * SAT_KMMIN; return Math.hypot(along - a, cross) <= p.halfW; }
+  if (p.sat === 'rf') return Math.hypot(along - (t1 - p.tc) * SAT_KMMIN, cross) <= p.halfW;
   return cross <= p.halfW && along >= (t0 - p.tc) * SAT_KMMIN && along <= (t1 - p.tc) * SAT_KMMIN;
 }
 
 // ── 탐지와 융합 ───────────────────────────────────────
-function sense(t, friends, activePasses, t0) {
+function sense(t, friends, act, t0) {
   const s = [];
   if (t.truth === 'F') s.push('link');
+  const near = list => list.some(x => dist(x.pos, t.pos) <= x.r);
+  const sat = (p, sid) => { s.push(sid); (p.seen = p.seen || new Set()).add(t.id); if (p.req && t.id === p.aim) p.aimHit = true; };
   if (t.kind === 'surface') {
     if (layerOn.surface && t.ais) s.push('ais');
-    if (layerOn.ground && RADARS.some(r => dist(r.pos, t.pos) <= r.r)) s.push('radar');
+    if (layerOn.ground && near(RADARS)) s.push('radar');
     if (layerOn.surface) {
-      if (PORTS.some(r => dist(r.pos, t.pos) <= r.r)) s.push('cctv');
+      if (near(PORTS)) s.push('cctv');
       if (friends.some(f => f !== t && dist(f.pos, t.pos) <= SHIP_R)) s.push('shipradar');
     }
     if (layerOn.air) {
       if (dist(mpa.pos, t.pos) <= MPA_R) s.push('mpa');
       if (dist(uav.pos, t.pos) <= UAV_R) s.push('uav');
     }
-    if (layerOn.space) for (const p of activePasses) {
+    if (layerOn.space) for (const p of act) {
       if (p.sat === 'rf' && !t.emit) continue;
-      if (swept(p, t.pos, t0, T) && !s.includes(p.sat)) { s.push(p.sat); if (p.req && t.id === p.aim) p.aimHit = true; }
+      if (!s.includes(p.sat) && swept(p, t.pos, t0, T)) sat(p, p.sat);
     }
+  } else if (t.kind === 'air') {
+    if (layerOn.ground && near(ADRADARS)) s.push('adradar');
+    if (layerOn.surface && friends.some(f => dist(f.pos, t.pos) <= SHIP_AIR_R)) s.push('shipradar');
+    if (layerOn.air && dist(mpa.pos, t.pos) <= MPA_R) s.push('mpa');
+    if (layerOn.space) for (const p of act) if (p.sat === 'rf' && !s.includes('rf') && swept(p, t.pos, t0, T)) sat(p, 'rf');
   } else if (layerOn.under) {
-    if (ARRAYS.some(r => dist(r.pos, t.pos) <= r.r)) s.push('fixed');
+    if (near(ARRAYS)) s.push('fixed');
     if (buoys.some(b => T < b.until && dist(b.pos, t.pos) <= BUOY_R)) s.push('buoy');
     if (friends.some(f => dist(f.pos, t.pos) <= SONAR_R)) s.push('sonar');
   }
@@ -482,36 +564,42 @@ function step(dt) {
   for (const t of targets) moveTarget(t, dt);
   moveAir(mpa, dt); moveAir(uav, dt);
   const friends = targets.filter(t => t.truth === 'F');
-  const act = passes.filter(p => { passGeom(p); return p.through && (passActive(p) || Math.abs((t0 - p.tc) * SAT_KMMIN) < 1050); });
+  const act = passes.filter(p => { passGeom(p); return p.through && (Math.abs((T - p.tc) * SAT_KMMIN) < 1050 || Math.abs((t0 - p.tc) * SAT_KMMIN) < 1050); });
   for (const t of targets) {
-    const s = sense(t, friends, act, t0);
     let tr = tracks.get(t.id);
+    if (!active(t)) { if (tr && t.gone) { tracks.delete(t.id); if (sel === t.id) sel = null; } continue; }
+    const s = sense(t, friends, act, t0);
     if (s.length) {
       if (!tr) { tr = { id: t.id, first: T, by: {}, affil: t.truth === 'F' ? 'F' : s.includes('ais') ? 'N' : 'U', contact: 0 }; tracks.set(t.id, tr); onNew(t, tr, s); }
       if (tr.lost) { tr.lost = false; onReacq(t, tr, s); }
-      tr.seen = T; tr.pos = t.pos.slice(); tr.hdg = t.hdg; tr.spd = t.spd; tr.now = s;
-      for (const x of s) tr.by[x] = T;
-      tr.contact += dt;
+      for (const x of s) {
+        if (tr.by[x] == null && x !== 'link' && tr.affil !== 'N' && tr.affil !== 'F' && DOMOF[x] !== 'space') feed(DOMOF[x], `${t.id} ${SN[x]} 신규 접촉`);
+        tr.by[x] = T;
+      }
+      tr.seen = T; tr.pos = t.pos.slice(); tr.hdg = t.hdg; tr.spd = t.spd; tr.now = s; tr.contact += dt;
     } else if (tr) {
       tr.now = [];
       if (!tr.lost && T - tr.seen > LOST_AFTER) { tr.lost = true; onLost(t, tr); }
       if (tr.lost && T - tr.seen > 120 && tr.affil === 'N') tracks.delete(t.id);
     }
   }
-  for (const p of act) {
-    if (p.req && p.aimHit && p.req.status !== '완료') { p.req.status = '완료'; addLog(`${SN[p.sat]} 긴급 촬영 완료. ${p.aim} 예상 해역 영상 수신.`); }
+  for (const p of passes) {
+    if (!p.through || p.done || (T - p.tc) * SAT_KMMIN < 1050) continue;
+    p.done = true;
+    if (p.req && p.req.status === '예정') { p.req.status = p.aimHit ? '완료' : '미탐지'; addLog(`${SN[p.sat]} 긴급 촬영 ${p.aimHit ? '완료' : '종료 (목표 미탐지)'}.`); }
+    if (layerOn.space) feed('space', `${SN[p.sat]} 통과 완료 · 표적 ${p.seen ? p.seen.size : 0}개 ${p.sat === 'rf' ? '신호 수집' : '촬영'}`);
   }
-  scenario(dt);
+  scenario();
 }
 
 function onNew(t, tr, s) {
-  if (t.id === 'H201') { addLog(`백령 감시대 레이더, AIS 미송출 접촉 H201 획득.`); tr.affil = 'U'; tr.classAt = T + 8; }
+  if (t.id === 'H201') { addLog('백령 감시대 레이더, AIS 미송출 접촉 H201 획득.'); tr.affil = 'U'; tr.classAt = T + 8; }
   if (t.id === 'U402') {
-    addLog(`수중감시 1 음향 접촉. 미식별 수중 표적 U402 생성.`);
-    raise({ id: 'sub', sev: 'crit', title: '수중 미식별 접촉', tgt: 'U402',
-      rec: '해상초계기 소노부이 투하, F101·F107 대잠 전개', approve: approveSub });
+    addLog('수중감시 1 음향 접촉. 미식별 수중 표적 U402 생성.');
+    raise({ id: 'sub', sev: 'crit', title: '수중 미식별 접촉', tgt: 'U402', rec: '해상초계기 소노부이 투하, F101·F107 대잠 전개', approve: approveSub });
   }
-  if (t.id === 'D302') { addLog(`${SN[s.find(x => x !== 'ais')] || '센서'} 영상에서 AIS 미송출 선박 D302 식별.`); }
+  if (t.id === 'U403') addLog(`${s.map(x => SN[x]).join('·')} 탐지로 서해 남부 미식별 항공기 U403 포착.`);
+  if (t.id === 'D302') addLog(`${SN[s.find(x => x !== 'ais')] || '센서'} 탐지로 AIS 미송출 선박 D302 식별.`);
 }
 function onReacq(t, tr, s) {
   if (t.id === 'D301' && !t.ais && tr.affil !== 'S') {
@@ -522,10 +610,10 @@ function onReacq(t, tr, s) {
   if (t.id === 'U402') addLog(`${s.map(x => SN[x]).join('·')} 탐지로 U402 접촉 회복.`);
 }
 function onLost(t, tr) {
-  if (tr.affil === 'N' && !t.ais && t.id === 'D301') {
+  if (t.id === 'D301' && !t.ais && tr.affil === 'N') {
     addLog(`D301(${t.name}) AIS 신호 ${LOST_AFTER}분 이상 미수신. 추적 소실.`);
-    raise({ id: 'ais', sev: 'warn', title: 'AIS 신호 소실', tgt: 'D301',
-      rec: 'SAR 위성 긴급 촬영 요청, 예상 위치 반경 60km', approve: approveSar });
+    feed('surface', `D301 AIS 신호 소실 (${t.name})`);
+    raise({ id: 'ais', sev: 'warn', title: 'AIS 신호 소실', tgt: 'D301', rec: 'SAR 위성 긴급 촬영 요청, 예상 위치 반경 60km', approve: () => taskSar('D301', 60) });
   }
   if (t.id === 'U402') addLog('U402 수중 접촉 소실. 추정 위치 오차 확대 중.');
   if (t.id === 'H201') addLog('H201 추적 소실.');
@@ -546,54 +634,62 @@ function approve(id) {
   const a = alerts.find(x => x.id === id); if (!a || a.status !== 'open') return;
   a.status = 'act'; stats.decided++; a.approve(a);
   addLog(`결심: ${a.tgt} ${a.rec}.`);
-  renderPanel(true);
 }
 function addReq(text, status) { const r = { t: T, text, status }; reqs.unshift(r); return r; }
+
+// 수집 과업 (조치 승인과 선택 표적 단추가 함께 쓴다)
+function taskSar(id, halfW = 50) {
+  const r = addReq(`SAR 위성 긴급 촬영 · ${id} 예상 해역`, '예정');
+  passes.push({ sat: 'sar', tc: T + 15, aim: id, brg: 193, halfW, req: r });
+  feed('space', `${id} 긴급 촬영 과업 접수 · ${clock(T + 15).hm} 통과 예정`);
+}
+function taskUav(id) {
+  const tr = tracks.get(id); if (!tr) return;
+  addReq(`무인기 근접 감시 · ${id}`, '수행');
+  sendAir(uav, tr.pos, 12, `${id} 근접 감시`, () => { addLog(`무인기 ${id} 해역 도착. 근접 감시 개시.`); feed('air', `무인기 ${id} 해역 도착`); });
+  feed('air', `무인기 ${id} 방향 재배치`);
+}
+function dropBuoys(p, why) {
+  buoys.push({ pos: p, until: T + 180 });
+  addLog(`해상초계기 소노부이 부설 (${fmtPos(p)}).`);
+  feed('under', `소노부이 필드 부설 · ${why}`);
+}
+function taskBuoy(id) {
+  const p = predicted(byId.get(id), 20);
+  addReq(`소노부이 부설 · ${id} 예상 침로`, '수행');
+  sendAir(mpa, p, 18, `${id} 대잠 탐색`, () => dropBuoys(p, id));
+  feed('air', `해상초계기 ${id} 대잠 탐색 출동`);
+}
 
 function approveNll() {
   const f = byId.get('F108'); f.mode = 'intercept'; f.goal = () => tracks.get('H201')?.pos; flags.nllAct = true;
 }
-function approveSar() {
-  const r = addReq('SAR 위성 긴급 촬영 · D301 예상 해역', '예정');
-  passes.push({ sat: 'sar', tc: T + 15, aim: 'D301', brg: 193, halfW: 60, req: r });
-}
 function approveSts() {
-  const d = byId.get('D301');
-  addReq('무인기 재배치 · D301·D302 지속 감시', '수행');
-  sendAir(uav, d.pos, 12, () => addLog('무인기 D301 상공 도착. 지속 감시 개시.'));
+  taskUav('D301');
   const f = byId.get('F111'); f.mode = 'intercept'; f.goal = () => tracks.get('D301')?.pos; flags.stsAct = true;
 }
 function approveSub() {
-  const u = byId.get('U402');
-  const drop = () => {
-    const p = predicted(byId.get('U402'), 15);
-    buoys.push({ pos: p, until: T + 180 });
-    addLog(`해상초계기 소노부이 부설 (${fmtPos(p)}).`);
-    flags.lastDrop = T;
-  };
-  addReq('소노부이 부설 · U402 예상 침로', '수행');
-  sendAir(mpa, predicted(u, 25), 18, drop);
-  for (const id of ['F101', 'F107']) { const f = byId.get(id); f.mode = 'intercept'; f.goal = () => { const tr = tracks.get('U402'); return tr ? advance(tr.pos, tr.hdg, KMMIN(tr.spd) * (T - tr.seen)) : null; }; }
-  flags.subAct = T; tracks.get('U402').contact = 0;
+  taskBuoy('U402');
+  for (const id of ['F101', 'F107']) {
+    const f = byId.get(id); f.mode = 'intercept';
+    f.goal = () => { const tr = tracks.get('U402'); return tr ? advance(tr.pos, tr.hdg, KMMIN(tr.spd) * (T - tr.seen)) : null; };
+  }
+  flags.subAct = T; flags.lastDrop = T; tracks.get('U402').contact = 0;
 }
+function approveEez() { addReq('해경 경비함 출동 요청 · C501 검문검색', '수행'); flags.eezAct = T; feed('surface', 'C501 대응 해경 경비함 출동'); }
+function approveKadiz() { addReq('공군 전투기 긴급발진·경고통신 (가상)', '수행'); flags.kadizAct = T; feed('air', 'U403 대응 전투기 긴급발진 (가상)'); }
 
 function scenario() {
   const h = byId.get('H201'), htr = tracks.get('H201');
   if (htr && htr.classAt && T >= htr.classAt) { htr.affil = 'H'; htr.classAt = null; htr.note = '북측 경비정 (식별 DB 대조)'; addLog('H201 북측 경비정으로 식별, 적성 분류.'); }
-  if (htr && !htr.lost && h.pos[1] < nllLat(SC.nllWest, h.pos[0]) && !alerts.some(a => a.id === 'nll')) {
-    raise({ id: 'nll', sev: 'crit', title: 'NLL 침범', tgt: 'H201', rec: 'F108 차단 기동 및 경고통신', approve: approveNll });
-  }
+  if (htr && !htr.lost && h.pos[1] < nllLat(SC.nllWest, h.pos[0])) raise({ id: 'nll', sev: 'crit', title: 'NLL 침범', tgt: 'H201', rec: 'F108 차단 기동 및 경고통신', approve: approveNll });
   if (flags.nllAct && !flags.h201Retreated) {
     const f = byId.get('F108');
     if (h.st !== 'retreat' && dist(f.pos, h.pos) < 5) { h.st = 'retreat'; addLog('F108 경고통신 실시. H201 북쪽으로 변침.'); }
-    if (h.st === 'retreat' && h.pos[1] > nllLat(SC.nllWest, h.pos[0]) + 0.05) {
-      flags.h201Retreated = true; f.mode = 'return'; closeAlert('nll', 'NLL 이북 퇴거 확인');
-    }
+    if (h.st === 'retreat' && h.pos[1] > nllLat(SC.nllWest, h.pos[0]) + 0.05) { flags.h201Retreated = true; f.mode = 'return'; closeAlert('nll', 'NLL 이북 퇴거 확인'); }
   }
   const dtr = tracks.get('D301'), d2 = tracks.get('D302');
-  if (dtr && dtr.affil === 'S' && d2 && !d2.lost) {
-    raise({ id: 'sts', sev: 'warn', title: '선박 간 환적 의심', tgt: 'D301·D302', rec: '무인기 재배치, F111 접근 식별', approve: approveSts });
-  }
+  if (dtr && dtr.affil === 'S' && d2 && !d2.lost) raise({ id: 'sts', sev: 'warn', title: '선박 간 환적 의심', tgt: 'D301·D302', rec: '무인기 재배치, F111 접근 식별', approve: approveSts });
   if (d2 && dtr && dtr.affil === 'S' && d2.affil === 'U' && !d2.lost && dist(d2.pos, dtr.pos) < 30) { d2.affil = 'S'; d2.note = 'D301과 접현 기동'; }
   if (flags.stsAct && !flags.stsDone) {
     const f = byId.get('F111'), d = byId.get('D301');
@@ -604,30 +700,55 @@ function scenario() {
       closeAlert('sts', '근접 식별로 환적 정황 확인, 해경 인계');
     }
   }
+  // EEZ 침범 조업
+  const c = byId.get('C501'), ctr = tracks.get('C501');
+  if (ctr && !ctr.lost && c.pos[0] > eezWestLon(c.pos[1]) && !flags.eezIn) {
+    flags.eezIn = true; ctr.affil = 'S'; ctr.note = '우리측 EEZ 안 조업 의심';
+    feed('surface', 'C501 EEZ 중간선 동쪽 진입 (AIS 항적)');
+    raise({ id: 'eez', sev: 'warn', title: 'EEZ 침범 조업 의심', tgt: 'C501', rec: '해경 경비함 출동 요청, 검문검색', approve: approveEez });
+  }
+  if (flags.eezAct != null && !flags.eezDone && T - flags.eezAct > 50) {
+    flags.eezDone = true; c.st = 'seized'; if (ctr) ctr.note = '무허가 조업 확인, 해경 나포';
+    closeAlert('eez', '해경 검문검색으로 무허가 조업 확인, 나포');
+  }
+  // KADIZ 진입 항공기
+  const u3 = byId.get('U403'), u3tr = tracks.get('U403');
+  if (u3tr && !u3tr.lost && active(u3) && inKadiz(u3.pos) && !flags.kadizIn) {
+    flags.kadizIn = true;
+    feed('ground', 'U403 KADIZ 진입 · 비행계획 미확인');
+    raise({ id: 'kadiz', sev: 'crit', title: 'KADIZ 진입 미식별 항공기', tgt: 'U403', rec: '전투기 긴급발진 및 경고통신 (가상)', approve: approveKadiz });
+  }
+  if (flags.kadizAct != null && !flags.kadizId && T - flags.kadizAct > 12) {
+    flags.kadizId = true; if (u3tr) { u3tr.affil = 'S'; u3tr.note = '외국 군용기 (전투기 육안 식별)'; }
+    u3.mode = 'exit'; addLog('U403 외국 군용기로 식별. 경고통신 후 서쪽으로 변침.');
+  }
+  if (flags.kadizId && !flags.kadizDone && !inKadiz(u3.pos)) { flags.kadizDone = true; closeAlert('kadiz', 'KADIZ 이탈 확인'); }
+  // 대잠
   const utr = tracks.get('U402');
   if (flags.subAct != null && !flags.subDone && utr) {
-    if (flags.lastDrop != null && T - flags.lastDrop > 40 && mpa.mode === 'orbit') {
+    if (T - flags.lastDrop > 40 && mpa.mode === 'orbit') {
       flags.lastDrop = T;
       const p = predicted(byId.get('U402'), 20);
-      sendAir(mpa, p, 18, () => { buoys.push({ pos: p, until: T + 180 }); addLog(`소노부이 추가 부설 (${fmtPos(p)}).`); });
+      sendAir(mpa, p, 18, 'U402 대잠 탐색', () => dropBuoys(p, 'U402 추가'));
     }
     if (utr.contact >= 45) {
       flags.subDone = true; utr.affil = 'H'; utr.note = '음향 식별: 잠수함';
       ['F101', 'F107'].forEach(id => { byId.get(id).mode = 'return'; });
+      feed('under', 'U402 음향 식별 · 잠수함');
       closeAlert('sub', '음향 식별로 잠수함 확인, 대잠 추적 유지');
     }
   }
-  if (flags.subDone && !flags.mpaHome && T - flags.lastDrop > 60) { flags.mpaHome = true; sendAir(mpa, SC.mpa.center, SC.mpa.r); }
+  if (flags.subDone && !flags.mpaHome && T - flags.lastDrop > 60) { flags.mpaHome = true; sendAir(mpa, SC.mpa.center, SC.mpa.r, '동해 정찰 궤도'); }
   for (const r of reqs) if (r.status === '수행' && T - r.t > 30) r.status = '완료';
 }
 
 // ── 시각 ─────────────────────────────────────────────
 function clock(t) {
-  const s = SC.start, base = Date.UTC(s.y, s.m - 1, s.d, s.hh, s.mm) + t * 60000;
-  const d = new Date(base), p = n => String(n).padStart(2, '0');
+  const s = SC.start, d = new Date(Date.UTC(s.y, s.m - 1, s.d, s.hh, s.mm) + t * 60000), p = n => String(n).padStart(2, '0');
   return { date: `${d.getUTCFullYear()}-${p(d.getUTCMonth() + 1)}-${p(d.getUTCDate())}`, hm: `${p(d.getUTCHours())}:${p(d.getUTCMinutes())}` };
 }
-function addLog(text) { logs.unshift({ t: T, text }); if (logs.length > 60) logs.pop(); }
+function addLog(text) { logs.unshift({ t: T, text }); if (logs.length > 80) logs.pop(); }
+function feed(dom, text) { if (!dom) return; feeds[dom].unshift({ t: T, text }); if (feeds[dom].length > 8) feeds[dom].pop(); }
 function fmtPos(p) {
   const dm = (v, pos, neg) => { const a = Math.abs(v), d = Math.floor(a), m = (a - d) * 60; return `${d}°${m.toFixed(1).padStart(4, '0')}′${v >= 0 ? pos : neg}`; };
   return `${dm(p[1], 'N', 'S')} ${dm(p[0], 'E', 'W')}`;
@@ -637,22 +758,24 @@ function fmtPos(p) {
 const svg = document.getElementById('map');
 const gDyn = document.getElementById('gDyn'), gAxis = document.getElementById('gAxis');
 let vb = { x: 0, y: 0, w: VW, h: VH };
-function setVB() { svg.setAttribute('viewBox', `${f1(vb.x)} ${f1(vb.y)} ${f1(vb.w)} ${f1(vb.h)}`); }
+const setVB = () => svg.setAttribute('viewBox', `${f1(vb.x)} ${f1(vb.y)} ${f1(vb.w)} ${f1(vb.h)}`);
 
 function drawStatic() {
-  svg.setAttribute('viewBox', `0 0 ${VW} ${VH}`);
-  for (const id of ['mrect', 'seaRect', 'frameRect']) {
-    const r = document.getElementById(id);
-    r.setAttribute('x', ML); r.setAttribute('y', MT); r.setAttribute('width', MW); r.setAttribute('height', f1(MH));
-  }
-  let h = '';
-  for (const ring of LAND) h += `<path class="land" d="M${ring.map(([x, y]) => f1(X(x)) + ',' + f1(Y(y))).join('L')}Z"/>`;
+  setVB();
+  const r = document.getElementById('mrect');
+  r.setAttribute('x', ML); r.setAttribute('y', MT); r.setAttribute('width', MW); r.setAttribute('height', f1(MH));
+  let h = `<rect x="${ML}" y="${MT}" width="${MW}" height="${f1(MH)}" fill="var(--sea)"/>`;
+  for (const ring of LAND) h += `<path class="land" d="${pathD(ring, true)}"/>`;
   document.getElementById('gStatic').innerHTML = h;
 }
 
-function sym(aff, dom, x, y, z, extra = '') {
-  const r = 6 * z, c = `class="sy ${aff}${extra}"`;
-  if (dom === 'air') return `<path ${c} d="M${f1(x - r)},${f1(y)} A${f1(r)},${f1(r)} 0 0 1 ${f1(x + r)},${f1(y)} Z"/>`;
+function sym(aff, dom, x, y, z) {
+  const r = 6 * z, c = `class="sy ${aff}"`;
+  if (dom === 'air') {
+    if (aff === 'H' || aff === 'S') return `<path ${c} d="M${f1(x - r * 1.25)},${f1(y)} L${f1(x)},${f1(y - r * 1.25)} L${f1(x + r * 1.25)},${f1(y)} Z"/>`;
+    if (aff === 'U') return `<path ${c} d="M${f1(x - r)},${f1(y)} V${f1(y - r * .55)} Q${f1(x - r)},${f1(y - r)} ${f1(x - r * .55)},${f1(y - r)} H${f1(x + r * .55)} Q${f1(x + r)},${f1(y - r)} ${f1(x + r)},${f1(y - r * .55)} V${f1(y)} Z"/>`;
+    return `<path ${c} d="M${f1(x - r)},${f1(y)} A${f1(r)},${f1(r)} 0 0 1 ${f1(x + r)},${f1(y)} Z"/>`;
+  }
   if (dom === 'sub') {
     if (aff === 'F') return `<path ${c} d="M${f1(x - r)},${f1(y)} A${f1(r)},${f1(r)} 0 0 0 ${f1(x + r)},${f1(y)} Z"/>`;
     if (aff === 'H' || aff === 'S') return `<path ${c} d="M${f1(x - r * 1.25)},${f1(y)} L${f1(x)},${f1(y + r * 1.25)} L${f1(x + r * 1.25)},${f1(y)} Z"/>`;
@@ -667,187 +790,270 @@ function sym(aff, dom, x, y, z, extra = '') {
   }
   const q = r * .78; return `<rect ${c} x="${f1(x - q)}" y="${f1(y - q)}" width="${f1(q * 2)}" height="${f1(q * 2)}"/>`;
 }
-function circ(cls, p, km, z, dash) {
-  return `<circle class="rg ${cls}" cx="${f1(X(p[0]))}" cy="${f1(Y(p[1]))}" r="${f1(km * PXKM)}"${dash ? ` stroke-dasharray="${f1(3 * z)} ${f1(3 * z)}"` : ''}/>`;
-}
+const dash = (z, ...seq) => ` stroke-dasharray="${seq.map(v => f1(v * z)).join(' ')}"`;
+function circ(cls, p, km, z, dashed) { return `<circle class="rg ${cls}" cx="${f1(X(p[0]))}" cy="${f1(Y(p[1]))}" r="${f1(km * PXKM)}"${dashed ? dash(z, 3, 3) : ''}/>`; }
 function txt(cls, x, y, size, s, anchor = 'start') { return `<text class="${cls}" x="${f1(x)}" y="${f1(y)}" font-size="${f1(size)}" text-anchor="${anchor}">${s}</text>`; }
 function leader(cls, t, x, y) {
-  const p = advance(t.pos, t.hdg, KMMIN(t.spd) * 30);
+  const p = advance(t.pos, t.hdg, KMMIN(Math.min(t.spd, 60)) * 30);
   return `<line class="ld ${cls}" x1="${f1(x)}" y1="${f1(y)}" x2="${f1(X(p[0]))}" y2="${f1(Y(p[1]))}"/>`;
 }
 
 function drawDyn() {
   const z = vb.w / VW;
   let h = '';
-  // 바다 이름
   for (const [n, x, y, s] of SC.seas) h += txt('sealbl', X(x), Y(y), s * Math.max(z, .55), n, 'middle');
-  // 위도·경도 격자
   for (let lon = 120; lon <= 133; lon++) h += `<line class="gl" x1="${f1(X(lon))}" y1="${MT}" x2="${f1(X(lon))}" y2="${f1(MT + MH)}"/>`;
   for (let lat = 32; lat <= 42; lat++) h += `<line class="gl" x1="${ML}" y1="${f1(Y(lat))}" x2="${ML + MW}" y2="${f1(Y(lat))}"/>`;
-  // 도시
   for (const [n, x, y] of SC.cities) h += `<circle class="city" cx="${f1(X(x))}" cy="${f1(Y(y))}" r="${f1(2.4 * z)}"/>` + txt('lbl', X(x) + 5 * z, Y(y) + 3.5 * z, 10.5 * z, n);
-  // NLL
-  for (const line of [SC.nllWest, SC.nllEast]) {
-    h += `<path class="nll" stroke-dasharray="${f1(7 * z)} ${f1(5 * z)}" d="M${line.map(([x, y]) => f1(X(x)) + ',' + f1(Y(y))).join('L')}"/>`;
-  }
-  h += txt('nlltx', X(SC.nllWest[0][0]) + 2 * z, Y(SC.nllWest[0][1]) - 7 * z, 11 * z, 'NLL');
-  h += txt('nlltx', X(SC.nllEast[1][0]) - 2 * z, Y(SC.nllEast[1][1]) - 7 * z, 11 * z, 'NLL', 'end');
 
-  // 위성
+  // 경계선
+  if (showB.kadiz) {
+    h += `<path class="kadiz" d="${pathD(SC.kadiz, true)}"${dash(z, 10, 4, 2, 4)}/>`;
+    h += txt('btx kadiz', X(123.08), Y(38.88), 11 * z, 'KADIZ') + txt('btx kadiz', X(132.92), Y(38.88), 11 * z, 'KADIZ', 'end');
+  }
+  if (showB.eez) {
+    h += `<path class="eez" d="${pathD(SC.eez.delimited)}"/>`;
+    for (const l of SC.eez.undelimited) h += `<path class="eez u" d="${pathD(l)}"${dash(z, 2, 4)}/>`;
+    h += txt('btx eez', X(123.8) - 5 * z, Y(36.45), 10.5 * z, 'EEZ 중간선(미획정)', 'end');
+    h += txt('btx eez', X(130.1), Y(35.6) + 14 * z, 10.5 * z, '한·일 경계');
+    h += txt('btx eez', X(132.45) + 6 * z, Y(37.3), 10.5 * z, 'EEZ(미획정)');
+  }
+  if (showB.nll) {
+    for (const line of [SC.nllWest, SC.nllEast]) h += `<path class="nll" d="${pathD(line)}"${dash(z, 7, 5)}/>`;
+    h += txt('btx nll', X(SC.nllWest[0][0]) + 2 * z, Y(SC.nllWest[0][1]) - 7 * z, 11 * z, 'NLL');
+    h += txt('btx nll', X(SC.nllEast[1][0]) - 2 * z, Y(SC.nllEast[1][1]) - 7 * z, 11 * z, 'NLL', 'end');
+  }
+
+  // 우주
   if (layerOn.space) for (const p of passes) {
     if (!p.through) continue;
     const dtc = T - p.tc;
     if (dtc < -18 || dtc > 30) continue;
     const a = subpoint(p, p.tc - 3), b = subpoint(p, p.tc + 3);
-    h += `<line class="orbit" stroke-dasharray="${f1(2 * z)} ${f1(4 * z)}" x1="${f1(X(a[0]))}" y1="${f1(Y(a[1]))}" x2="${f1(X(b[0]))}" y2="${f1(Y(b[1]))}"/>`;
+    h += `<line class="orbit"${dash(z, 2, 4)} x1="${f1(X(a[0]))}" y1="${f1(Y(a[1]))}" x2="${f1(X(b[0]))}" y2="${f1(Y(b[1]))}"/>`;
     if (p.sat !== 'rf' && dtc > -2.6) {
-      const s0 = -1050, s1 = Math.min(1050, dtc * SAT_KMMIN);
-      if (s1 > s0) {
-        const L0 = advance(p.through, p.brg, s0), L1 = advance(p.through, p.brg, s1), w = p.halfW, nb = p.brg + 90;
-        const q = [advance(L0, nb, w), advance(L1, nb, w), advance(L1, nb, -w), advance(L0, nb, -w)];
-        h += `<path class="swath" opacity="${dtc > 3 ? f1(Math.max(.15, 1 - (dtc - 3) / 30)) : 1}" d="M${q.map(v => f1(X(v[0])) + ',' + f1(Y(v[1]))).join('L')}Z"/>`;
-      }
+      const s1 = Math.min(1050, dtc * SAT_KMMIN);
+      const L0 = advance(p.through, p.brg, -1050), L1 = advance(p.through, p.brg, s1), w = p.halfW, nb = p.brg + 90;
+      const q = [advance(L0, nb, w), advance(L1, nb, w), advance(L1, nb, -w), advance(L0, nb, -w)];
+      h += `<path class="swath" opacity="${dtc > 3 ? f1(Math.max(.15, 1 - (dtc - 3) / 30)) : 1}" d="${pathD(q, true)}"/>`;
     }
     if (Math.abs(dtc * SAT_KMMIN) < 1050) {
       const sp = subpoint(p, T), x = X(sp[0]), y = Y(sp[1]);
-      const nm = p.sat === 'sar' ? 'SAR 위성' : p.sat === 'eo' ? 'EO 위성' : 'RF 위성 군집 (3기)';
       if (p.sat === 'rf') {
         for (const off of [-45, 0, 45]) { const q = advance(sp, p.brg, off); h += `<rect class="f-space" x="${f1(X(q[0]) - 3.5 * z)}" y="${f1(Y(q[1]) - 3.5 * z)}" width="${f1(7 * z)}" height="${f1(7 * z)}"/>`; }
-        h += circ('air', sp, p.halfW, z, true).replace('rg air', 'rg orbit');
-      } else {
-        h += `<line class="satbar" x1="${f1(x - 13 * z)}" y1="${f1(y)}" x2="${f1(x + 13 * z)}" y2="${f1(y)}"/><rect class="f-space" x="${f1(x - 4 * z)}" y="${f1(y - 4 * z)}" width="${f1(8 * z)}" height="${f1(8 * z)}"/>`;
-      }
-      h += txt('t-space', x + 16 * z, y + 4 * z, 11.5 * z, nm + (p.req ? ' · 긴급' : ''));
+        h += circ('space', sp, p.halfW, z, true);
+      } else h += `<line class="satbar" x1="${f1(x - 13 * z)}" y1="${f1(y)}" x2="${f1(x + 13 * z)}" y2="${f1(y)}"/><rect class="f-space" x="${f1(x - 4 * z)}" y="${f1(y - 4 * z)}" width="${f1(8 * z)}" height="${f1(8 * z)}"/>`;
+      h += txt('lbl t-space', x + 16 * z, y + 4 * z, 11.5 * z, (p.sat === 'sar' ? 'SAR 위성' : p.sat === 'eo' ? 'EO 위성' : 'RF 위성 군집 (3기)') + (p.req ? ' · 긴급' : ''));
     }
   }
-  // 지상 레이더
-  if (layerOn.ground) for (const r of RADARS) {
-    const x = X(r.pos[0]), y = Y(r.pos[1]);
-    h += circ('ground', r.pos, r.r, z, true);
-    h += `<path class="f-ground" d="M${f1(x)},${f1(y - 5 * z)} L${f1(x + 4.5 * z)},${f1(y + 3.5 * z)} L${f1(x - 4.5 * z)},${f1(y + 3.5 * z)}Z"/>`;
-    h += txt('lbl t-ground', x + 6 * z, y - 4 * z, 10 * z, r.name);
+  // 지상
+  if (layerOn.ground) {
+    for (const r of RADARS) {
+      const x = X(r.pos[0]), y = Y(r.pos[1]);
+      h += circ('ground', r.pos, r.r, z, true) + `<path class="f-ground" d="M${f1(x)},${f1(y - 5 * z)} L${f1(x + 4.5 * z)},${f1(y + 3.5 * z)} L${f1(x - 4.5 * z)},${f1(y + 3.5 * z)}Z"/>`;
+      h += txt('lbl t-ground', x + 6 * z, y - 4 * z, 10 * z, r.name);
+    }
+    for (const r of ADRADARS) {
+      const x = X(r.pos[0]), y = Y(r.pos[1]);
+      h += `<circle class="rg ground wide" cx="${f1(x)}" cy="${f1(y)}" r="${f1(r.r * PXKM)}"${dash(z, 1, 5)}/>`;
+      h += `<rect class="f-ground" x="${f1(x - 4 * z)}" y="${f1(y + 6 * z)}" width="${f1(8 * z)}" height="${f1(8 * z)}"/>` + txt('lbl t-ground', x + 7 * z, y + 14 * z, 10 * z, r.name);
+    }
   }
-  // 항만 CCTV
-  if (layerOn.surface) for (const r of PORTS) {
-    const x = X(r.pos[0]), y = Y(r.pos[1]);
-    h += circ('surf', r.pos, r.r, z) + `<rect class="f-surf" x="${f1(x - 3.5 * z)}" y="${f1(y - 3.5 * z)}" width="${f1(7 * z)}" height="${f1(7 * z)}"/>`;
-    h += txt('lbl t-surf', x + 7 * z, y - 5 * z, 9.5 * z, r.name);
+  // 수상
+  if (layerOn.surface) {
+    for (const r of PORTS) {
+      const x = X(r.pos[0]), y = Y(r.pos[1]);
+      h += circ('surf', r.pos, r.r, z) + `<rect class="f-surf" x="${f1(x - 3.5 * z)}" y="${f1(y - 3.5 * z)}" width="${f1(7 * z)}" height="${f1(7 * z)}"/>`;
+      h += txt('lbl t-surf', x + 7 * z, y - 5 * z, 9.5 * z, r.name);
+    }
+    for (const t of targets) if (t.truth === 'F') h += circ('surf', t.pos, SHIP_R, z);
   }
-  // 수중 센서
+  // 수중
   if (layerOn.under) {
     const grid = (p, gap, rr) => { let g = ''; for (let i = -1; i <= 1; i++) for (let j = -1; j <= 1; j++) { const q = fromLocal(p, i * gap, j * gap); g += `<circle class="f-under" cx="${f1(X(q[0]))}" cy="${f1(Y(q[1]))}" r="${f1(rr * z)}"/>`; } return g; };
-    for (const a of ARRAYS) { h += circ('under', a.pos, a.r, z, true) + grid(a.pos, 7, 2.6); h += txt('lbl t-under', X(a.pos[0]) - 10 * z, Y(a.pos[1]) - a.r * PXKM - 4 * z, 10 * z, a.name, 'middle'); }
+    for (const a of ARRAYS) h += circ('under', a.pos, a.r, z, true) + grid(a.pos, 7, 2.6) + txt('lbl t-under', X(a.pos[0]), Y(a.pos[1]) - a.r * PXKM - 4 * z, 10 * z, a.name, 'middle');
     for (const b of buoys) if (T < b.until) h += circ('under', b.pos, BUOY_R, z) + grid(b.pos, 6, 2);
   }
-  // 항공
+  // 항공 자산
   if (layerOn.air) for (const a of [mpa, uav]) {
     const x = X(a.pos[0]), y = Y(a.pos[1]);
     h += circ('air', a.pos, a === mpa ? MPA_R : UAV_R, z) + sym('A', 'air', x, y, z) + txt('tid A', x + 8 * z, y - 4 * z, 10.5 * z, a.name);
   }
-  // 아군 함정 센서 범위
-  if (layerOn.surface) for (const t of targets) if (t.truth === 'F') h += circ('surf', t.pos, SHIP_R, z);
 
   // 표적
   let labels = '';
   for (const t of targets) {
     const tr = tracks.get(t.id); if (!tr) continue;
-    const dom = t.kind === 'sub' ? 'sub' : 'surface';
     const x = X(tr.pos[0]), y = Y(tr.pos[1]);
-    const lost = tr.lost ? ' lost' : '';
-    if (tr.lost) {
-      const unc = Math.min(90, KMMIN(tr.spd || 8) * (T - tr.seen) + 5);
-      h += `<circle class="rg unc" cx="${f1(x)}" cy="${f1(y)}" r="${f1(unc * PXKM)}" stroke-dasharray="${f1(2.5 * z)} ${f1(3 * z)}"/>`;
-    } else h += leader(tr.affil, tr, x, y);
-    if (t.mode === 'intercept' && t.goal) { const g = t.goal(); if (g) h += `<line class="ic" stroke-dasharray="${f1(5 * z)} ${f1(4 * z)}" x1="${f1(x)}" y1="${f1(y)}" x2="${f1(X(g[0]))}" y2="${f1(Y(g[1]))}"/>`; }
-    h += `<g class="${lost.trim()}">${sym(tr.affil, dom, x, y, z)}</g>`;
-    if (tr.affil !== 'N') labels += `<g class="${lost.trim()}">` + txt('tid ' + tr.affil, x + 8 * z, y - 6 * z, 11 * z, t.id) + '</g>';
+    if (tr.lost) h += `<circle class="rg unc" cx="${f1(x)}" cy="${f1(y)}" r="${f1(Math.min(90, KMMIN(tr.spd || 8) * (T - tr.seen) + 5) * PXKM)}"${dash(z, 2.5, 3)}/>`;
+    else h += leader(tr.affil, tr, x, y);
+    if (t.mode === 'intercept' && t.goal) { const g = t.goal(); if (g) h += `<line class="ic"${dash(z, 5, 4)} x1="${f1(x)}" y1="${f1(y)}" x2="${f1(X(g[0]))}" y2="${f1(Y(g[1]))}"/>`; }
+    h += `<g${tr.lost ? ' class="lost"' : ''}>${sym(tr.affil, t.kind, x, y, z)}</g>`;
+    if (tr.affil !== 'N') labels += `<g${tr.lost ? ' class="lost"' : ''}>` + txt('tid ' + tr.affil, x + 8 * z, y - 6 * z, 11 * z, t.id) + '</g>';
     if (sel === t.id) h += `<circle class="selring" cx="${f1(x)}" cy="${f1(y)}" r="${f1(12 * z)}"/>`;
   }
   gDyn.innerHTML = h + labels;
 
-  // 축 눈금 (보이는 범위 기준)
   let ax = '';
   const lonMin = LON0 + (vb.x - ML) / KX, lonMax = LON0 + (vb.x + vb.w - ML) / KX;
   const latMax = LAT1 - (vb.y - MT) / KY, latMin = LAT1 - (vb.y + vb.h - MT) / KY;
   const by = Math.min(vb.y + vb.h - 9 * z, MT + MH + 17 * z), lx = Math.max(vb.x + 40 * z, ML - 6 * z);
-  for (let lon = Math.ceil(lonMin); lon <= Math.min(133, lonMax); lon++) if (lon >= 120) ax += txt('ax', X(lon), by, 10 * z, lon + '°E', 'middle');
-  for (let lat = Math.ceil(latMin); lat <= Math.min(42, latMax); lat++) if (lat >= 32) ax += txt('ax', lx, Y(lat) + 3.5 * z, 10 * z, lat + '°N', 'end');
+  for (let lon = Math.max(120, Math.ceil(lonMin)); lon <= Math.min(133, lonMax); lon++) ax += txt('ax', X(lon), by, 10 * z, lon + '°E', 'middle');
+  for (let lat = Math.max(32, Math.ceil(latMin)); lat <= Math.min(42, latMax); lat++) ax += txt('ax', lx, Y(lat) + 3.5 * z, 10 * z, lat + '°N', 'end');
   gAxis.innerHTML = ax;
 }
 
 // ── 패널 ────────────────────────────────────────────
 const elCache = new Map();
-function setHTML(id, html) { if (elCache.get(id) === html) return; elCache.set(id, html); document.getElementById(id).innerHTML = html; }
+function setHTML(el, key, html) { if (elCache.get(key) === html) return; elCache.set(key, html); el.innerHTML = html; }
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const $ = id => document.getElementById(id);
+
+function detCounts() {
+  const det = {};
+  for (const k of Object.keys(DOMOF)) { det[k] = 0; for (const tr of tracks.values()) if (tr.by[k] != null && T - tr.by[k] <= 10) det[k]++; }
+  return det;
+}
+function satStatus(sat) {
+  const now = passes.find(p => p.sat === sat && p.through && Math.abs((T - p.tc) * SAT_KMMIN) < 1050);
+  if (now) return now.req ? '긴급 촬영 중' : (sat === 'rf' ? '신호 수집 중' : '촬영 중');
+  const nx = passes.filter(p => p.sat === sat && p.tc > T).sort((a, b) => a.tc - b.tc)[0];
+  return nx ? `다음 ${clock(nx.tc).hm}${nx.req ? ' (긴급)' : ''}` : '–';
+}
+function assets(dom) {
+  switch (dom) {
+    case 'space': return [['SAR 위성', satStatus('sar')], ['EO 위성', satStatus('eo')], ['RF 위성 군집 (3기)', satStatus('rf')]];
+    case 'air': return [['해상초계기', mpa.task], ['무인기', uav.task]];
+    case 'ground': {
+      const air = [...tracks.values()].filter(tr => !tr.lost && byId.get(tr.id).kind === 'air').length;
+      return [['레이더 감시대', `${RADARS.length}개소 가동`], ['방공 레이더', `${ADRADARS.length}개소 가동`], ['접촉 중 항공 표적', `${air}`]];
+    }
+    case 'surface': {
+      const ais = targets.filter(t => t.ais && tracks.get(t.id) && !tracks.get(t.id).lost).length;
+      const lost = [...tracks.values()].filter(tr => tr.lost && byId.get(tr.id).kind === 'surface').length;
+      return [['AIS 수신', `${ais}척`], ['추적 소실', `${lost}척`], ['함정 레이더', `${SC.friendlies.length}척 탑재`], ['해안 CCTV', `${PORTS.length}개소`]];
+    }
+    case 'under': {
+      const bs = buoys.filter(b => T < b.until);
+      return [['고정형 수중감시', `${ARRAYS.length}개소`], ['소노부이 필드', bs.length ? `${bs.length}개 · 잔여 ${Math.round(Math.max(...bs.map(b => b.until - T)))}분` : '없음'], ['함정 소나', `${SC.friendlies.length}척`]];
+    }
+  }
+}
+function renderBoxes(det) {
+  for (const [dom, d] of Object.entries(DOMS)) {
+    const box = document.querySelector(`.box[data-dom="${dom}"]`);
+    box.classList.toggle('off', !layerOn[dom]);
+    const head = `<div class="bh"><h2>${d.nm}</h2><small>${d.sub}</small><button class="sw" type="button" data-layer="${dom}" aria-pressed="${layerOn[dom]}">${layerOn[dom] ? '가동' : '중지'}</button></div>`;
+    const st = `<div class="stats">${d.types.map(([k, n]) => `<div><b>${det[k]}</b><span>${n}</span></div>`).join('')}</div>`;
+    const as = `<ul class="assets">${assets(dom).map(([a, b]) => `<li><span>${a}</span><span>${esc(b)}</span></li>`).join('')}</ul>`;
+    const fd = feeds[dom].slice(0, box.classList.contains('wide') ? 4 : 3);
+    const fh = `<ul class="feed">${fd.length ? fd.map(f => `<li><time>${clock(f.t).hm}</time><span>${esc(f.text)}</span></li>`).join('') : '<li class="none">최근 탐지 사건 없음</li>'}</ul>`;
+    setHTML(box, 'box-' + dom, head + `<div class="bb">${st}${as}${fh}</div>`);
+  }
+}
 
 function renderPanel() {
   const c = clock(T);
-  setHTML('dtg', `<b>${c.date} ${c.hm}</b> KST · 가상 훈련 시나리오 · ${running ? '×' + speed : '일시정지'}`);
+  setHTML($('dtg'), 'dtg', `${c.date} ${c.hm}<span>KST · ${running ? '×' + speed : '일시정지'}</span>`);
   const cnt = { F: 0, H: 0, S: 0, U: 0, N: 0 }; let lost = 0, held = 0;
   for (const tr of tracks.values()) { cnt[tr.affil]++; if (tr.lost) lost++; else held++; }
   const open = alerts.filter(a => a.status === 'open').length, act = alerts.filter(a => a.status === 'act').length;
-  setHTML('counts', `<div class="row"><span class="k">보유 표적</span>${['F', 'H', 'S', 'U', 'N'].map(k => `<span>${AFF[k]} <b>${cnt[k]}</b></span>`).join('')}</div>
-    <div class="row"><span>전체 <b>${tracks.size}</b></span><span>추적 소실 <b>${lost}</b></span><span>이상징후 <b>${open + act}</b></span></div>`);
-  const det = {}; let collected = 0;
-  for (const L of LAYERS) for (const [k] of L.types) { det[k] = 0; for (const tr of tracks.values()) if (tr.by[k] != null && T - tr.by[k] <= 10) det[k]++; collected += det[k]; }
+  setHTML($('counts'), 'counts', ['F', 'H', 'S', 'U', 'N'].map(k => `<span class="${k.toLowerCase()}">${AFF[k]} <b>${cnt[k]}</b></span>`).join('')
+    + `<span>전체 <b>${tracks.size}</b></span><span>추적 소실 <b>${lost}</b></span>`);
+  const det = detCounts();
+  renderBoxes(det);
+  const collected = Object.values(det).reduce((a, b) => a + b, 0);
   const cyc = [[collected, '수집 감시'], [held, '융합'], [open, '분석'], [stats.shared, '공유'], [stats.decided, '결심'], [act, '조치'], [stats.evaluated, '평가']];
-  setHTML('cycle', cyc.map(([v, n], i) => `<div class="${(i === 2 && open) || (i === 5 && act) ? 'hot' : ''}"><b>${v}</b><span>${n}</span></div>`).join(''));
-  setHTML('layers', LAYERS.map(L => `<button type="button" class="layer${layerOn[L.key] ? '' : ' off'}" data-layer="${L.key}" aria-pressed="${layerOn[L.key]}">
-    <i style="background:${L.col}"></i><span class="nm">${L.nm}</span><span class="v">${L.types.map(([k, n]) => `${n} <b>${det[k]}</b>`).join(' · ')}</span></button>`).join(''));
+  setHTML($('cycle'), 'cycle', cyc.map(([v, n], i) => `<div class="${(i === 2 && open) ? 'hot' : ''}"><b>${v}</b><span>${n}</span></div>`).join(''));
 
-  // 선택 표적
   const t = sel && byId.get(sel), tr = sel && tracks.get(sel);
-  let sh = '';
+  let sh = '<h2>선택 표적</h2>';
   if (t && tr) {
     const recent = Object.entries(tr.by).filter(([, v]) => T - v <= 10).map(([k]) => SN[k]);
-    sh = `<h2>선택 표적</h2><div class="sel"><div class="hd"><b>${esc(t.id)}</b><span class="chip ${tr.lost ? '' : 'act'}">${AFF[tr.affil]} · ${t.kind === 'sub' ? '수중' : '수상'}${tr.lost ? ' · 추적 소실' : ''}</span></div><dl>
-      <dt>종류</dt><dd>${esc(tr.affil === 'N' || tr.affil === 'F' ? t.type : tr.affil === 'H' && tr.note ? t.type : '식별 중')}</dd>
+    const known = tr.affil === 'N' || tr.affil === 'F' || !!tr.note;
+    const acts = tr.affil === 'F' ? '' : t.kind === 'sub'
+      ? '<button class="btn" type="button" data-task="buoy">소노부이 부설 요청</button>'
+      : t.kind === 'surface' ? '<button class="btn" type="button" data-task="sar">SAR 긴급 촬영</button><button class="btn" type="button" data-task="uav">무인기 근접 감시</button>' : '';
+    sh += `<div class="sel"><div class="hd"><b>${esc(t.id)}</b><span class="chip ${tr.lost ? '' : 'act'}">${AFF[tr.affil]} · ${{ surface: '수상', sub: '수중', air: '항공' }[t.kind]}${tr.lost ? ' · 추적 소실' : ''}</span></div><dl>
+      <dt>종류</dt><dd>${esc(known ? t.type : '식별 중')}</dd>
       ${t.name && (t.ais || tr.affil === 'S') ? `<dt>선명</dt><dd>${esc(t.name)}</dd>` : ''}
       ${t.mmsi && tr.affil !== 'U' ? `<dt>MMSI</dt><dd>${t.mmsi}</dd>` : ''}
       <dt>${tr.lost ? '최종 위치' : '위치'}</dt><dd>${fmtPos(tr.pos)}</dd>
-      <dt>침로·속력</dt><dd>${Math.round(tr.hdg).toString().padStart(3, '0')}° · ${f1(tr.spd)}kn</dd>
-      <dt>탐지 센서</dt><dd>${recent.length ? recent.join(', ') : '없음'}</dd>
+      <dt>침로·속력</dt><dd>${String(Math.round(tr.hdg)).padStart(3, '0')}° · ${f1(tr.spd)}kn</dd>
+      <dt>탐지 출처</dt><dd>${recent.length ? recent.join(', ') : '없음'}</dd>
       <dt>최초·최종</dt><dd>${clock(tr.first).hm} · ${clock(tr.seen).hm}</dd>
-      ${tr.note ? `<dt>비고</dt><dd>${esc(tr.note)}</dd>` : ''}</dl></div>`;
-  } else sh = `<h2>선택 표적</h2><p class="empty">지도에서 표적 기호를 누르면 위치, 탐지 센서, 식별 상태를 봅니다.</p>`;
-  setHTML('selSec', sh);
+      ${tr.note ? `<dt>비고</dt><dd>${esc(tr.note)}</dd>` : ''}</dl><div class="acts">${acts}</div></div>`;
+  } else sh += '<p class="empty">지도에서 표적 기호를 누르면 위치, 탐지 출처, 식별 상태를 보고 수집을 요청할 수 있습니다.</p>';
+  setHTML($('selSec'), 'sel', sh);
 
-  const colors = { crit: 'var(--ho)', warn: 'var(--un)' };
   const stName = { open: '결심 대기', act: '조치 중', done: '평가 완료' };
-  setHTML('alerts', alerts.length ? alerts.map(a => `<div class="al"><i style="background:${a.status === 'done' ? 'var(--faint)' : colors[a.sev]}"></i>
+  setHTML($('alerts'), 'alerts', alerts.length ? alerts.map(a => `<div class="al ${a.status === 'done' ? 'done' : a.sev}">
     <div class="t">${esc(a.title)}<span>${esc(a.tgt)}</span></div>
     <div class="r">${a.status === 'done' ? '평가: ' + esc(a.result) : '→ ' + esc(a.rec)}</div>
     <div class="a"><span class="chip ${a.status}">${stName[a.status]}</span>${a.status === 'open' ? `<button class="btn go" type="button" data-approve="${a.id}">조치 승인</button>` : ''}<span class="empty">${clock(a.t).hm}</span></div></div>`).join('')
-    : '<p class="empty">현재 이상징후가 없습니다. 시나리오가 진행되면 NLL 침범, AIS 신호 소실, 수중 접촉이 나타납니다.</p>');
-  const nextPass = passes.filter(p => p.tc > T && p.sat !== 'rf').sort((a, b) => a.tc - b.tc)[0];
-  setHTML('reqs', (reqs.length ? reqs.map(r => `<div class="req"><span>${esc(r.text)}</span><span class="chip ${r.status === '완료' ? 'done' : 'act'}">${r.status}</span></div>`).join('') : '<p class="empty">없음</p>')
-    + (nextPass ? `<p class="hint">다음 위성 통과: ${nextPass.sat === 'sar' ? 'SAR' : 'EO'} ${clock(nextPass.tc).hm}</p>` : ''));
-  setHTML('log', logs.slice(0, 40).map(l => `<div><time>${clock(l.t).hm}</time><span>${esc(l.text)}</span></div>`).join(''));
+    : '<p class="empty">현재 이상징후가 없습니다. 시나리오가 진행되면 AIS 신호 소실, EEZ 침범, NLL 침범, 수중 접촉, KADIZ 진입이 차례로 나타납니다.</p>');
+  setHTML($('reqs'), 'reqs', reqs.length ? reqs.map(r => `<div class="req"><span>${esc(r.text)}</span><span class="chip ${r.status === '완료' ? 'done' : r.status === '미탐지' ? '' : 'act'}">${r.status}</span></div>`).join('') : '<p class="empty">없음</p>');
+  setHTML($('log'), 'log', logs.slice(0, 40).map(l => `<li><time>${clock(l.t).hm}</time><span>${esc(l.text)}</span></li>`).join(''));
+}
+
+function makeReport() {
+  const c = clock(T), cnt = { F: 0, H: 0, S: 0, U: 0, N: 0 }; let lost = 0;
+  for (const tr of tracks.values()) { cnt[tr.affil]++; if (tr.lost) lost++; }
+  const st = { open: '결심 대기', act: '조치 중', done: '평가 완료' };
+  const watch = [...tracks.values()].filter(tr => 'HSU'.includes(tr.affil));
+  return [
+    `[MDA 상황보고] ${c.date} ${c.hm} KST (가상 훈련)`,
+    `1. 보유 표적: ${Object.keys(cnt).map(k => AFF[k] + ' ' + cnt[k]).join(', ')} / 추적 소실 ${lost}`,
+    '2. 관심 표적:',
+    ...(watch.length ? watch.map(tr => `   - ${tr.id} ${AFF[tr.affil]} · ${fmtPos(tr.pos)}${tr.note ? ' · ' + tr.note : ''}${tr.lost ? ' (추적 소실)' : ''}`) : ['   - 없음']),
+    '3. 이상징후와 조치:',
+    ...(alerts.length ? alerts.map(a => `   - ${a.title} ${a.tgt}: ${st[a.status]} · ${a.status === 'done' ? a.result : a.rec}`) : ['   - 없음']),
+    '4. 수집 요청:',
+    ...(reqs.length ? reqs.map(r => `   - ${r.text} (${r.status})`) : ['   - 없음']),
+    `5. 센서 출처: ${Object.entries(DOMS).map(([k, d]) => d.nm + (layerOn[k] ? ' 가동' : ' 중지')).join(', ')}`
+  ].join('\n');
 }
 
 // ── 상호작용 ─────────────────────────────────────────
 let running = !matchMedia('(prefers-reduced-motion: reduce)').matches, speed = 180, last = performance.now();
 function setPlay() {
-  const b = document.getElementById('bPlay');
-  b.textContent = running ? '❚❚ 정지' : '▶ 재생'; b.setAttribute('aria-label', running ? '일시정지' : '재생');
+  $('bPlay').textContent = running ? '❚❚ 정지' : '▶ 재생';
   document.querySelectorAll('[data-speed]').forEach(x => x.setAttribute('aria-pressed', String(+x.dataset.speed === speed)));
 }
-document.getElementById('bPlay').onclick = () => { running = !running; setPlay(); renderPanel(); };
+$('bPlay').onclick = () => { running = !running; setPlay(); renderPanel(); };
 document.querySelectorAll('[data-speed]').forEach(b => b.onclick = () => { speed = +b.dataset.speed; running = true; setPlay(); });
-document.getElementById('bReset').onclick = () => { init(); elCache.clear(); drawDyn(); renderPanel(); };
-document.querySelector('.panel').addEventListener('click', e => {
-  const a = e.target.closest('[data-approve]'); if (a) { approve(a.dataset.approve); drawDyn(); return; }
+$('bReset').onclick = () => { init(); elCache.clear(); drawDyn(); renderPanel(); };
+$('bReport').onclick = () => { $('report').value = makeReport(); $('copyMsg').textContent = ''; };
+$('bCopy').onclick = () => {
+  const ta = $('report'); if (!ta.value) ta.value = makeReport();
+  const fallback = () => { ta.focus(); ta.select(); $('copyMsg').textContent = '선택됨. Ctrl+C로 복사하세요.'; };
+  try { navigator.clipboard.writeText(ta.value).then(() => { $('copyMsg').textContent = '복사됨'; }, fallback); } catch (e) { fallback(); }
+};
+for (const k of ['nll', 'kadiz', 'eez']) $('bd' + k.toUpperCase()).onchange = e => { showB[k] = e.target.checked; drawDyn(); };
+document.querySelector('.grid').addEventListener('click', e => {
+  const a = e.target.closest('[data-approve]'); if (a) { approve(a.dataset.approve); renderPanel(); drawDyn(); return; }
+  const tk = e.target.closest('[data-task]');
+  if (tk && sel) { ({ sar: taskSar, uav: taskUav, buoy: taskBuoy })[tk.dataset.task](sel); addLog(`수집 요청: ${sel} ${tk.textContent}.`); renderPanel(); drawDyn(); return; }
   const l = e.target.closest('[data-layer]');
-  if (l) { const k = l.dataset.layer; layerOn[k] = !layerOn[k]; addLog(`${LAYERS.find(x => x.key === k).nm} 레이어 ${layerOn[k] ? '가동' : '중지'}.`); renderPanel(); drawDyn(); }
+  if (l) { const k = l.dataset.layer; layerOn[k] = !layerOn[k]; addLog(`${DOMS[k].nm} 출처 ${layerOn[k] ? '가동' : '중지'}.`); renderPanel(); drawDyn(); }
 });
 
+function clampVB() { vb.x = Math.min(Math.max(vb.x, 0), VW - vb.w); vb.y = Math.min(Math.max(vb.y, 0), VH - vb.h); }
 function zoomAt(f, cx, cy) {
-  const nw = Math.min(VW, Math.max(VW / 10, vb.w * f)), k = nw / vb.w;
-  vb.x = cx - (cx - vb.x) * k; vb.y = cy - (cy - vb.y) * k; vb.w = nw; vb.h = VH * nw / VW;
+  const ar = vb.w / vb.h, nw = Math.min(VW, VH * ar, Math.max(VW / 10, vb.w * f)), k = nw / vb.w;
+  vb.x = cx - (cx - vb.x) * k; vb.y = cy - (cy - vb.y) * k; vb.w = nw; vb.h *= k;
   clampVB(); setVB(); drawDyn();
 }
-function clampVB() { vb.x = Math.min(Math.max(vb.x, 0), VW - vb.w); vb.y = Math.min(Math.max(vb.y, 0), VH - vb.h); }
-function svgPt(e) { const m = svg.getScreenCTM().inverse(); return new DOMPoint(e.clientX, e.clientY).matrixTransform(m); }
+// 기본 화면: 해도 칸의 가로세로비에 맞춰 한반도 주변을 꽉 채운다
+function fitView() {
+  const r = svg.getBoundingClientRect(), ar = r.width && r.height ? r.width / r.height : VW / VH;
+  let h = VH * 0.86, w = h * ar;
+  if (w > VW) { w = VW; h = w / ar; }
+  vb = { x: X(127.4) - w / 2, y: Y(36.6) - h / 2, w, h };
+  clampVB(); setVB(); drawDyn();
+}
+new ResizeObserver(fitView).observe(document.querySelector('.mapwrap'));
+const svgPt = e => new DOMPoint(e.clientX, e.clientY).matrixTransform(svg.getScreenCTM().inverse());
 svg.addEventListener('wheel', e => { e.preventDefault(); const p = svgPt(e); zoomAt(Math.exp(e.deltaY * 0.0015), p.x, p.y); }, { passive: false });
 let drag = null;
 svg.addEventListener('pointerdown', e => { drag = { x: e.clientX, y: e.clientY, vx: vb.x, vy: vb.y, moved: false }; svg.setPointerCapture(e.pointerId); });
@@ -859,16 +1065,16 @@ svg.addEventListener('pointermove', e => {
 });
 svg.addEventListener('pointerup', e => {
   if (drag && !drag.moved) {
-    const p = svgPt(e), z = vb.w / VW; let best = null, bd = 14 * z;
+    const p = svgPt(e); let best = null, bd = 14 * vb.w / VW;
     for (const tr of tracks.values()) { const d = Math.hypot(X(tr.pos[0]) - p.x, Y(tr.pos[1]) - p.y); if (d < bd) { bd = d; best = tr.id; } }
     sel = best; drawDyn(); renderPanel();
   }
   drag = null; svg.classList.remove('drag');
 });
-const center = () => ({ x: vb.x + vb.w / 2, y: vb.y + vb.h / 2 });
-document.getElementById('bZin').onclick = () => { const c = center(); zoomAt(0.7, c.x, c.y); };
-document.getElementById('bZout').onclick = () => { const c = center(); zoomAt(1 / 0.7, c.x, c.y); };
-document.getElementById('bZfit').onclick = () => { vb = { x: 0, y: 0, w: VW, h: VH }; setVB(); drawDyn(); };
+const center = () => [vb.x + vb.w / 2, vb.y + vb.h / 2];
+$('bZin').onclick = () => zoomAt(0.7, ...center());
+$('bZout').onclick = () => zoomAt(1 / 0.7, ...center());
+$('bZfit').onclick = fitView;
 
 let panelAt = 0;
 function frame(now) {
@@ -882,7 +1088,7 @@ function frame(now) {
   requestAnimationFrame(frame);
 }
 
-init(); drawStatic(); setPlay(); drawDyn(); renderPanel();
+init(); drawStatic(); setPlay(); fitView(); renderPanel();
 requestAnimationFrame(frame);
 })();
 </script>
