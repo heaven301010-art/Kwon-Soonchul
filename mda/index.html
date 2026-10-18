@@ -33,6 +33,7 @@
   --kadiz: #2f3e4c;
   --eez: #0f5d8c;
   --mca: #5b6b1f;
+  --infra: #a35d00;
   --halo: #f8fafb;
   --font-ui: "IBM Plex Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", system-ui, sans-serif;
   --font-data: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
@@ -57,6 +58,8 @@ button { font: inherit; color: inherit; }
 .counts { display: flex; gap: 4px 12px; flex-wrap: wrap; font-variant-numeric: tabular-nums; }
 .counts span { display: inline-flex; align-items: baseline; gap: 4px; color: var(--muted); }
 .counts b { font-family: var(--font-data); font-weight: 500; font-size: 14px; color: var(--fg); }
+.counts .sea { color: var(--fg); font-weight: 600; }
+.counts .sea b { font-size: 17px; color: var(--fr); }
 .counts .h b { color: var(--ho); } .counts .s b { color: var(--su); } .counts .u b { color: var(--un); }
 .ctl { display: flex; gap: 6px; align-items: center; margin-left: auto; flex-wrap: wrap; }
 .btn { font-size: 12.5px; font-weight: 500; background: var(--panel); border: 1px solid var(--line); border-radius: 5px; padding: 5px 10px; cursor: pointer; }
@@ -69,31 +72,27 @@ button { font: inherit; color: inherit; }
 .seg .btn[aria-pressed="true"] { background: var(--fg); color: var(--panel); border-color: var(--fg); }
 
 /* 격자 배치 */
-.grid {
-  flex: 1; min-height: 0; display: grid; gap: 8px;
-  grid-template-columns: 228px minmax(0, 1fr) 228px 340px;
-  grid-template-rows: auto minmax(0, 1fr) auto;
-  grid-template-areas: "space space air mda" "ground map surface mda" "under under under mda";
-}
-.box { background: var(--panel); border: 1px solid var(--line); border-top: 3px solid var(--c); min-width: 0; min-height: 0; overflow: auto; padding: 8px 11px 10px; }
-.box[data-dom="space"] { grid-area: space; --c: var(--l-space); }
-.box[data-dom="air"] { grid-area: air; --c: var(--l-air); }
-.box[data-dom="ground"] { grid-area: ground; --c: var(--l-ground); }
-.box[data-dom="surface"] { grid-area: surface; --c: var(--l-surf); }
-.box[data-dom="under"] { grid-area: under; --c: var(--l-under); }
+.grid { flex: 1; min-height: 0; display: grid; gap: 8px; grid-template-columns: minmax(0, 1fr) 340px; grid-template-areas: "map mda"; }
+/* 출처별 정보칸은 해도 안의 네모 상자: 위(우주·항공), 왼쪽(지상), 오른쪽(수상), 아래(수중) */
+.box { position: absolute; z-index: 2; width: 250px; max-height: 30%; overflow: auto; background: color-mix(in srgb, var(--panel) 93%, transparent);
+  border: 1px solid var(--line); border-top: 3px solid var(--c); border-radius: 4px; box-shadow: 0 2px 8px color-mix(in srgb, var(--fg) 14%, transparent); padding: 7px 10px 8px; }
+.box[data-dom="space"] { --c: var(--l-space); top: 8px; left: 8px; }
+.box[data-dom="air"] { --c: var(--l-air); top: 8px; right: 8px; }
+.box[data-dom="ground"] { --c: var(--l-ground); left: 8px; top: 50%; transform: translateY(-50%); }
+.box[data-dom="surface"] { --c: var(--l-surf); right: 8px; top: 50%; transform: translateY(-50%); }
+.box[data-dom="under"] { --c: var(--l-under); left: 8px; bottom: 8px; }
+.mapwrap.nobox .box { display: none; }
 .box.off { opacity: .55; }
 .bh { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
-.bh h2 { margin: 0; font-size: 14px; font-weight: 700; color: var(--c); }
+.bh h2 { margin: 0; font-size: 13.5px; font-weight: 700; color: var(--c); }
 .bh small { color: var(--muted); font-size: 11.5px; }
 .sw { margin-left: auto; font-size: 11.5px; border: 1px solid var(--line); background: var(--panel-2); border-radius: 999px; padding: 2px 9px; cursor: pointer; }
 .sw[aria-pressed="true"] { background: var(--c); color: #fff; border-color: var(--c); }
-.bb { display: grid; gap: 8px; }
-.box[data-dom="space"], .box[data-dom="air"] { max-height: 21vh; }
-.box[data-dom="under"] { max-height: 19vh; }
-.box.wide .bb { grid-template-columns: auto minmax(0, 300px) minmax(0, 1fr); align-items: start; gap: 8px 18px; }
+.bb { display: grid; gap: 6px; }
 .stats { display: flex; gap: 12px; flex-wrap: wrap; }
-.stats div { display: flex; flex-direction: column; min-width: 44px; }
-.stats b { font-family: var(--font-data); font-weight: 500; font-size: 19px; line-height: 1.15; font-variant-numeric: tabular-nums; }
+.stats div { display: flex; flex-direction: column; min-width: 38px; }
+.stats { row-gap: 4px; }
+.stats b { font-family: var(--font-data); font-weight: 500; font-size: 16px; line-height: 1.15; font-variant-numeric: tabular-nums; }
 .stats span { font-size: 11px; color: var(--muted); white-space: nowrap; }
 .assets, .feed { list-style: none; margin: 0; padding: 0; display: grid; gap: 3px; font-size: 12px; }
 .assets li { display: flex; justify-content: space-between; gap: 8px; }
@@ -102,15 +101,16 @@ button { font: inherit; color: inherit; }
 .feed li { display: grid; grid-template-columns: 38px 1fr; gap: 6px; }
 .feed time { font-family: var(--font-data); color: var(--faint); }
 .feed .none { display: block; color: var(--faint); }
-.box:not(.wide) .feed { border-top: 1px dashed var(--line); padding-top: 6px; }
+.box .feed { border-top: 1px dashed var(--line); padding-top: 5px; }
 
 /* 해도 */
 .mapwrap { grid-area: map; position: relative; min-width: 0; min-height: 0; background: var(--sea); border: 1px solid var(--line); }
+.mapview { position: absolute; inset: 0; }
 #map { width: 100%; height: 100%; display: block; touch-action: none; cursor: grab; user-select: none; }
 #map.drag { cursor: grabbing; }
-.zoom { position: absolute; top: 8px; right: 8px; display: flex; flex-direction: column; gap: 4px; }
+.zoom { position: absolute; bottom: 8px; right: 8px; z-index: 3; display: flex; flex-direction: column; gap: 4px; }
 .zoom .btn { width: 30px; height: 30px; padding: 0; font-size: 15px; }
-.bounds { position: absolute; left: 8px; bottom: 8px; display: flex; gap: 4px 12px; flex-wrap: wrap; align-items: center; background: color-mix(in srgb, var(--panel) 88%, transparent); border: 1px solid var(--line); border-radius: 5px; padding: 4px 9px; font-size: 12px; max-width: calc(100% - 16px); }
+.bounds { position: absolute; left: 50%; transform: translateX(-50%); bottom: 8px; z-index: 3; justify-content: center; display: flex; gap: 4px 12px; flex-wrap: wrap; align-items: center; background: color-mix(in srgb, var(--panel) 88%, transparent); border: 1px solid var(--line); border-radius: 5px; padding: 4px 9px; font-size: 12px; max-width: calc(100% - 16px); }
 .bounds label { display: inline-flex; gap: 5px; align-items: center; cursor: pointer; white-space: nowrap; }
 .bounds svg { flex: none; }
 .bounds b { font-weight: 600; color: var(--muted); }
@@ -133,6 +133,7 @@ button { font: inherit; color: inherit; }
 .share .nd { fill: var(--panel-2); stroke: var(--line); stroke-width: 1; }
 .share .nd.hub { fill: color-mix(in srgb, var(--fr) 8%, var(--panel)); stroke: var(--fr); }
 .share .nd.ext { stroke-dasharray: 4 3; }
+.share .nd.ext2 { fill: color-mix(in srgb, var(--ne) 7%, var(--panel)); }
 .share .nt { font: 600 11.5px var(--font-ui); fill: var(--fg); }
 .share .ns { font: 10px var(--font-ui); fill: var(--muted); }
 .share .eg { stroke: var(--faint); stroke-width: 1.3; fill: none; }
@@ -201,6 +202,10 @@ textarea.report { width: 100%; min-height: 150px; font: 12px/1.5 var(--font-data
 .kadiz { stroke: var(--kadiz); fill: none; stroke-width: 1.6; vector-effect: non-scaling-stroke; }
 .eez { stroke: var(--eez); fill: none; stroke-width: 1.8; vector-effect: non-scaling-stroke; }
 .eez.u { stroke-width: 1.5; }
+.cable { stroke: var(--infra); fill: none; stroke-width: 1.6; vector-effect: non-scaling-stroke; }
+.wind { fill: color-mix(in srgb, var(--infra) 14%, transparent); stroke: var(--infra); stroke-width: 1; vector-effect: non-scaling-stroke; }
+.f-infra { fill: var(--infra); }
+.btx.infra { fill: var(--infra); font-weight: 600; font-family: var(--font-ui); }
 .mca { stroke: var(--mca); fill: color-mix(in srgb, var(--mca) 4%, transparent); stroke-width: 2; vector-effect: non-scaling-stroke; }
 .btx { font-weight: 700; font-family: var(--font-data); paint-order: stroke; stroke: var(--halo); stroke-width: 3px; stroke-linejoin: round; }
 .btx.nll { fill: var(--nll); } .btx.kadiz { fill: var(--kadiz); } .btx.eez { fill: var(--eez); } .btx.mca { fill: var(--mca); }
@@ -231,17 +236,16 @@ textarea.report { width: 100%; min-height: 150px; font: 12px/1.5 var(--font-data
 
 @media (max-width: 1280px) {
   html, body { height: auto; }
-  .grid { flex: none; grid-template-columns: 210px minmax(0, 1fr) 210px; grid-template-rows: auto minmax(560px, 1fr) auto auto;
-    grid-template-areas: "space space air" "ground map surface" "under under under" "mda mda mda"; }
+  .grid { flex: none; grid-template-columns: minmax(0, 1fr); grid-template-areas: "map" "mda"; }
+  .mapwrap { height: max(560px, 82vh); }
   .mda { overflow: visible; contain: none; }
-  .box { overflow: visible; }
-  .box[data-dom] { max-height: none; }
 }
 @media (max-width: 860px) {
-  .grid { grid-template-columns: minmax(0, 1fr); grid-template-rows: none;
-    grid-template-areas: "map" "space" "air" "surface" "ground" "under" "mda"; }
-  .mapwrap { aspect-ratio: 1058 / 1025; max-width: 100%; }
-  .box.wide .bb { grid-template-columns: minmax(0, 1fr); }
+  /* 좁은 화면에서는 정보칸을 해도 아래로 쌓는다 */
+  .mapwrap { height: auto; display: flex; flex-direction: column; gap: 8px; background: none; border: 0; }
+  .mapview { position: relative; inset: auto; aspect-ratio: 1058 / 1025; max-width: 100%; background: var(--sea); border: 1px solid var(--line); }
+  .box, .box[data-dom] { position: static; transform: none; width: auto; max-height: none; box-shadow: none; }
+  .bounds { left: 8px; transform: none; max-width: calc(100% - 56px); justify-content: flex-start; }
   .ctl { margin-left: 0; }
 }
 </style>
@@ -260,15 +264,14 @@ textarea.report { width: 100%; min-height: 150px; font: 12px/1.5 var(--font-data
       <button class="btn" type="button" data-speed="180">×180</button>
       <button class="btn" type="button" data-speed="600">×600</button>
     </span>
+    <button class="btn" id="bBoxes" type="button" aria-pressed="true">정보칸 숨기기</button>
     <button class="btn" id="bReset" type="button">시나리오 재시작</button>
   </div>
 </header>
 
 <main class="grid">
-  <section class="box wide" data-dom="space"></section>
-  <section class="box" data-dom="air"></section>
-  <section class="box" data-dom="ground"></section>
-  <div class="mapwrap">
+  <div class="mapwrap" id="mapwrap">
+   <div class="mapview">
     <svg id="map" viewBox="0 0 1058 1025" preserveAspectRatio="xMidYMid meet" role="img" aria-label="한반도 주변 해역 상황도">
       <defs><clipPath id="mclip"><rect id="mrect"></rect></clipPath></defs>
       <g clip-path="url(#mclip)">
@@ -288,10 +291,15 @@ textarea.report { width: 100%; min-height: 150px; font: 12px/1.5 var(--font-data
       <label><input type="checkbox" id="bdKADIZ" checked><svg width="22" height="6"><line x1="0" y1="3" x2="22" y2="3" class="kadiz" stroke-dasharray="8 3 2 3"/></svg>KADIZ</label>
       <label><input type="checkbox" id="bdEEZ" checked><svg width="22" height="6"><line x1="0" y1="3" x2="22" y2="3" class="eez" stroke-dasharray="2 3"/></svg>EEZ</label>
       <label id="bdMCAwrap"><input type="checkbox" id="bdMCA" checked><svg width="22" height="6"><line x1="0" y1="3" x2="22" y2="3" class="mca" stroke-dasharray="12 4"/></svg>MCA(KTO)</label>
+      <label><input type="checkbox" id="bdINFRA" checked><svg width="22" height="6"><line x1="0" y1="3" x2="22" y2="3" class="cable" stroke-dasharray="7 2 1 2"/></svg>해양 기반시설</label>
     </div>
+   </div>
+    <section class="box" data-dom="space"></section>
+    <section class="box" data-dom="air"></section>
+    <section class="box" data-dom="ground"></section>
+    <section class="box" data-dom="surface"></section>
+    <section class="box" data-dom="under"></section>
   </div>
-  <section class="box" data-dom="surface"></section>
-  <section class="box wide" data-dom="under"></section>
 
   <aside class="mda">
     <section>
@@ -302,7 +310,7 @@ textarea.report { width: 100%; min-height: 150px; font: 12px/1.5 var(--font-data
     <section id="selSec"></section>
     <section>
       <h2>기관 간 정보 공유</h2>
-      <svg class="share" id="shareSvg" viewBox="0 0 320 236" role="img" aria-label="해수부, 해경, 해군, K-IFC, 해외 IFC 사이의 정보 흐름"></svg>
+      <svg class="share" id="shareSvg" viewBox="0 0 320 262" role="img" aria-label="해수부, 해경, 기상청, KIOST·국립해양조사원, 해군, 국가 MDA 플랫폼, 해외 IFC 사이의 정보 흐름"></svg>
       <ul class="log" id="shareLog"></ul>
     </section>
     <section>
@@ -424,7 +432,7 @@ const ICLASS = { ais: '민간', cctv: '기관', vpass: '기관', lrit: '기관',
 const iclass = k => ICLASS[k] || '군사';
 const AFF = { F: '아군', H: '적성', S: '의심', U: '미상', N: '중립' };
 const layerOn = { space: true, surface: true, under: true, air: true, ground: true };
-const showB = { nll: true, kadiz: true, eez: true, mca: true };
+const showB = { nll: true, kadiz: true, eez: true, mca: true, infra: true };
 
 // RF 위성이 잡는 방사원 종류
 const EMIT = {
@@ -495,6 +503,10 @@ function init() {
   targets.push({ id: 'C501', kind: 'surface', truth: 'N', type: '외국 어선', name: SC.c501.name, mmsi: SC.c501.mmsi, pos: SC.c501.start.slice(), hdg: 80, spd: 7, ais: true, emitter: EMIT.vhf, mode: 'c501', st: 'approach' });
   targets.push({ id: 'U402', kind: 'sub', truth: 'H', type: '잠수함', pos: SC.u402.path[0].slice(), hdg: 190, spd: 8, ais: false, emitter: null, mode: 'path', wp: SC.u402.path, wi: 1, dir: 1, endHold: true });
   targets.push({ id: 'U403', kind: 'air', truth: 'H', type: '외국 군용기', pos: SC.u403.start.slice(), hdg: 60, spd: 330, ais: false, emitter: EMIT.air, mode: 'path', wp: [SC.u403.start].concat(SC.u403.path), wi: 1, dir: 1, endHold: true, startAt: SC.u403.at });
+  targets.push({ id: 'L601', kind: 'surface', truth: 'N', type: '화물선', name: SC.l601.name, mmsi: SC.l601.mmsi, pos: SC.l601.start.slice(), hdg: 300, spd: 10,
+    ais: true, lrit: true, lritPh: 7, emitter: EMIT.nav, mode: 'l601', st: 'transit' });
+  targets.push({ id: 'R701', kind: 'surface', truth: 'N', type: '해양조사선', name: SC.r701.name, mmsi: SC.r701.mmsi, pos: SC.r701.start.slice(), hdg: 70, spd: 14,
+    ais: true, emitter: EMIT.navS, mode: 'r701', st: 'transit', startAt: SC.r701.at });
   byId = new Map(targets.map(t => [t.id, t]));
   mpa = { id: 'MPA', name: '해상초계기', pos: advance(SC.mpa.center, 0, SC.mpa.r), center: SC.mpa.center.slice(), r: SC.mpa.r, spd: 300, ph: 0, mode: 'orbit', hdg: 90, task: '동해 정찰 궤도' };
   uav = { id: 'UAV', name: '무인기', pos: advance(SC.uav.center, 0, SC.uav.r), center: SC.uav.center.slice(), r: SC.uav.r, spd: 80, ph: 0, mode: 'orbit', hdg: 90, task: '서해 정찰 궤도' };
@@ -576,6 +588,19 @@ function moveTarget(t, dt) {
     case 'd302':
       t.spd = flags.sts ? 0.5 : 1.5; t.hdg = (t.hdg + dt * (flags.sts ? 2 : 6)) % 360;
       t.pos = advance(t.pos, t.hdg, KMMIN(t.spd) * dt); break;
+    case 'l601':
+      if (t.st === 'transit') { if (moveToward(t, SC.l601.loiter, 10, dt)) { t.st = 'loiter'; t.center = SC.l601.loiter.slice(); } }
+      else { t.spd = 0.8; t.hdg = (t.hdg + dt * 4) % 360; t.pos = advance(t.pos, t.hdg, KMMIN(t.spd) * dt); }
+      break;
+    case 'r701':
+      if (t.st === 'transit') { t.spd = 14; if (moveToward(t, SC.r701.dest, 14, dt)) { t.st = 'survey'; t.leg = 0; t.hdg = 0; } }
+      else if (t.st === 'survey') {
+        // 격자형 조사 항적: 20분마다 남북으로 방향을 바꾸며 동쪽으로 조금씩 옮긴다
+        t.spd = 5; t.leg += dt;
+        if (t.leg > 20) { t.leg = 0; t.hdg = t.hdg === 0 ? 180 : 0; t.pos = advance(t.pos, 90, 2); }
+        t.pos = advance(t.pos, t.hdg, KMMIN(t.spd) * dt);
+      } else { t.spd = 12; t.hdg = 255; t.pos = advance(t.pos, t.hdg, KMMIN(t.spd) * dt); if (t.pos[0] < 122.8) t.gone = true; }
+      break;
     case 'c501':
       if (t.st === 'approach') { t.spd = 7; t.hdg = 80; if (t.pos[0] > eezWestLon(t.pos[1]) + 0.2) t.st = 'fishing'; }
       else if (t.st === 'fishing') { t.spd = 3; t.hdg = (t.hdg + dt * 9) % 360; }
@@ -682,7 +707,7 @@ function step(dt) {
       feed('space', `RF 군집 통과 완료 · 신호 ${ids.length}개 · AIS 미대조 ${dark}개`);
     } else if (layerOn.space) feed('space', `${SN[p.sat]} 통과 완료 · 표적 ${p.seen ? p.seen.size : 0}개 촬영`);
   }
-  scenario();
+  scenario(dt);
 }
 
 function onNew(t, tr, s) {
@@ -742,7 +767,9 @@ const CAT = {
   ais: ['이상 항적 (AIS 단절)', '국외 공유 가능', ['해수부', '해경', '해외 IFC']],
   sts: ['불법 환적·제재 위반 의심', '국외 공유 가능', ['해경', '해수부', '해외 IFC']],
   eez: ['IUU 어업', '국외 공유 가능', ['해경', '해외 IFC']],
-  nll: ['군사 위협', '국내 한정', ['해경']], sub: ['군사 위협', '국내 한정', []], kadiz: ['군사 위협', '국내 한정', []]
+  nll: ['군사 위협', '국내 한정', ['해경']], sub: ['군사 위협', '국내 한정', []], kadiz: ['군사 위협', '국내 한정', []],
+  cable: ['해양 기반시설 위협', '국외 공유 가능', ['해경', '해수부']],
+  survey: ['무단 해양과학조사 의심', '국내 한정', ['해경', '해수부', '외교부']]
 };
 function raise(a) {
   if (alerts.some(x => x.id === a.id)) return;
@@ -806,7 +833,50 @@ function approveSub() {
 function approveEez() { addReq('해경 경비함 출동 요청 · C501 검문검색', '수행'); flags.eezAct = T; feed('surface', 'C501 대응 해경 경비함 출동'); }
 function approveKadiz() { addReq('공군 전투기 긴급발진·경고통신 (가상)', '수행'); flags.kadizAct = T; feed('air', 'U403 대응 전투기 긴급발진 (가상)'); }
 
-function scenario() {
+function distToLine(p, line) {
+  let best = 1e9;
+  for (let i = 0; i < line.length - 1; i++) {
+    const a = toLocal(p, line[i]), b = toLocal(p, line[i + 1]), dx = b[0] - a[0], dy = b[1] - a[1];
+    const u = Math.max(0, Math.min(1, -(a[0] * dx + a[1] * dy) / (dx * dx + dy * dy || 1)));
+    best = Math.min(best, Math.hypot(a[0] + u * dx, a[1] + u * dy));
+  }
+  return best;
+}
+function scenario(dt = 0) {
+  // AI 이상항적 탐지 1: 해저케이블 4km 안에서 2kn 미만으로 20분 넘게 머무는 선박
+  const l6 = byId.get('L601'), l6tr = tracks.get('L601');
+  if (l6tr && !l6tr.lost && !flags.cableIn) {
+    const near = SC.cables.some(([, line]) => distToLine(l6tr.pos, line) < 4);
+    flags.cableT = near && l6tr.spd < 2 ? (flags.cableT || 0) + dt : 0;
+    if (flags.cableT > 20) {
+      flags.cableIn = true; l6tr.affil = 'S'; l6tr.note = 'AI 이상항적: 해저케이블 상공 저속 배회';
+      feed('surface', 'L601 해저케이블 상공 저속 배회 (AI 탐지)');
+      raise({ id: 'cable', sev: 'warn', title: '해저케이블 상공 배회 (AI 탐지)', tgt: 'L601', rec: '부산 VTS 경고 방송, 해경 경비함 현장 확인',
+        approve: () => { addReq('부산 VTS 경고 방송 · 해경 경비함 현장 확인', '수행'); flags.cableAct = T; } });
+    }
+  }
+  if (flags.cableAct != null && !flags.cableDone && T - flags.cableAct > 40) {
+    flags.cableDone = true; Object.assign(l6, { mode: 'path', wp: SC.l601.leave, wi: 0, dir: 1, endHold: true, spd: 12 });
+    if (l6tr) l6tr.note = '케이블 보호구역 이탈 조치 완료';
+    closeAlert('cable', '투묘 중단 요구, 케이블 보호구역 이탈 확인');
+  }
+  // AI 이상항적 탐지 2: 우리측 EEZ 안에서 격자형으로 저속 항주하는 외국 조사선
+  const r7 = byId.get('R701'), r7tr = tracks.get('R701');
+  if (r7tr && !r7tr.lost && active(r7) && !flags.surveyIn) {
+    const inside = r7.pos[0] > eezWestLon(r7.pos[1]);
+    flags.surveyT = inside && r7tr.spd < 7 ? (flags.surveyT || 0) + dt : 0;
+    if (flags.surveyT > 15) {
+      flags.surveyIn = true; r7tr.affil = 'S'; r7tr.note = 'AI 항적 패턴: 격자형 저속 항주 (해양조사 추정)';
+      feed('surface', 'R701 EEZ 안 격자형 항적 (AI 탐지)');
+      raise({ id: 'survey', sev: 'warn', title: '무단 해양과학조사 의심 (AI 탐지)', tgt: 'R701', rec: '해경 경비함 확인, 외교부 통보 (가상)',
+        approve: () => { addReq('해경 경비함 확인 · 외교부 통보 (가상)', '수행'); flags.surveyAct = T; } });
+    }
+  }
+  if (flags.surveyAct != null && !flags.surveyDone && T - flags.surveyAct > 45) {
+    flags.surveyDone = true; r7.st = 'leave'; if (r7tr) r7tr.note = '조사 중단 요구 후 EEZ 밖으로 퇴거';
+    closeAlert('survey', '조사 중단 요구, EEZ 외측 퇴거 확인');
+  }
+
   const h = byId.get('H201'), htr = tracks.get('H201');
   if (htr && htr.classAt && T >= htr.classAt) { htr.affil = 'H'; htr.classAt = null; htr.note = '북측 경비정 (식별 DB 대조)'; addLog('H201 북측 경비정으로 식별, 적성 분류.'); }
   if (htr && !htr.lost && h.pos[1] < nllLat(SC.nllWest, h.pos[0])) raise({ id: 'nll', sev: 'crit', title: 'NLL 침범', tgt: 'H201', rec: 'F108 차단 기동 및 경고통신', approve: approveNll });
@@ -944,6 +1014,18 @@ function drawDyn() {
     h += txt('btx eez', X(123.8) - 5 * z, Y(36.45), 10.5 * z, 'EEZ 중간선(미획정)', 'end');
     h += txt('btx eez', X(130.1), Y(35.6) + 14 * z, 10.5 * z, '한·일 경계');
     h += txt('btx eez', X(132.45) + 6 * z, Y(37.3), 10.5 * z, 'EEZ(미획정)');
+  }
+  if (showB.infra) {
+    for (const [n, line] of SC.cables) {
+      h += `<path class="cable" d="${pathD(line)}"${dash(z, 7, 2, 1, 2)}/>`;
+      const m = line[1]; h += txt('btx infra', X(m[0]) + 5 * z, Y(m[1]) + 12 * z, 9.5 * z, n);
+    }
+    for (const [n, x, y, r] of SC.windFarms) {
+      const a = fromLocal([x, y], -r, r), b = fromLocal([x, y], r, -r);
+      h += `<rect class="wind" x="${f1(X(a[0]))}" y="${f1(Y(a[1]))}" width="${f1(X(b[0]) - X(a[0]))}" height="${f1(Y(b[1]) - Y(a[1]))}"/>`;
+      for (let i = -1; i <= 1; i++) for (let j = -1; j <= 1; j++) { const q = fromLocal([x, y], i * r * .55, j * r * .55); h += `<circle class="f-infra" cx="${f1(X(q[0]))}" cy="${f1(Y(q[1]))}" r="${f1(1.4 * z)}"/>`; }
+      h += txt('btx infra', X(b[0]) + 4 * z, Y(y) + 3 * z, 9.5 * z, n);
+    }
   }
   if (showB.mca && SC.mca) {
     h += `<path class="mca" d="${pathD(SC.mca, true)}"${dash(z, 12, 4)}/>`;
@@ -1090,7 +1172,7 @@ function renderBoxes(det) {
     const head = `<div class="bh"><h2>${d.nm}</h2><small>${d.sub}</small><button class="sw" type="button" data-layer="${dom}" aria-pressed="${layerOn[dom]}">${layerOn[dom] ? '가동' : '중지'}</button></div>`;
     const st = `<div class="stats">${d.types.map(([k, n]) => `<div><b>${det[k]}</b><span>${n}</span></div>`).join('')}</div>`;
     const as = `<ul class="assets">${assets(dom).map(([a, b]) => `<li><span>${a}</span><span>${esc(b)}</span></li>`).join('')}</ul>`;
-    const fd = feeds[dom].slice(0, box.classList.contains('wide') ? 4 : 3);
+    const fd = feeds[dom].slice(0, 2);
     const fh = `<ul class="feed">${fd.length ? fd.map(f => `<li><time>${clock(f.t).hm}</time><span>${esc(f.text)}</span></li>`).join('') : '<li class="none">최근 탐지 사건 없음</li>'}</ul>`;
     setHTML(box, 'box-' + dom, head + `<div class="bb">${st}${as}${fh}</div>`);
   }
@@ -1102,7 +1184,8 @@ function renderPanel() {
   const cnt = { F: 0, H: 0, S: 0, U: 0, N: 0 }; let lost = 0, held = 0;
   for (const tr of tracks.values()) { cnt[tr.affil]++; if (tr.lost) lost++; else held++; }
   const open = alerts.filter(a => a.status === 'open').length, act = alerts.filter(a => a.status === 'act').length;
-  setHTML($('counts'), 'counts', ['F', 'H', 'S', 'U', 'N'].map(k => `<span class="${k.toLowerCase()}">${AFF[k]} <b>${cnt[k]}</b></span>`).join('')
+  const seaN = [...tracks.values()].filter(tr => !tr.lost && byId.get(tr.id).kind !== 'air').length;
+  setHTML($('counts'), 'counts', `<span class="sea">해상 표적 <b>${seaN}</b>척</span>` + ['F', 'H', 'S', 'U', 'N'].map(k => `<span class="${k.toLowerCase()}">${AFF[k]} <b>${cnt[k]}</b></span>`).join('')
     + `<span>전체 <b>${tracks.size}</b></span><span>추적 소실 <b>${lost}</b></span>`);
   const det = detCounts();
   renderBoxes(det);
@@ -1120,17 +1203,20 @@ function renderPanel() {
     const sum = ks => ks.reduce((a, k) => a + det[k], 0);
     const recent = to => shares.some(x => T - x.t <= 15 && x.to.includes(to));
     const nIFC = alerts.filter(a => a.to.includes('해외 IFC')).length, nKCG = alerts.filter(a => a.to.includes('해경')).length;
-    const node = (x, y, w, t1, t2, cls = '') => `<rect class="nd ${cls}" x="${x}" y="${y}" width="${w}" height="40" rx="5"/><text class="nt" x="${x + w / 2}" y="${y + 17}" text-anchor="middle">${t1}</text><text class="ns" x="${x + w / 2}" y="${y + 31}" text-anchor="middle">${t2}</text>`;
+    const node = (x, y, w, t1, t2, cls = '', hh = 40) => `<rect class="nd ${cls}" x="${x}" y="${y}" width="${w}" height="${hh}" rx="5"/><text class="nt" x="${x + w / 2}" y="${y + hh / 2 - 3}" text-anchor="middle">${t1}</text><text class="ns" x="${x + w / 2}" y="${y + hh / 2 + 11}" text-anchor="middle">${t2}</text>`;
     const edge = (d, hot) => `<path class="eg${hot ? ' hot' : ''}" d="${d}"/>`;
     const lab = (x, y, t, a = 'middle') => `<text class="el" x="${x}" y="${y}" text-anchor="${a}">${t}</text>`;
     setHTML($('shareSvg'), 'share',
-      edge('M70,50 L130,98', recent('해수부')) + edge('M250,50 L190,98', recent('해경')) + edge('M70,186 L130,138', false) + edge('M190,138 L250,186', recent('해외 IFC'))
+      edge('M70,48 L132,106', recent('해수부')) + edge('M250,48 L188,106', recent('해경'))
+      + edge('M86,131 L102,131', false) + edge('M234,131 L218,131', false)
+      + edge('M70,214 L132,156', false) + edge('M188,156 L250,214', recent('해외 IFC'))
       + node(5, 8, 130, '해양수산부', 'GICOMS · AIS · LRIT') + node(185, 8, 130, '해양경찰청', 'V-PASS · VTS · 경비함')
-      + node(95, 96, 130, 'K-IFC (가칭)', '범정부 해양정보 융합', 'hub')
-      + node(5, 188, 130, '해군 MDA 상황도', '군사정보 · 비밀 분리') + node(185, 188, 130, '해외 IFC', 'IFC-SG · IFC-IOR 등', 'ext')
-      + lab(108, 66, `AIS ${det.ais} · LRIT ${det.lrit}`, 'end') + lab(212, 66, `V-PASS ${det.vpass} · VTS ${det.vts}`, 'start')
-      + lab(232, 86, `해경 인계 ${nKCG}건`, 'start')
-      + lab(108, 166, `융합 표적 ${held}`, 'end') + lab(212, 166, `공유 사건 ${nIFC}건`, 'start'));
+      + node(0, 111, 86, '기상청', '해양기상', 'ext2') + node(234, 111, 86, 'KIOST·KHOA', '관측·예측', 'ext2')
+      + node(102, 106, 116, '국가 MDA 플랫폼', '해수부 · K-IFC(가칭)', 'hub', 50)
+      + node(5, 214, 130, '해군 MDA 상황도', '군사정보 · 비밀 분리') + node(185, 214, 130, '해외 IFC', 'IFC-SG · IFC-IOR 등', 'ext')
+      + lab(100, 68, `AIS ${det.ais} · LRIT ${det.lrit}`, 'end') + lab(220, 68, `V-PASS ${det.vpass} · VTS ${det.vts}`, 'start')
+      + lab(220, 83, `해경 인계 ${nKCG}건`, 'start')
+      + lab(100, 192, `융합 표적 ${held}`, 'end') + lab(220, 192, `공유 사건 ${nIFC}건`, 'start'));
     setHTML($('shareLog'), 'shareLog', shares.length ? shares.slice(0, 6).map(x => `<li><time>${clock(x.t).hm}</time><span>${esc(x.text)}</span></li>`).join('')
       : '<li><time></time><span>이상징후가 공유되면 대상 기관과 함께 여기에 기록됩니다.</span></li>');
   }
@@ -1218,6 +1304,10 @@ function setPlay() {
 $('bPlay').onclick = () => { running = !running; setPlay(); renderPanel(); };
 document.querySelectorAll('[data-speed]').forEach(b => b.onclick = () => { speed = +b.dataset.speed; running = true; setPlay(); });
 $('bReset').onclick = () => { init(); elCache.clear(); drawDyn(); renderPanel(); };
+$('bBoxes').onclick = () => {
+  const hide = $('mapwrap').classList.toggle('nobox');
+  $('bBoxes').textContent = hide ? '정보칸 보이기' : '정보칸 숨기기'; $('bBoxes').setAttribute('aria-pressed', String(!hide));
+};
 $('bReport').onclick = () => { $('report').value = makeReport(); $('copyMsg').textContent = ''; };
 $('bCopy').onclick = () => {
   const ta = $('report'); if (!ta.value) ta.value = makeReport();
@@ -1225,7 +1315,7 @@ $('bCopy').onclick = () => {
   try { navigator.clipboard.writeText(ta.value).then(() => { $('copyMsg').textContent = '복사됨'; }, fallback); } catch (e) { fallback(); }
 };
 if (!SC.mca) { $('bdMCA').disabled = true; $('bdMCA').checked = false; $('bdMCAwrap').classList.add('na'); $('bdMCAwrap').title = 'scenario.js의 mca에 좌표를 넣으면 표시됩니다'; $('bdMCAwrap').lastChild.textContent = 'MCA(KTO) 좌표 미입력'; }
-for (const k of ['nll', 'kadiz', 'eez', 'mca']) $('bd' + k.toUpperCase()).onchange = e => { showB[k] = e.target.checked; drawDyn(); };
+for (const k of ['nll', 'kadiz', 'eez', 'mca', 'infra']) $('bd' + k.toUpperCase()).onchange = e => { showB[k] = e.target.checked; drawDyn(); };
 document.querySelector('.grid').addEventListener('click', e => {
   const a = e.target.closest('[data-approve]'); if (a) { approve(a.dataset.approve); renderPanel(); drawDyn(); return; }
   const sr = e.target.closest('[data-sel]');
@@ -1250,7 +1340,7 @@ function fitView() {
   vb = { x: X(127.4) - w / 2, y: Y(36.6) - h / 2, w, h };
   clampVB(); setVB(); drawDyn();
 }
-new ResizeObserver(fitView).observe(document.querySelector('.mapwrap'));
+new ResizeObserver(fitView).observe(document.querySelector('.mapview'));
 const svgPt = e => new DOMPoint(e.clientX, e.clientY).matrixTransform(svg.getScreenCTM().inverse());
 svg.addEventListener('wheel', e => { e.preventDefault(); const p = svgPt(e); zoomAt(Math.exp(e.deltaY * 0.0015), p.x, p.y); }, { passive: false });
 let drag = null;
