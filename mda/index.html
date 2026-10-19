@@ -561,6 +561,8 @@ function init() {
   foreign(SC.cnCoastGuard, 'ccg', '중국 해경함', true, '412');
   foreign(SC.jpNavy, 'jpn', '일본 해상자위대 호위함', false);
   foreign(SC.ruNavy, 'run', '러시아 해군 구축함', false);
+  targets.push({ id: SC.ruTransit.id, cls: 'run', kind: 'surface', truth: 'N', type: '러시아 해군 호위함', pos: SC.ruTransit.path[1].slice(), hdg: 200, spd: 14,
+    ais: false, emitter: EMIT.mil, mode: 'path', wp: SC.ruTransit.path, wi: 2, dir: 1 });
   let n = 0;
   SC.routes.forEach(rt => { for (let k = 0; k < rt[0]; k++) targets.push(routeShip(rt, n++)); });
   SC.ferries.forEach(rt => { for (let k = 0; k < rt[0]; k++) targets.push(routeShip(rt, n++, { type: '연안 여객선', mid: '440', spd: 14 })); });
