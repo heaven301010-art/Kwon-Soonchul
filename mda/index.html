@@ -1265,7 +1265,7 @@ function renderBoxes(det) {
   domCls = domainClsCounts();
   const all = {};
   for (const tr of tracks.values()) { if (tr.lost) continue; const k = clsOf(byId.get(tr.id), tr); if (k) all[k] = (all[k] || 0) + 1; }
-  setHTML($('clsum'), 'clsum', `<h3>보유 해상 표적 선종별 (추적 중)</h3>${kgrid(all, false)}`);
+  setHTML($('clsum'), 'clsum', `<h3>해양표적 식별 및 추적현황</h3>${kgrid(all, false)}`);
   for (const [dom, d] of Object.entries(DOMS)) {
     const box = document.querySelector(`.box[data-dom="${dom}"]`);
     box.classList.toggle('off', !layerOn[dom]);
