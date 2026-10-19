@@ -73,15 +73,19 @@ button { font: inherit; color: inherit; }
 
 /* 격자 배치 */
 .grid { flex: 1; min-height: 0; display: grid; gap: 8px; grid-template-columns: minmax(0, 1fr) 340px; grid-template-areas: "map mda"; }
-/* 출처별 정보칸은 해도 안의 네모 상자: 위(우주·항공), 왼쪽(지상), 오른쪽(수상), 아래(수중) */
-.box { position: absolute; z-index: 2; width: 250px; max-height: 30%; overflow: auto; background: color-mix(in srgb, var(--panel) 93%, transparent);
-  border: 1px solid var(--line); border-top: 3px solid var(--c); border-radius: 4px; box-shadow: 0 2px 8px color-mix(in srgb, var(--fg) 14%, transparent); padding: 7px 10px 8px; }
-.box[data-dom="space"] { --c: var(--l-space); top: 8px; left: 8px; }
-.box[data-dom="air"] { --c: var(--l-air); top: 8px; right: 8px; }
-.box[data-dom="ground"] { --c: var(--l-ground); left: 8px; top: 50%; transform: translateY(-50%); }
-.box[data-dom="surface"] { --c: var(--l-surf); right: 8px; top: 50%; transform: translateY(-50%); }
-.box[data-dom="under"] { --c: var(--l-under); left: 8px; bottom: 8px; }
-.mapwrap.nobox .box { display: none; }
+/* 출처별 정보칸은 해도 오른쪽의 큰 상자 하나에 모은다: 우주·항공·지상·수상·수중 순 */
+.srcpanel { position: absolute; z-index: 2; top: 8px; right: 8px; width: 272px; max-height: calc(100% - 16px); overflow-y: auto;
+  background: color-mix(in srgb, var(--panel) 94%, transparent); border: 1px solid var(--line); border-radius: 5px;
+  box-shadow: 0 2px 10px color-mix(in srgb, var(--fg) 14%, transparent); }
+.srcpanel > h2 { position: sticky; top: 0; z-index: 1; margin: 0; padding: 7px 11px; font-size: 13.5px; font-weight: 700; background: var(--panel); border-bottom: 1px solid var(--line); }
+.box { border-left: 3px solid var(--c); padding: 7px 10px 8px; }
+.box + .box { border-top: 1px solid var(--line); }
+.box[data-dom="space"] { --c: var(--l-space); }
+.box[data-dom="air"] { --c: var(--l-air); }
+.box[data-dom="ground"] { --c: var(--l-ground); }
+.box[data-dom="surface"] { --c: var(--l-surf); }
+.box[data-dom="under"] { --c: var(--l-under); }
+.mapwrap.nobox .srcpanel { display: none; }
 .box.off { opacity: .55; }
 .bh { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
 .bh h2 { margin: 0; font-size: 13.5px; font-weight: 700; color: var(--c); }
@@ -108,9 +112,9 @@ button { font: inherit; color: inherit; }
 .mapview { position: absolute; inset: 0; }
 #map { width: 100%; height: 100%; display: block; touch-action: none; cursor: grab; user-select: none; }
 #map.drag { cursor: grabbing; }
-.zoom { position: absolute; bottom: 8px; right: 8px; z-index: 3; display: flex; flex-direction: column; gap: 4px; }
+.zoom { position: absolute; top: 8px; left: 8px; z-index: 3; display: flex; flex-direction: column; gap: 4px; }
 .zoom .btn { width: 30px; height: 30px; padding: 0; font-size: 15px; }
-.bounds { position: absolute; left: 50%; transform: translateX(-50%); bottom: 8px; z-index: 3; justify-content: center; display: flex; gap: 4px 12px; flex-wrap: wrap; align-items: center; background: color-mix(in srgb, var(--panel) 88%, transparent); border: 1px solid var(--line); border-radius: 5px; padding: 4px 9px; font-size: 12px; max-width: calc(100% - 16px); }
+.bounds { position: absolute; left: 8px; bottom: 8px; z-index: 3; justify-content: flex-start; display: flex; gap: 4px 12px; flex-wrap: wrap; align-items: center; background: color-mix(in srgb, var(--panel) 88%, transparent); border: 1px solid var(--line); border-radius: 5px; padding: 4px 9px; font-size: 12px; max-width: calc(100% - 300px); }
 .bounds label { display: inline-flex; gap: 5px; align-items: center; cursor: pointer; white-space: nowrap; }
 .bounds svg { flex: none; }
 .bounds b { font-weight: 600; color: var(--muted); }
@@ -241,9 +245,11 @@ textarea.report { width: 100%; min-height: 150px; font: 12px/1.5 var(--font-data
   .mda { overflow: visible; contain: none; }
 }
 @media (max-width: 860px) {
-  /* 좁은 화면에서도 정보칸은 해도 안에 두되, 이름과 탐지 수만 보이는 작은 상자로 줄이고 누르면 펼친다 */
+  /* 좁은 화면에서도 큰 상자는 해도 오른쪽에 두고, 출처별로 이름과 탐지 수만 보이다가 누르면 펼친다 */
   .mapwrap { height: auto; aspect-ratio: 3 / 4; max-width: 100%; }
-  .box { width: calc(50% - 12px); max-height: none; overflow: hidden; padding: 4px 7px 5px; cursor: pointer; }
+  .srcpanel { width: calc(54% - 8px); }
+  .srcpanel > h2 { font-size: 12px; padding: 5px 8px; }
+  .box { padding: 4px 7px 5px; cursor: pointer; }
   .box .bh { margin-bottom: 2px; gap: 4px; }
   .box .bh h2 { font-size: 12px; }
   .box .bh small, .box .assets, .box .feed { display: none; }
@@ -252,13 +258,11 @@ textarea.report { width: 100%; min-height: 150px; font: 12px/1.5 var(--font-data
   .box .stats div { min-width: 0; }
   .box .stats b { font-size: 13px; }
   .box .stats span { font-size: 9.5px; }
-  .box.open { z-index: 5; width: calc(100% - 16px); max-height: 70%; overflow: auto; background: var(--panel); }
   .box.open .assets, .box.open .feed { display: grid; }
-  .box.open .bh small { display: inline; }
-  .bounds { left: auto; right: 46px; transform: none; bottom: 8px; width: calc(50% - 58px); max-width: none; gap: 2px 8px; padding: 3px 6px; font-size: 10.5px; justify-content: flex-start; }
+  .box.open .assets li span:first-child { white-space: normal; }
+  .bounds { width: calc(46% - 16px); max-width: none; gap: 2px 8px; padding: 3px 6px; font-size: 10.5px; }
   .bounds b { width: 100%; }
   .bounds svg { width: 14px; }
-  .zoom .btn { width: 30px; height: 30px; }
   .ctl { margin-left: 0; }
 }
 </style>
@@ -307,11 +311,14 @@ textarea.report { width: 100%; min-height: 150px; font: 12px/1.5 var(--font-data
       <label><input type="checkbox" id="bdINFRA" checked><svg width="22" height="6"><line x1="0" y1="3" x2="22" y2="3" class="cable" stroke-dasharray="7 2 1 2"/></svg>해양 기반시설</label>
     </div>
    </div>
-    <section class="box" data-dom="space"></section>
-    <section class="box" data-dom="air"></section>
-    <section class="box" data-dom="ground"></section>
-    <section class="box" data-dom="surface"></section>
-    <section class="box" data-dom="under"></section>
+    <aside class="srcpanel" aria-label="출처별 센서 정보">
+      <h2>출처별 센서 정보</h2>
+      <section class="box" data-dom="space"></section>
+      <section class="box" data-dom="air"></section>
+      <section class="box" data-dom="ground"></section>
+      <section class="box" data-dom="surface"></section>
+      <section class="box" data-dom="under"></section>
+    </aside>
   </div>
 
   <aside class="mda">
@@ -1333,7 +1340,6 @@ document.querySelector('.grid').addEventListener('click', e => {
   const bx = e.target.closest('.box');
   if (bx && !e.target.closest('[data-layer]') && matchMedia('(max-width: 860px)').matches) {
     const was = bx.classList.contains('open');
-    document.querySelectorAll('.box.open').forEach(b => b.classList.remove('open'));
     if (!was) bx.classList.add('open');
     return;
   }
@@ -1357,7 +1363,7 @@ function fitView() {
   const r = svg.getBoundingClientRect(), ar = r.width && r.height ? r.width / r.height : VW / VH;
   let h = VH * 0.86, w = h * ar;
   if (w > VW) { w = VW; h = w / ar; }
-  vb = { x: X(127.4) - w / 2, y: Y(36.6) - h / 2, w, h };
+  vb = { x: X(127.4) - w / 2 + w * 0.12, y: Y(36.6) - h / 2, w, h };
   clampVB(); setVB(); drawDyn();
 }
 new ResizeObserver(fitView).observe(document.querySelector('.mapview'));
