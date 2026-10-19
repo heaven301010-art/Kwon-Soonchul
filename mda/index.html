@@ -200,6 +200,16 @@ button { font: inherit; color: inherit; }
 .stab tr.gh td { font-weight: 600; color: var(--muted); padding-top: 6px; border-bottom: 1px solid var(--line); }
 .stab td.st { text-align: right; }
 .sattab { max-height: 280px; overflow-y: auto; }
+.emsall { display: flex; align-items: center; gap: 8px; font-size: 12.5px; margin-bottom: 6px; }
+.etab { width: 100%; border-collapse: collapse; font-size: 11.5px; }
+.etab th { font-weight: 600; color: var(--muted); font-size: 10.5px; text-align: left; padding: 2px 4px 3px 0; border-bottom: 1px solid var(--line); }
+.etab td { padding: 3px 4px 3px 0; border-bottom: 1px dotted var(--line); vertical-align: top; }
+.etab td small { display: block; color: var(--muted); font-size: 10.5px; }
+.etab td.n { text-align: right; font-family: var(--font-data); white-space: nowrap; }
+.chip.lv0 { color: var(--ne); border-color: color-mix(in srgb, var(--ne) 45%, transparent); }
+.chip.lv1 { color: var(--fr); border-color: color-mix(in srgb, var(--fr) 45%, transparent); }
+.chip.lv2 { color: var(--su); border-color: color-mix(in srgb, var(--su) 45%, transparent); }
+.chip.lv3 { color: var(--ho); border-color: color-mix(in srgb, var(--ho) 55%, transparent); font-weight: 600; }
 .csum { display: flex; flex-wrap: wrap; gap: 3px 10px; font-size: 12px; color: var(--muted); margin-bottom: 6px; }
 .csum b { font-family: var(--font-data); font-weight: 500; color: var(--fg); }
 .chip.warn { color: var(--su); border-color: color-mix(in srgb, var(--su) 45%, transparent); }
@@ -265,6 +275,8 @@ textarea.report { width: 100%; min-height: 150px; font: 12px/1.5 var(--font-data
 .rg.air { stroke: color-mix(in srgb, var(--l-air) 70%, transparent); fill: color-mix(in srgb, var(--l-air) 6%, transparent); }
 .rg.space { stroke: color-mix(in srgb, var(--l-space) 60%, transparent); fill: color-mix(in srgb, var(--l-space) 5%, transparent); }
 .rg.unc { stroke: var(--muted); fill: none; }
+.rg.gnssz { stroke: var(--su); fill: color-mix(in srgb, var(--su) 5%, transparent); }
+.btx.gnss { fill: var(--su); }
 .rg.jamz { stroke: var(--ho); fill: color-mix(in srgb, var(--ho) 6%, transparent); }
 .rg.yam { stroke: var(--infra); fill: color-mix(in srgb, var(--infra) 6%, transparent); }
 .swl { fill: none; stroke: var(--l-space); stroke-linecap: butt; stroke-linejoin: round; }
@@ -398,6 +410,10 @@ textarea.report { width: 100%; min-height: 150px; font: 12px/1.5 var(--font-data
       <h2>기관 간 정보 공유</h2>
       <svg class="share" id="shareSvg" viewBox="0 0 320 262" role="img" aria-label="해수부, 해경, 기상청, KIOST·국립해양조사원, 해군, 국가 MDA 플랫폼, 해외 IFC 사이의 정보 흐름"></svg>
       <ul class="log" id="shareLog"></ul>
+    </section>
+    <section>
+      <h2>전자기스펙트럼 영향성 평가</h2>
+      <div id="emsInfo"></div>
     </section>
     <section>
       <h2>우군 함정 위성통신 현황</h2>
@@ -839,6 +855,23 @@ function updateComms() {
     comm[t.id] = { key, sat, rate, lat, loss, status, inZone, since: prev && prev.status === status ? prev.since : T };
   });
 }
+// GPS 전파교란: 영향권 안 선박의 GPS 기반 위치 보고(AIS·V-PASS)가 어긋난다. 교란원에 가까울수록 오차가 크다
+let gnssMis = new Set(), gnssZone = 0;
+const gnssOn = () => T >= SC.gnss.at;
+function gnssErr(t) {
+  if (!gnssOn() || t.truth === 'F' || (!t.ais && !t.vpass)) return null;
+  const d = dist(t.pos, SC.gnss.center); if (d > SC.gnss.r) return null;
+  const mag = 0.4 + 2.6 * (1 - d / SC.gnss.r), h = [...t.id].reduce((a2, c) => a2 + c.charCodeAt(0), 0);
+  const ang = (h * 37 + T * 3) * D2R;
+  return [mag * Math.sin(ang), mag * Math.cos(ang)];
+}
+// 우군 함정 항법: 교란 영향권에서는 GPS 오차가 커지고, 대응을 승인하면 관성항법·eLoran으로 바꾼다
+function navState(t) {
+  const d = dist(t.pos, SC.gnss.center), inZone = gnssOn() && d <= SC.gnss.r, k = Math.abs(Math.sin(T / 6 + t.id.length));
+  if (!inZone) return { mode: 'GPS', err: 3 + 4 * k, status: '정상', inZone };
+  if (flags.gnssAct != null) return { mode: '관성항법·eLoran', err: 15 + 25 * k, status: '주의', inZone };
+  return { mode: 'GPS (교란)', err: 80 + 520 * (1 - d / SC.gnss.r) * (0.6 + 0.4 * k), status: '교란', inZone };
+}
 const fmtRate = r => r >= 1 ? `${r.toFixed(1)} Mbps` : `${(r * 1000).toFixed(r < 0.1 ? 1 : 0)} kbps`;
 
 // ── 탐지와 융합 ───────────────────────────────────────
@@ -913,6 +946,8 @@ function step(dt) {
     addLog(`${k.o.name} ${k.mis === 'rf' ? '신호 수집' : '긴급 촬영'} ${hit ? '완료' : '종료 (목표 미탐지)'}.`);
   }
   if (T - commAt >= 0.5) { commAt = T; updateComms(); }
+  gnssMis = new Set();
+  gnssZone = gnssOn() ? targets.filter(t => t.truth !== 'F' && (t.ais || t.vpass) && active(t) && dist(t.pos, SC.gnss.center) <= SC.gnss.r).length : 0;
   for (const t of targets) {
     let tr = tracks.get(t.id);
     if (!active(t)) { if (tr && t.gone) { tracks.delete(t.id); if (sel === t.id) sel = null; } continue; }
@@ -931,6 +966,11 @@ function step(dt) {
         tr.by[x] = T;
       }
       let pos = t.pos.slice();
+      const ge = gnssErr(t);
+      if (ge && s.some(x => x === 'ais' || x === 'vpass')) {
+        if (s.every(x => COOP.has(x))) pos = fromLocal(t.pos, ge[0], ge[1]);   // 협조 보고만 있으면 어긋난 위치를 그대로 쓴다
+        else if (Math.hypot(ge[0], ge[1]) > 0.3) gnssMis.add(t.id);            // 레이더 등과 대조하면 불일치가 드러난다
+      }
       if (t.spoof && s.includes('ais')) {
         if (s.length === 1) pos = tr.spoofSeen ? tr.pos : fromLocal(t.pos, t.spoof[0], t.spoof[1]);
         else if (!tr.spoofSeen) {
@@ -1018,6 +1058,7 @@ const CAT = {
   shadow: ['제재 회피·그림자선단 의심', '국외 공유 가능', ['해경', '해수부', '해외 IFC']],
   jointex: ['주변국 연합 군사활동', '국내 한정', ['해경']],
   jam: ['전자전·위성통신 방해', '국내 한정', ['해경']],
+  gnss: ['전자전·GPS 전파교란 (항행 안전)', '국외 공유 가능', ['해수부', '해경', '해외 IFC']],
   survey: ['무단 해양과학조사 의심', '국내 한정', ['해경', '해수부', '외교부']]
 };
 function raise(a) {
@@ -1094,6 +1135,21 @@ function distToLine(p, line) {
   return best;
 }
 function scenario(dt = 0) {
+  // GPS 전파교란: 레이더 위치와 AIS·V-PASS 위치가 어긋나는 선박이 8척 이상 5분 넘게 이어지면
+  flags.gnssT = gnssMis.size >= 8 ? (flags.gnssT || 0) + dt : 0;
+  if (flags.gnssT > 5) raise({ id: 'gnss', sev: 'crit', title: 'GPS 전파교란 의심 (서해 북부)', tgt: '서해 북부',
+    rec: '항행경보(NAVTEX) 발령, 함정 관성항법·eLoran 전환, RF 위성 교란원 탐지', approve: () => {
+      flags.gnssAct = T; addReq('항행경보 발령 · 해수부·해경 공유', '완료'); addReq('RF 위성 GPS 교란원 탐지 · 서해 북부', '수행');
+      feed('surface', '서해 북부 GPS 교란 항행경보 발령'); feed('ground', '서해 북부 함정 관성항법·eLoran 전환');
+    } });
+  if (flags.gnssAct != null && !flags.gnssLoc) {
+    const rfo = SATS.find(o => o.use && o.mis === 'rf' && o.cur && dist(satPos(o, T), SC.gnss.center) < 700);
+    if (rfo) { flags.gnssLoc = T; addLog(`${rfo.name} GPS 교란 신호원 위치 추정: ${SC.gnss.name} (오차 ±10km).`); feed('space', `${rfo.name} GPS 교란원 위치 추정 · ${SC.gnss.name}`); }
+  }
+  if (flags.gnssAct != null && !flags.gnssDone && ((flags.gnssLoc && T - flags.gnssAct > 30) || T - flags.gnssAct > 150)) {
+    flags.gnssDone = true;
+    closeAlert('gnss', flags.gnssLoc ? `항행경보 전파, 함정 관성항법 전환, 교란원 위치 추정(${SC.gnss.name})` : '항행경보 전파, 함정 관성항법 전환 (교란원 추가 탐지 필요)');
+  }
   // 위성통신 재밍: 영향권 함정 2척 이상이 5분 넘게 두절되면
   const jammed = Object.entries(comm).filter(([, c]) => c.inZone && c.status === '두절' && T - c.since >= 5).map(([id]) => id);
   if (jammed.length >= 2) raise({ id: 'jam', sev: 'crit', title: '위성통신 이상 (재밍 의심, 서해 북부)', tgt: jammed.join('·'),
@@ -1359,6 +1415,13 @@ function drawDyn() {
       h += `<path class="f-space" d="M${f1(x)},${f1(y + 4 * z)} l${f1(4 * z)},${f1(-7 * z)} h${f1(-8 * z)}Z"/>` + txt('lbl t-space', x + (sd === 'r' ? -7 : 7) * z, y + 2 * z, 10 * z, nm, sd === 'r' ? 'end' : 'start');
     });
   }
+  // GPS 전파교란 영향권
+  if (alerts.some(al => al.id === 'gnss')) {
+    const g = SC.gnss;
+    h += `<circle class="rg gnssz" cx="${f1(X(g.center[0]))}" cy="${f1(Y(g.center[1]))}" r="${f1(g.r * PXKM)}"${dash(z, 3, 3)}/>`
+      + `<circle class="rg gnssz" cx="${f1(X(g.center[0]))}" cy="${f1(Y(g.center[1]))}" r="${f1(g.r * .5 * PXKM)}"${dash(z, 3, 3)}/>`;
+    h += txt('btx gnss', X(g.center[0]), Y(g.center[1]) + g.r * PXKM + 12 * z, 10.5 * z, `GPS 전파교란 영향권 (${g.name} 추정)`, 'middle');
+  }
   // 위성통신 재밍 의심 구역
   if (alerts.some(al => al.id === 'jam')) {
     h += `<circle class="rg jamz" cx="${f1(X(SC.jam.center[0]))}" cy="${f1(Y(SC.jam.center[1]))}" r="${f1(SC.jam.r * PXKM)}"${dash(z, 6, 4)}/>`;
@@ -1604,7 +1667,8 @@ function renderPanel() {
       <dt>탐지 출처</dt><dd>${recent.length ? recent.join(', ') : '없음'}</dd>
       <dt>최초·최종</dt><dd>${clock(tr.first).hm} · ${clock(tr.seen).hm}</dd>
       ${tr.note ? `<dt>비고</dt><dd>${esc(tr.note)}</dd>` : ''}
-      ${comm[t.id] ? `<dt class="rfh">위성통신</dt><dd class="rfh">${LINKS[comm[t.id].key].nm}${comm[t.id].sat ? ` (${comm[t.id].sat.id})` : ''} · ${LINKS[comm[t.id].key].sub}</dd>
+      ${t.cls === 'kn' || t.cls === 'kcg' ? (nv => `<dt class="rfh">항법</dt><dd class="rfh">${nv.mode}</dd><dt>위치 오차</dt><dd class="${nv.status === '정상' ? '' : 'warn'}">약 ${Math.round(nv.err)}m · ${nv.status}</dd>`)(navState(t)) : ''}
+      ${comm[t.id] ? `<dt>위성통신</dt><dd class="rfh">${LINKS[comm[t.id].key].nm}${comm[t.id].sat ? ` (${comm[t.id].sat.id})` : ''} · ${LINKS[comm[t.id].key].sub}</dd>
         <dt>전송·지연</dt><dd>${fmtRate(comm[t.id].rate)} · ${Math.round(comm[t.id].lat)}ms · 손실 ${comm[t.id].loss.toFixed(1)}%</dd>
         <dt>통신 상태</dt><dd class="${comm[t.id].status === '정상' ? '' : 'warn'}">${comm[t.id].status}${comm[t.id].inZone ? ' (재밍 영향권)' : ''}</dd>` : ''}
       ${tr.rf ? `<dt class="rfh">RF 신호</dt><dd class="rfh">${esc(tr.rf.type)}</dd><dt>주파수</dt><dd>${esc(tr.rf.band)}</dd>
@@ -1618,6 +1682,33 @@ function renderPanel() {
     <div class="r">${a.status === 'done' ? '평가: ' + esc(a.result) : '→ ' + esc(a.rec)}</div>
     <div class="a"><span class="chip ${a.status}">${stName[a.status]}</span><span class="chip">${esc(a.cat)}</span><span class="chip ${a.share === '국내 한정' ? 'cls' : 'shr'}">${a.share}</span><span class="chip">→ ${a.to.length ? a.to.join('·') : '군 내부'}</span>${a.status === 'open' ? `<button class="btn go" type="button" data-approve="${a.id}">조치 승인</button>` : ''}<span class="empty">${clock(a.t).hm}</span></div></div>`).join('')
     : '<p class="empty">현재 이상징후가 없습니다. 시나리오가 진행되면 AIS 신호 소실, EEZ 침범, NLL 침범, 수중 접촉, KADIZ 진입이 차례로 나타납니다.</p>');
+  // 전자기스펙트럼 영향성 평가: 대역·체계별 영향 범위, 영향 받는 우군·민간 수, 평가 등급, 대응
+  {
+    const LV = ['정상', '주의', '경계', '심각'];
+    const ours = targets.filter(t => t.cls === 'kn' || t.cls === 'kcg');
+    const navs = ours.map(t => navState(t)), gnssOurs = navs.filter(nv => nv.inZone).length;
+    const cm = Object.values(comm), satcomBad = cm.filter(c => c.inZone).length, satcomCut = cm.filter(c => c.status === '두절').length;
+    const hfUse = cm.filter(c => c.key === 'hf').length, spoofN = [...tracks.values()].filter(tr => tr.spoofSeen).length;
+    const gAlert = alerts.find(al => al.id === 'gnss'), jAlert = alerts.find(al => al.id === 'jam');
+    const rows = [
+      ['GNSS (GPS L1·L2)', '1575.42·1227.6MHz', gnssOn() ? `${SC.gnss.name} 반경 ${SC.gnss.r}km 교란` : '간섭 없음', gnssOurs, gnssZone,
+        !gnssOn() ? 0 : flags.gnssAct != null ? 1 : gAlert ? 3 : 2, flags.gnssAct != null ? '관성항법·eLoran 전환, 항행경보' : gnssOn() ? '레이더·AIS 위치 대조로 감시' : '–'],
+      ['위성통신 (X·Ku 대역)', '7.25–8.4·10.7–14.5GHz', T >= SC.jam.at ? `서해 북부 반경 ${SC.jam.r}km 재밍` : '간섭 없음', satcomBad, 0,
+        satcomCut >= 2 ? 3 : satcomBad ? (flags.jamAct != null ? 1 : 2) : 0, flags.jamAct != null ? '저궤도 위성통신 우회' : satcomBad ? '링크 품질 감시' : '–'],
+      ['AIS (VHF)', '161.975·162.025MHz', `위치 위장 ${spoofN}척 · GPS 오차 ${gnssMis.size}척`, 0, spoofN + gnssMis.size,
+        spoofN + gnssMis.size >= 8 ? 2 : spoofN + gnssMis.size ? 1 : 0, spoofN + gnssMis.size ? 'SAR·레이더 위치 대조' : '–'],
+      ['해상 VHF 무선', '156.8MHz (16채널)', '간섭 없음', 0, 0, 0, '–'],
+      ['레이더 (X·S 대역)', '9.2–9.5·2.9–3.1GHz', '간섭 없음', 0, 0, 0, '–'],
+      ['전술데이터링크', '960–1215MHz', gnssOurs && flags.gnssAct == null ? '시각 동기 GPS 의존 · 주의' : '정상 운용', gnssOurs && flags.gnssAct == null ? gnssOurs : 0, 0,
+        gnssOurs && flags.gnssAct == null ? 1 : 0, gnssOurs ? '내부 시각원 동기' : '–'],
+      ['HF 무선', '3–30MHz', hfUse ? `위성 우회 사용 ${hfUse}척` : '예비', hfUse, 0, 0, '–']
+    ];
+    const worst = Math.max(...rows.map(r => r[5]));
+    setHTML($('emsInfo'), 'ems', `<div class="emsall">종합 평가 <span class="chip lv${worst}">${LV[worst]}</span><span class="empty">${[gAlert && 'GPS 교란', jAlert && '위성통신 재밍'].filter(Boolean).join(' · ') || '특이사항 없음'}</span></div>
+      <table class="etab"><thead><tr><th>대역·체계</th><th>영향</th><th class="n">우군</th><th class="n">민간</th><th>평가</th></tr></thead><tbody>`
+      + rows.map(r => `<tr><td>${r[0]}<small>${r[1]}</small></td><td>${r[2]}<small>${r[6]}</small></td><td class="n">${r[3]}</td><td class="n">${r[4]}</td><td><span class="chip lv${r[5]}">${LV[r[5]]}</span></td></tr>`).join('')
+      + '</tbody></table>');
+  }
   // 우군 함정 위성통신
   {
     const rows = targets.filter(t => comm[t.id]).map(t => [t, comm[t.id]]);
