@@ -42,6 +42,8 @@
   --k-ccg: #ef7d00;
   --k-jpn: #7048e8;
   --k-run: #6b4a24;
+  --k-usn: #0b3d91;
+  --k-jcg: #d6336c;
   --k-merchant: #2b8a3e;
   --k-fishing: #8fb31b;
   --k-other: #7d8a94;
@@ -266,6 +268,8 @@ textarea.report { width: 100%; min-height: 150px; font: 12px/1.5 var(--font-data
 .tid.F { fill: var(--fr); } .tid.H { fill: var(--ho); } .tid.S { fill: var(--su); } .tid.U { fill: var(--un); } .tid.A { fill: var(--l-air); }
 .sy.k-kn { fill: var(--k-kn); } .sy.k-kcg { fill: var(--k-kcg); } .sy.k-nkn { fill: var(--k-nkn); } .sy.k-cnn { fill: var(--k-cnn); }
 .sy.k-ccg { fill: var(--k-ccg); } .sy.k-jpn { fill: var(--k-jpn); } .sy.k-run { fill: var(--k-run); } .sy.k-merchant { fill: var(--k-merchant); }
+.sy.k-usn { fill: var(--k-usn); } .sy.k-jcg { fill: var(--k-jcg); } .ld.k-usn { stroke: var(--k-usn); } .ld.k-jcg { stroke: var(--k-jcg); }
+.tid.k-usn { fill: var(--k-usn); } .tid.k-jcg { fill: var(--k-jcg); }
 .sy.k-fishing { fill: var(--k-fishing); } .sy.k-other { fill: var(--k-other); } .sy.k-unk { fill: var(--k-unk); }
 .ld.k-kn { stroke: var(--k-kn); } .ld.k-kcg { stroke: var(--k-kcg); } .ld.k-nkn { stroke: var(--k-nkn); } .ld.k-cnn { stroke: var(--k-cnn); }
 .ld.k-ccg { stroke: var(--k-ccg); } .ld.k-jpn { stroke: var(--k-jpn); } .ld.k-run { stroke: var(--k-run); } .ld.k-merchant { stroke: var(--k-merchant); }
@@ -494,10 +498,10 @@ const ICLASS = { ais: '민간', cctv: '기관', vpass: '기관', lrit: '기관',
 const iclass = k => ICLASS[k] || '군사';
 // 선종: 해상 표적을 소속·용도별로 나눠 색으로 구분한다
 const CLS = {
-  kn: '한국 해군', kcg: '한국 해경', nkn: '북한 해군', cnn: '중국 해군', ccg: '중국 해경', jpn: '일본 해상자위대', run: '러시아 해군',
+  kn: '한국 해군', kcg: '한국 해경', usn: '미국 해군', nkn: '북한 해군', cnn: '중국 해군', ccg: '중국 해경', jpn: '일본 해상자위대', jcg: '일본 해상보안청', run: '러시아 해군',
   merchant: '상선', fishing: '어선', other: '기타·조사선', unk: '미식별'
 };
-const FOREIGN_NAVY = new Set(['cnn', 'jpn', 'run', 'ccg']);
+const FOREIGN_NAVY = new Set(['cnn', 'jpn', 'run', 'ccg', 'jcg']);
 // 미상(U)이면 선종을 아직 모르므로 '미식별'로 칠한다
 const clsOf = (t, tr) => t.kind === 'air' ? null : (tr.affil === 'U' ? 'unk' : t.cls);
 const AFF = { F: '아군', H: '적성', S: '의심', U: '미상', N: '중립' };
@@ -561,6 +565,9 @@ function init() {
   foreign(SC.cnCoastGuard, 'ccg', '중국 해경함', true, '412');
   foreign(SC.jpNavy, 'jpn', '일본 해상자위대 호위함', false);
   foreign(SC.ruNavy, 'run', '러시아 해군 구축함', false);
+  foreign(SC.jpCoastGuard, 'jcg', '일본 해상보안청 순시선', true, '431');
+  SC.usNavy.forEach(([id, x, y, r, type]) => targets.push({ id, cls: 'usn', kind: 'surface', truth: 'F', type, pos: [x, y], home: [x, y],
+    hdg: 0, spd: 12, ais: false, emitter: EMIT.mil, mode: 'patrol', ph: rnd() * 360, orbitR: r }));
   targets.push({ id: SC.ruTransit.id, cls: 'run', kind: 'surface', truth: 'N', type: '러시아 해군 호위함', pos: SC.ruTransit.path[1].slice(), hdg: 200, spd: 14,
     ais: false, emitter: EMIT.mil, mode: 'path', wp: SC.ruTransit.path, wi: 2, dir: 1 });
   let n = 0;
@@ -1197,7 +1204,7 @@ function drawDyn() {
     if (layerOn.space && tr.rf && tr.affil !== 'F' && T - tr.rf.t <= 15) h += `<ellipse class="rfe" cx="${f1(x)}" cy="${f1(y)}" rx="${f1(tr.rf.err * PXKM)}" ry="${f1(tr.rf.err * .55 * PXKM)}" transform="rotate(103 ${f1(x)} ${f1(y)})"${dash(z, 2, 2)}/>`;
     if (t.mode === 'intercept' && t.goal) { const g = t.goal(); if (g) h += `<line class="ic"${dash(z, 5, 4)} x1="${f1(x)}" y1="${f1(y)}" x2="${f1(X(g[0]))}" y2="${f1(Y(g[1]))}"/>`; }
     h += `<g${tr.lost ? ' class="lost"' : ''}>${sym(tr.affil, t.kind, x, y, big ? z : z * .72, k)}</g>`;
-    if (big) labels += `<g${tr.lost ? ' class="lost"' : ''}>` + txt('tid ' + tr.affil + (FOREIGN_NAVY.has(k) || k === 'kcg' ? ' k-' + k : ''), x + 8 * z, y - 6 * z, 11 * z, t.id) + '</g>';
+    if (big) labels += `<g${tr.lost ? ' class="lost"' : ''}>` + txt('tid ' + tr.affil + (FOREIGN_NAVY.has(k) || k === 'kcg' || k === 'usn' ? ' k-' + k : ''), x + 8 * z, y - 6 * z, 11 * z, t.id) + '</g>';
     if (sel === t.id) h += `<circle class="selring" cx="${f1(x)}" cy="${f1(y)}" r="${f1(12 * z)}"/>`;
   }
   gDyn.innerHTML = h + labels;
