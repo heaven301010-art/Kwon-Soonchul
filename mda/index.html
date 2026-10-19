@@ -117,6 +117,36 @@ button { font: inherit; color: inherit; }
 .box[data-dom="surface"] { --c: var(--l-surf); }
 .box[data-dom="under"] { --c: var(--l-under); }
 .mapwrap.nobox .srcpanel { display: none; }
+[hidden] { display: none !important; }
+.viewsw { position: absolute; top: 8px; left: 50%; transform: translateX(-50%); z-index: 3; }
+.viewsw .btn { padding: 4px 10px; }
+@media (max-width: 860px) { .viewsw { left: 8px; transform: none; } }
+#arc { width: 100%; height: 100%; display: block; background: var(--bg); }
+.asea { fill: var(--sea); }
+.aland { fill: var(--land); }
+.aice { fill: #f4f8fb; stroke: #a9c3d3; stroke-width: 1; opacity: .92; }
+.aice2 { fill: #e6eff5; opacity: .85; }
+.agl { stroke: var(--grid); fill: none; stroke-width: 1; }
+.acirc { stroke: #6f8fa3; fill: none; stroke-width: 1.2; stroke-dasharray: 6 4; }
+.ageo { stroke: var(--l-space); fill: none; stroke-width: 1.4; stroke-dasharray: 3 4; }
+.aroute { fill: none; stroke-width: 2.4; stroke-linejoin: round; }
+.aroute.NSR { stroke: #0b7285; } .aroute.NWP { stroke: #5c7cfa; } .aroute.TSR { stroke: #868e96; stroke-dasharray: 8 6; }
+.atx { font-family: var(--font-ui); paint-order: stroke; stroke: var(--halo); stroke-width: 3px; stroke-linejoin: round; }
+.atx.sea { fill: var(--sea-label); font-weight: 700; } .atx.port { fill: var(--muted); } .atx.base { fill: var(--ho); } .atx.st { fill: #0b7285; font-style: italic; }
+.atx.rt { font-weight: 700; } .atx.rt.NSR { fill: #0b7285; } .atx.rt.NWP { fill: #5c7cfa; } .atx.rt.TSR { fill: #868e96; }
+.atx.geo { fill: var(--l-space); } .atx.id { font-family: var(--font-data); font-weight: 500; }
+.ash { stroke: var(--halo); stroke-width: 1.2; }
+.ash.kr { fill: #1e6bd0; color: #1e6bd0; } .ash.lng { fill: #2b8a3e; color: #2b8a3e; } .ash.cargo { fill: #5c940d; color: #5c940d; } .ash.ice { fill: #0b7285; color: #0b7285; } .ash.cn { fill: #ef7d00; color: #ef7d00; }
+.ash.run { fill: var(--k-run); color: var(--k-run); } .ash.gov { fill: #7d8a94; color: #7d8a94; } .ash.fish { fill: #8fb31b; color: #8fb31b; }
+.arcpanel .ahd { padding: 7px 10px; border-bottom: 1px solid var(--line); font-size: 12px; }
+.arcpanel .ahd h3 { margin: 0 0 4px; font-size: 11px; color: var(--muted); font-weight: 600; }
+.atab { width: 100%; border-collapse: collapse; font-size: 11px; font-variant-numeric: tabular-nums; }
+.atab th { text-align: left; font-weight: 600; color: var(--muted); font-size: 10px; padding: 2px 3px 3px 0; border-bottom: 1px solid var(--line); }
+.atab td { padding: 2px 3px 2px 0; border-bottom: 1px dotted var(--line); vertical-align: top; }
+.atab td:nth-child(n+2) { white-space: nowrap; }
+.atab td small { display: block; color: var(--muted); font-size: 10px; }
+.atab tr { cursor: pointer; } .atab tr.on td { background: var(--panel-2); }
+.atab i { display: inline-block; width: 8px; height: 8px; border-radius: 2px; margin-right: 4px; }
 .box.off { opacity: .55; }
 .bh { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
 .bh h2 { margin: 0; font-size: 13.5px; font-weight: 700; color: var(--c); }
@@ -379,6 +409,14 @@ textarea.report { width: 100%; min-height: 150px; font: 12px/1.5 var(--font-data
       <button class="btn" id="bZout" type="button" aria-label="축소">−</button>
       <button class="btn" id="bZfit" type="button" aria-label="전체 보기">⤢</button>
     </div>
+    <div class="viewsw seg" role="group" aria-label="해도 전환">
+      <button class="btn" type="button" data-view="kr" aria-pressed="true">한반도 해역</button>
+      <button class="btn" type="button" data-view="arc" aria-pressed="false">북극항로</button>
+    </div>
+    <svg id="arc" viewBox="0 0 1000 1000" preserveAspectRatio="xMinYMid meet" hidden role="img" aria-label="북극 해역 상황도 (북극점 중심 투영)">
+      <defs><clipPath id="aclip"><circle cx="500" cy="500" r="482"></circle></clipPath></defs>
+      <g clip-path="url(#aclip)"><g id="aStatic"></g><g id="aDyn"></g></g>
+    </svg>
     <div class="bounds">
       <b>경계선</b>
       <label><input type="checkbox" id="bdNLL" checked><svg width="22" height="6"><line x1="0" y1="3" x2="22" y2="3" class="nll" stroke-dasharray="6 3"/></svg>NLL</label>
@@ -388,7 +426,11 @@ textarea.report { width: 100%; min-height: 150px; font: 12px/1.5 var(--font-data
       <label><input type="checkbox" id="bdINFRA" checked><svg width="22" height="6"><line x1="0" y1="3" x2="22" y2="3" class="cable" stroke-dasharray="7 2 1 2"/></svg>해양 기반시설</label>
     </div>
    </div>
-    <aside class="srcpanel" aria-label="해양영역인식 종합 정보 현황">
+    <aside class="srcpanel arcpanel" id="arcpanel" hidden aria-label="북극항로 표적관리 현황">
+      <h2>북극항로 표적관리 현황</h2>
+      <div id="arcInfo"></div>
+    </aside>
+    <aside class="srcpanel" id="srcpanel" aria-label="해양영역인식 종합 정보 현황">
       <h2>해양영역인식 종합 정보 현황</h2>
       <div class="clsum" id="clsum"></div>
       <section class="box" data-dom="space"></section>
@@ -460,6 +502,7 @@ textarea.report { width: 100%; min-height: 150px; font: 12px/1.5 var(--font-data
 </main>
 
 <script src="land.js"></script>
+<script src="arcticland.js"></script>
 <script src="scenario.js"></script>
 <script>
 (() => {
@@ -653,7 +696,7 @@ function init() {
   mpa = { id: 'MPA', name: '해상초계기', pos: advance(SC.mpa.center, 0, SC.mpa.r), center: SC.mpa.center.slice(), r: SC.mpa.r, spd: 300, ph: 0, mode: 'orbit', hdg: 90, task: '동해 정찰 궤도' };
   uav = { id: 'UAV', name: '무인기', pos: advance(SC.uav.center, 0, SC.uav.r), center: SC.uav.center.slice(), r: SC.uav.r, spd: 80, ph: 0, mode: 'orbit', hdg: 90, task: '서해 정찰 궤도' };
   passes = []; tasks = []; comm = {}; commAt = -1;
-  buildSats();
+  buildSats(); buildArctic(); arcSel = null;
   addLog('훈련 시나리오 개시. 전 센서 출처 가동.');
   for (let i = 0; i < 30; i++) step(0.2);
 }
@@ -872,6 +915,88 @@ function navState(t) {
   if (flags.gnssAct != null) return { mode: '관성항법·eLoran', err: 15 + 25 * k, status: '주의', inZone };
   return { mode: 'GPS (교란)', err: 80 + 520 * (1 - d / SC.gnss.r) * (0.6 + 0.4 * k), status: '교란', inZone };
 }
+// ── 북극 MDA ─────────────────────────────────────────────
+const AR = SC.arctic, ALAND = window.MDA_ARCTIC_LAND, AK = 482 / 63;
+// 북극점 중심 정거방위 투영: 동경 130°(한반도)가 아래쪽
+const AP = (lon, lat) => { const r = (90 - lat) * AK, th = (lon - 130) * D2R; return [500 + r * Math.sin(th), 500 + r * Math.cos(th)]; };
+const apath = (pts, close) => 'M' + pts.map(q => { const v = AP(q[0], q[1]); return f1(v[0]) + ',' + f1(v[1]); }).join('L') + (close ? 'Z' : '');
+const ACLS = { kr: '한국 관련', lng: 'LNG운반선', cargo: '화물·컨테이너', ice: '러시아 쇄빙선', cn: '중국', run: '러시아 해군', gov: '미·캐나다 정부선', fish: '어선' };
+function iceLat(lon) {
+  lon = ((lon % 360) + 360) % 360; const t = AR.ice;
+  for (let i = 0; i < t.length - 1; i++) if (lon <= t[i + 1][0]) return t[i][1] + (t[i + 1][1] - t[i][1]) * (lon - t[i][0]) / (t[i + 1][0] - t[i][0]);
+  return t[t.length - 1][1];
+}
+const heavyIce = q => q[1] >= iceLat(q[0]) - 1.2;
+function gdist(a, b) {
+  const p1 = a[1] * D2R, p2 = b[1] * D2R, dl = (b[0] - a[0]) * D2R;
+  return 6371 * Math.acos(Math.min(1, Math.sin(p1) * Math.sin(p2) + Math.cos(p1) * Math.cos(p2) * Math.cos(dl)));
+}
+let ARR = {}, arcShips = [], arcView = false, arcSel = null;
+function buildArctic() {
+  const nsr = AR.routes.NSR.pts, i78 = nsr.findIndex(q => q[0] === 78 && q[1] === 74.2);
+  ARR = { NSR: nsr, NWP: AR.routes.NWP.pts, LNG: AR.lngStart.concat(nsr.slice(0, i78).reverse()), cum: {} };
+  for (const k of ['NSR', 'NWP', 'LNG']) { const pts = ARR[k], c = [0]; for (let i = 1; i < pts.length; i++) c.push(c[i - 1] + gdist(pts[i - 1], pts[i])); ARR.cum[k] = c; }
+  arcShips = AR.ships.map(([id, name, flag, type, ice, route, start, dir, kn, kr, cls], i) => {
+    const sh = { id, name, flag, type, ice, route, dir, kn, kr, cls, pos: start.slice(), hdg: 0, spd: kn, ais: cls !== 'run', ph: i * 7, escort: null,
+      mode: route ? 'route' : 'station', center: start.slice(), ang: i * 40, slowT: 0, aisT: 0, rep: { t: 0, pos: start.slice(), src: cls === 'run' ? '위성' : 'S-AIS' } };
+    if (route) {   // 시작 위치에서 가장 가까운 항로 지점부터 출발
+      const pts = ARR[route], c = ARR.cum[route]; let best = 0, bd = 1e9;
+      for (let k = 0; k < pts.length - 1; k++) for (let f = 0; f <= 1.001; f += 0.05) {
+        const q = [pts[k][0] + (pts[k + 1][0] - pts[k][0]) * f, pts[k][1] + (pts[k + 1][1] - pts[k][1]) * f], d = gdist(q, start);
+        if (d < bd) { bd = d; best = c[k] + (c[k + 1] - c[k]) * f; }
+      }
+      sh.s = best; placeOnRoute(sh);
+    }
+    return sh;
+  });
+}
+function placeOnRoute(sh) {
+  const pts = ARR[sh.route], c = ARR.cum[sh.route]; let k = 0;
+  while (k < c.length - 2 && c[k + 1] < sh.s) k++;
+  const f = (sh.s - c[k]) / ((c[k + 1] - c[k]) || 1), a = pts[k], b = pts[k + 1];
+  sh.pos = [a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) * f];
+  const h = bearing(a, b); sh.hdg = sh.dir > 0 ? h : (h + 180) % 360;
+}
+function arcStep(t0, dt) {
+  for (const sh of arcShips) {
+    if (sh.mode === 'route') {
+      // 해빙 가장자리 부근에서는 빙급에 따라 속력이 떨어진다 (Arc4는 쇄빙선 호송 없이는 정체)
+      const heavy = heavyIce(sh.pos);
+      const v = !heavy ? sh.kn : sh.ice === 'Arc7' ? Math.min(sh.kn, 11) : sh.ice === 'Arc4' ? (sh.escort ? 10 : 2.5) : 1;
+      sh.spd = v; sh.heavy = heavy; sh.s += sh.dir * KMMIN(v) * dt;
+      const L = ARR.cum[sh.route][ARR.cum[sh.route].length - 1];
+      if (sh.s >= L) { sh.s = L; sh.dir = -1; } else if (sh.s <= 0) { sh.s = 0; sh.dir = 1; }
+      placeOnRoute(sh); sh.slowT = heavy && v < 3 ? sh.slowT + dt : 0;
+    } else if (sh.mode === 'station') {
+      sh.ang = (sh.ang + KMMIN(sh.kn) * dt / 20 / D2R) % 360; sh.pos = advance(sh.center, sh.ang, 20); sh.hdg = (sh.ang + 90) % 360; sh.spd = sh.kn; sh.heavy = heavyIce(sh.pos);
+    } else if (sh.mode === 'goto') {
+      const tg = arcShips.find(x => x.id === sh.goTo); sh.spd = 20;
+      if (moveToward(sh, tg.pos, 20, dt) || gdist(sh.pos, tg.pos) < 3) { sh.mode = 'escort'; tg.escort = sh.id; tg.escT = T; addLog(`${sh.name}, ${tg.id} 호송 개시.`); feed('surface', `[북극] ${sh.name} ${tg.id} 호송 개시`); }
+    } else if (sh.mode === 'escort') {
+      const tg = arcShips.find(x => x.id === sh.goTo); sh.pos = advance(tg.pos, tg.hdg, 2); sh.hdg = tg.hdg; sh.spd = tg.spd;
+    }
+  }
+  // 위치 보고: 위성 AIS(20분 간격), 극궤도 관측·RF 위성 상공 통과 시 위치 확인
+  const sp = SATS.map(o => o.use ? satPos(o, T) : null);
+  for (const sh of arcShips) {
+    const aisDown = sh.id === AR.aisOff.id && T >= AR.aisOff.at && !flags.arcaisFixed;
+    if (sh.ais && !aisDown && Math.floor((t0 + sh.ph) / 20) !== Math.floor((T + sh.ph) / 20)) { sh.aisT = T; sh.rep = { t: T, pos: sh.pos.slice(), src: 'S-AIS' }; }
+    SATS.forEach((o, i) => {
+      const q = sp[i]; if (!q || q[1] < 55 || (o.mis === 'rf' && sh.ais)) return;
+      if (gdist(q, sh.pos) <= (o.mis === 'rf' ? 600 : 250)) sh.rep = { t: T, pos: sh.pos.slice(), src: `${SAT_MIS[o.mis]} 위성 (${o.name})` };
+    });
+  }
+}
+function arcStatus(sh) {
+  if (sh.escort) return ['호송 중', 1];
+  if (sh.heavy && sh.spd < 3) return ['결빙 정체', 3];
+  if (sh.ais && T - sh.aisT > 120) return ['AIS 공백', 2];
+  if (alerts.some(al => al.id === 'arcmil' && al.status !== 'done') && gdist(sh.pos, AR.exercise.center) < AR.exercise.r + 80) return ['훈련구역 인접', 2];
+  if (sh.heavy) return ['결빙 해역', 1];
+  return ['정상', 0];
+}
+const arcSea = q => AR.seas.reduce((b, s2) => gdist(q, [s2[1], s2[2]]) < gdist(q, [b[1], b[2]]) ? s2 : b)[0];
+
 const fmtRate = r => r >= 1 ? `${r.toFixed(1)} Mbps` : `${(r * 1000).toFixed(r < 0.1 ? 1 : 0)} kbps`;
 
 // ── 탐지와 융합 ───────────────────────────────────────
@@ -946,6 +1071,7 @@ function step(dt) {
     addLog(`${k.o.name} ${k.mis === 'rf' ? '신호 수집' : '긴급 촬영'} ${hit ? '완료' : '종료 (목표 미탐지)'}.`);
   }
   if (T - commAt >= 0.5) { commAt = T; updateComms(); }
+  arcStep(t0, dt);
   gnssMis = new Set();
   gnssZone = gnssOn() ? targets.filter(t => t.truth !== 'F' && (t.ais || t.vpass) && active(t) && dist(t.pos, SC.gnss.center) <= SC.gnss.r).length : 0;
   for (const t of targets) {
@@ -1059,6 +1185,9 @@ const CAT = {
   jointex: ['주변국 연합 군사활동', '국내 한정', ['해경']],
   jam: ['전자전·위성통신 방해', '국내 한정', ['해경']],
   gnss: ['전자전·GPS 전파교란 (항행 안전)', '국외 공유 가능', ['해수부', '해경', '해외 IFC']],
+  arcice: ['북극항로 항행 안전 (결빙)', '국외 공유 가능', ['해수부', '해외 IFC']],
+  arcais: ['북극항로 위치 보고 공백', '국외 공유 가능', ['해수부', '해경']],
+  arcmil: ['북극 군사활동 (항로 인접)', '국내 한정', ['해수부']],
   survey: ['무단 해양과학조사 의심', '국내 한정', ['해경', '해수부', '외교부']]
 };
 function raise(a) {
@@ -1135,6 +1264,34 @@ function distToLine(p, line) {
   return best;
 }
 function scenario(dt = 0) {
+  // 북극 1: Arc4 컨테이너선이 호송 없이 결빙 해역에서 20분 넘게 정체되면
+  const a1 = arcShips.find(x => x.id === 'A01');
+  if (a1.slowT > 20 && !a1.escort) raise({ id: 'arcice', sev: 'warn', title: '[북극] 결빙 정체 위험 (빌키츠키 해협 접근)', tgt: 'A01',
+    rec: '러시아 원자력 쇄빙선 호송 요청, 해빙·기상 정보 공유', approve: () => {
+      const ib = arcShips.filter(x => x.cls === 'ice' && x.mode === 'station').sort((p1, p2) => gdist(p1.pos, a1.pos) - gdist(p2.pos, a1.pos))[0];
+      ib.mode = 'goto'; ib.goTo = 'A01'; addReq(`쇄빙선 호송 요청 · ${ib.name} → A01`, '수행'); flags.arciceAct = T;
+    } });
+  if (flags.arciceAct != null && !flags.arciceDone && a1.escort && T - a1.escT > 90) {
+    flags.arciceDone = true; closeAlert('arcice', '쇄빙선 호송으로 결빙 구간 항행 재개 (10kn)');
+  }
+  // 결빙 해역을 벗어나면 호송을 마치고 쇄빙선은 대기 위치로
+  if (a1.escort && (!heavyIce(a1.pos) || a1.pos[0] < 100)) {
+    const ib = arcShips.find(x => x.id === a1.escort); a1.escort = null; ib.mode = 'station'; ib.center = ib.pos.slice();
+    addLog(`${ib.name}, A01 호송 종료 (결빙 구간 통과).`);
+  }
+  // 북극 2: 한국 벌크선의 AIS 보고가 2시간 넘게 끊기면
+  const a4 = arcShips.find(x => x.id === AR.aisOff.id);
+  if (T - a4.aisT > 120) raise({ id: 'arcais', sev: 'warn', title: '[북극] AIS 위치 보고 공백 (동시베리아해)', tgt: a4.id,
+    rec: '극궤도 SAR 위성 촬영 요청, 선사·Iridium 위성통신 확인', approve: () => { flags.arcaisAct = T; addReq(`극궤도 SAR 위성 촬영 · ${a4.id} 동시베리아해`, '수행'); } });
+  if (flags.arcaisAct != null && !flags.arcaisDone && a4.rep.t > flags.arcaisAct && /SAR|EO/.test(a4.rep.src)) {
+    flags.arcaisDone = true; flags.arcaisFixed = true;
+    addLog(`[북극] ${a4.rep.src}으로 ${a4.id} 위치 확인.`);
+    closeAlert('arcais', `${a4.rep.src.replace(/ \(.*/, '')} 영상으로 위치·항행 정상 확인, AIS 장비 고장 (선사 확인)`);
+  }
+  // 북극 3: 러시아 북방함대 훈련구역 설정
+  if (T >= AR.exercise.at) raise({ id: 'arcmil', sev: 'warn', title: '[북극] 러시아 북방함대 훈련구역 설정 (카라해, 항로 인접)', tgt: 'N42',
+    rec: '항행경보(NAVAREA XX) 공유, 해당 구간 통항 선박 일정 조정 권고', approve: () => { flags.arcmilAct = T; addReq('북극 항행경보 공유 · 카라해 훈련구역', '완료'); } });
+  if (flags.arcmilAct != null && !flags.arcmilDone && T - flags.arcmilAct > 60) { flags.arcmilDone = true; closeAlert('arcmil', '항행경보 전파, 통항 선박 일정 조정 권고'); }
   // GPS 전파교란: 레이더 위치와 AIS·V-PASS 위치가 어긋나는 선박이 8척 이상 5분 넘게 이어지면
   flags.gnssT = gnssMis.size >= 8 ? (flags.gnssT || 0) + dt : 0;
   if (flags.gnssT > 5) raise({ id: 'gnss', sev: 'crit', title: 'GPS 전파교란 의심 (서해 북부)', tgt: '서해 북부',
@@ -1495,6 +1652,80 @@ function drawDyn() {
   gAxis.innerHTML = ax;
 }
 
+// ── 북극 해도 ───────────────────────────────────────
+function drawArcStatic() {
+  let h = '<circle class="asea" cx="500" cy="500" r="482"/>';
+  const ice = [], ice2 = []; for (let lon = 0; lon <= 360; lon += 4) { ice.push([lon, iceLat(lon)]); ice2.push([lon, iceLat(lon) - 1.2]); }
+  h += `<path class="aice2" d="${apath(ice2, true)}"/><path class="aice" d="${apath(ice, true)}"/>`;
+  for (const ring of ALAND) h += `<path class="aland" d="${apath(ring, true)}"/>`;
+  for (const lat of [40, 50, 60, 70, 80]) h += `<circle class="agl" cx="500" cy="500" r="${f1((90 - lat) * AK)}"/>` + `<text class="atx port" x="${f1(AP(130, lat)[0] + 4)}" y="${f1(AP(130, lat)[1] - 3)}" font-size="10">${lat}°N</text>`;
+  for (let lon = 0; lon < 360; lon += 30) { const a = AP(lon, 88), b = AP(lon, 27); h += `<line class="agl" x1="${f1(a[0])}" y1="${f1(a[1])}" x2="${f1(b[0])}" y2="${f1(b[1])}"/>`; }
+  h += `<circle class="acirc" cx="500" cy="500" r="${f1((90 - 66.56) * AK)}"/>` + `<text class="atx port" x="${f1(AP(160, 66.56)[0])}" y="${f1(AP(160, 66.56)[1] + 12)}" font-size="10">북극권 66.5°N</text>`;
+  h += `<circle class="ageo" cx="500" cy="500" r="${f1((90 - AR.geoLimit) * AK)}"/>` + `<text class="atx geo" x="${f1(AP(95, AR.geoLimit)[0])}" y="${f1(AP(95, AR.geoLimit)[1] + 13)}" font-size="10">정지궤도 위성통신 한계 (~${AR.geoLimit}°N)</text>`;
+  for (const [k, r] of Object.entries(AR.routes)) {
+    h += `<path class="aroute ${k}" d="${apath(r.pts)}"/>`;
+    const m = r.pts[Math.floor(r.pts.length * (k === 'TSR' ? 0.3 : k === 'NWP' ? 0.45 : 0.55))], v = AP(m[0], m[1]);
+    h += `<text class="atx rt ${k}" x="${f1(v[0] + 6)}" y="${f1(v[1] - 6)}" font-size="12">${r.nm}</text>`;
+  }
+  for (const [n, x, y] of AR.seas) { const v = AP(x, y); h += `<text class="atx sea" x="${f1(v[0])}" y="${f1(v[1])}" font-size="13" text-anchor="middle">${n}</text>`; }
+  for (const [n, x, y] of AR.ports) { const v = AP(x, y); h += `<circle cx="${f1(v[0])}" cy="${f1(v[1])}" r="2.6" fill="var(--muted)"/>` + `<text class="atx port" x="${f1(v[0] + 5)}" y="${f1(v[1] + 4)}" font-size="10">${n}</text>`; }
+  for (const [n, x, y] of AR.straits) { const v = AP(x, y); h += `<path d="M${f1(v[0])},${f1(v[1] - 4)}l4,4l-4,4l-4,-4Z" fill="#0b7285"/>` + `<text class="atx st" x="${f1(v[0] + 6)}" y="${f1(v[1] + 4)}" font-size="10">${n}</text>`; }
+  for (const [n, x, y] of AR.bases) { const v = AP(x, y); h += `<rect x="${f1(v[0] - 3)}" y="${f1(v[1] - 3)}" width="6" height="6" fill="var(--ho)"/>` + `<text class="atx base" x="${f1(v[0] + 6)}" y="${f1(v[1] + 4)}" font-size="10">${n}</text>`; }
+  $('aStatic').innerHTML = h;
+}
+function drawArc() {
+  let h = '';
+  // 극궤도 위성은 북극 상공에서 자주 지난다: 북위 50° 이북 관측·정찰 위성과 극궤도 통신위성
+  for (const c of COMMS) { if (c.name === 'Starlink') continue; const q = satPos(c, T); if (q[1] < 55) continue; const v = AP(q[0], q[1]); h += `<circle class="f-comm" cx="${f1(v[0])}" cy="${f1(v[1])}" r="2"/>`; }
+  for (const o of SATS) {
+    const q = satPos(o, T); if (q[1] < 50) continue; const v = AP(q[0], q[1]);
+    h += `<g class="sat ${o.op}"><rect x="${f1(v[0] - 3)}" y="${f1(v[1] - 3)}" width="6" height="6"/></g>` + `<text class="atx ${o.op === 'foreign' ? 'base' : 'geo'}" x="${f1(v[0] + 5)}" y="${f1(v[1] + 3)}" font-size="9">${o.name}</text>`;
+  }
+  if (alerts.some(al => al.id === 'arcmil')) {
+    const v = AP(...AR.exercise.center), r = AR.exercise.r / 111.2 * AK;
+    h += `<circle cx="${f1(v[0])}" cy="${f1(v[1])}" r="${f1(r)}" fill="color-mix(in srgb, var(--ho) 8%, transparent)" stroke="var(--ho)" stroke-dasharray="5 4"/>` + `<text class="atx base" x="${f1(v[0])}" y="${f1(v[1] - r - 4)}" font-size="10.5" text-anchor="middle">북방함대 훈련구역 (가상)</text>`;
+  }
+  for (const sh of arcShips) {
+    const q = sh.rep.pos, v = AP(q[0], q[1]), age = T - sh.rep.t, st = arcStatus(sh);
+    if (sh.escort) { const e = arcShips.find(x => x.id === sh.escort), w = AP(e.pos[0], e.pos[1]); h += `<line x1="${f1(v[0])}" y1="${f1(v[1])}" x2="${f1(w[0])}" y2="${f1(w[1])}" stroke="#0b7285" stroke-width="1.5"/>`; }
+    const op = age > 60 ? ' opacity=".45"' : '', r = sh.kr ? 6.5 : 5;
+    h += sh.cls === 'run' ? `<path class="ash run"${op} d="M${f1(v[0])},${f1(v[1] - r * 1.3)}l${f1(r * 1.3)},${f1(r * 1.3)}l${f1(-r * 1.3)},${f1(r * 1.3)}l${f1(-r * 1.3)},${f1(-r * 1.3)}Z"/>`
+      : `<circle class="ash ${sh.cls}"${op} cx="${f1(v[0])}" cy="${f1(v[1])}" r="${r}"/>`;
+    if (st[1] >= 2) h += `<circle cx="${f1(v[0])}" cy="${f1(v[1])}" r="${r + 4}" fill="none" stroke="${st[1] === 3 ? 'var(--ho)' : 'var(--su)'}" stroke-width="1.6"/>`;
+    if (arcSel === sh.id) h += `<circle class="selring" cx="${f1(v[0])}" cy="${f1(v[1])}" r="${r + 8}"/>`;
+    h += `<text class="atx id" x="${f1(v[0] + 8)}" y="${f1(v[1] - 6)}" font-size="10.5" fill="var(--fg)"${op}>${sh.id}</text>`;
+  }
+  $('aDyn').innerHTML = h;
+}
+function renderArcPanel() {
+  const rows = arcShips.map(sh => [sh, arcStatus(sh)]);
+  const onR = k => arcShips.filter(sh => sh.route === k || (k === 'NSR' && sh.route === 'LNG')).length;
+  const nSt = n => rows.filter(([, st]) => st[0] === n).length;
+  const polar = SATS.filter(o => satPos(o, T)[1] > 66.5), north = arcShips.filter(sh => sh.pos[1] > AR.geoLimit).length;
+  const polarComm = COMMS.filter(c => c.name !== 'Starlink' && satPos(c, T)[1] > 66.5).length;
+  const lv = ['done', 'act', 'warn', 'open'];
+  let selH = '';
+  const ss = arcSel && arcShips.find(x => x.id === arcSel);
+  if (ss) {
+    const st = arcStatus(ss);
+    selH = `<div class="ahd"><h3>선택 선박</h3><b>${ss.id}</b> ${esc(ss.name)} <small>(${ss.flag})</small> <span class="chip ${lv[st[1]]}">${st[0]}</span>
+      <div class="empty" style="font-size:11.5px;margin-top:3px">${ss.type} · 빙급 ${ss.ice} · ${ss.route ? AR.routes[ss.route === 'LNG' ? 'NSR' : ss.route].nm : '해역 체류'} · ${arcSea(ss.pos)}<br>
+      ${fmtPos(ss.rep.pos)} · ${f1(ss.spd)}kn · 최종 보고 ${clock(ss.rep.t).hm} (${esc(ss.rep.src)})${ss.escort ? ` · 호송 ${ss.escort}` : ''}${ss.heavy ? ` · 해빙 가장자리 ${f1(iceLat(ss.pos[0]))}°N` : ''}</div></div>`;
+  }
+  setHTML($('arcInfo'), 'arc', `<div class="ahd"><h3>항로·선박 현황</h3>
+      <div class="csum"><span>NSR <b>${onR('NSR')}</b></span><span>NWP <b>${onR('NWP')}</b></span><span>해역 체류 <b>${arcShips.filter(sh => !sh.route).length}</b></span><span>한국 관련 <b>${arcShips.filter(sh => sh.kr).length}</b></span>
+      <span>호송 <b>${nSt('호송 중')}</b></span><span>결빙 정체 <b>${nSt('결빙 정체')}</b></span><span>AIS 공백 <b>${nSt('AIS 공백')}</b></span><span>러시아 군함 <b>${arcShips.filter(sh => sh.cls === 'run').length}</b></span></div></div>
+    ${selH}
+    <div class="ahd"><table class="atab"><thead><tr><th>선박</th><th>선종·빙급·해역</th><th>상태·속력</th><th>보고</th></tr></thead><tbody>`
+    + rows.map(([sh, st]) => `<tr data-arc="${sh.id}" class="${arcSel === sh.id ? 'on' : ''}"><td><i class="ash ${sh.cls}" style="background:currentColor"></i>${sh.id}<small>${esc(sh.name)} · ${sh.flag}</small></td><td>${sh.type}<small>${sh.ice} · ${arcSea(sh.pos)}</small></td><td><span class="chip ${lv[st[1]]}">${st[0]}</span><small>${f1(sh.spd)}kn</small></td><td>${clock(sh.rep.t).hm}<small>${esc(sh.rep.src.replace(/ \(.*/, ''))}</small></td></tr>`).join('')
+    + `</tbody></table></div>
+    <div class="ahd"><h3>해빙·환경 (10월 결빙 시작기, 개략)</h3>해빙 가장자리 카라해 ${f1(iceLat(70))}°N · 랍테프해 ${f1(iceLat(125))}°N · 동시베리아해 ${f1(iceLat(160))}°N · 보퍼트해 ${f1(iceLat(220))}°N<br><span class="empty" style="font-size:11.5px">NSR 통항 가능 기간 대략 7~11월. Arc4 이하 선박은 결빙 해역에서 쇄빙선 호송이 필요합니다.</span></div>
+    <div class="ahd"><h3>북극 위성 커버리지</h3>극궤도 관측·정찰 위성 북극권 상공 <b>${polar.length}</b>기${polar.length ? ` <small>(${polar.slice(0, 4).map(o => o.name).join(', ')}${polar.length > 4 ? ' 등' : ''})</small>` : ''}<br>
+      정지궤도 통신 한계 ${AR.geoLimit}°N 이북 운항 <b>${north}</b>척 → 극궤도 통신(Iridium·OneWeb) 북극권 상공 <b>${polarComm}</b>기</div>
+    <div class="ahd"><h3>북극 MDA 협력 기반</h3><span class="empty" style="font-size:11.5px">다산과학기지(니알레순), 쇄빙연구선 아라온, 북극이사회 옵서버(2013~), 러시아 발령 북극 항행경보(NAVAREA XX·XXI)</span></div>
+    <div class="ahd" style="border:0"><h3>범례</h3><div class="kgrid">${Object.entries(ACLS).map(([k, n]) => `<span><i class="ash ${k}" style="background:currentColor"></i>${n}</span>`).join('')}</div></div>`);
+}
+
 // ── 패널 ────────────────────────────────────────────
 const elCache = new Map();
 function setHTML(el, key, html) { if (elCache.get(key) === html) return; elCache.set(key, html); el.innerHTML = html; }
@@ -1774,7 +2005,23 @@ function setPlay() {
 }
 $('bPlay').onclick = () => { running = !running; setPlay(); renderPanel(); };
 document.querySelectorAll('[data-speed]').forEach(b => b.onclick = () => { speed = +b.dataset.speed; running = true; setPlay(); });
-$('bReset').onclick = () => { init(); elCache.clear(); drawDyn(); renderPanel(); };
+$('bReset').onclick = () => { init(); elCache.clear(); if (arcView) { drawArc(); renderArcPanel(); } else drawDyn(); renderPanel(); };
+function setView(v) {
+  arcView = v === 'arc';
+  $('map').toggleAttribute('hidden', arcView); $('arc').toggleAttribute('hidden', !arcView);
+  document.querySelector('.zoom').hidden = arcView; document.querySelector('.bounds').hidden = arcView;
+  $('srcpanel').hidden = arcView; $('arcpanel').hidden = !arcView;
+  document.querySelectorAll('[data-view]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.view === v)));
+  if (arcView) { drawArc(); renderArcPanel(); } else { fitView(); }
+}
+document.querySelectorAll('[data-view]').forEach(b => b.onclick = () => setView(b.dataset.view));
+$('arc').addEventListener('click', e => {
+  const q = new DOMPoint(e.clientX, e.clientY).matrixTransform($('arc').getScreenCTM().inverse());
+  let best = null, bd = 16;
+  for (const sh of arcShips) { const v = AP(sh.rep.pos[0], sh.rep.pos[1]), d = Math.hypot(v[0] - q.x, v[1] - q.y); if (d < bd) { bd = d; best = sh.id; } }
+  arcSel = best; drawArc(); renderArcPanel();
+});
+$('arcpanel').addEventListener('click', e => { const r = e.target.closest('[data-arc]'); if (r) { arcSel = r.dataset.arc; drawArc(); renderArcPanel(); } });
 $('bBoxes').onclick = () => {
   const hide = $('mapwrap').classList.toggle('nobox');
   $('bBoxes').textContent = hide ? '정보칸 보이기' : '정보칸 숨기기'; $('bBoxes').setAttribute('aria-pressed', String(!hide));
@@ -1848,13 +2095,13 @@ function frame(now) {
   if (running) {
     let sim = dtReal * speed / 60;
     while (sim > 0) { const d = Math.min(0.5, sim); step(d); sim -= d; }
-    if (now - drawAt > 100) { drawAt = now; drawDyn(); }
+    if (now - drawAt > 100) { drawAt = now; if (arcView) drawArc(); else drawDyn(); }
   }
-  if (now - panelAt > 250) { panelAt = now; renderPanel(); }
+  if (now - panelAt > 250) { panelAt = now; renderPanel(); if (arcView) renderArcPanel(); }
   requestAnimationFrame(frame);
 }
 
-init(); drawStatic(); setPlay(); fitView(); renderPanel();
+init(); drawStatic(); drawArcStatic(); setPlay(); fitView(); renderPanel();
 requestAnimationFrame(frame);
 })();
 </script>
