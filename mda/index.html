@@ -35,6 +35,17 @@
   --mca: #5b6b1f;
   --infra: #a35d00;
   --halo: #f8fafb;
+  --k-kn: #1e6bd0;
+  --k-kcg: #0b9bb5;
+  --k-nkn: #d62f2f;
+  --k-cnn: #8a1c3c;
+  --k-ccg: #ef7d00;
+  --k-jpn: #7048e8;
+  --k-run: #6b4a24;
+  --k-merchant: #2b8a3e;
+  --k-fishing: #8fb31b;
+  --k-other: #7d8a94;
+  --k-unk: #d4a400;
   --font-ui: "IBM Plex Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", system-ui, sans-serif;
   --font-data: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
 }
@@ -79,6 +90,14 @@ button { font: inherit; color: inherit; }
   box-shadow: 0 2px 10px color-mix(in srgb, var(--fg) 14%, transparent); }
 .srcpanel > h2 { position: sticky; top: 0; z-index: 1; margin: 0; padding: 7px 11px; font-size: 13.5px; font-weight: 700; background: var(--panel); border-bottom: 1px solid var(--line); }
 .box { border-left: 3px solid var(--c); padding: 7px 10px 8px; }
+.clsum { padding: 7px 10px 8px; border-bottom: 1px solid var(--line); }
+.clsum h3, .box h3 { margin: 0 0 4px; font-size: 11px; font-weight: 600; color: var(--muted); }
+.kgrid { display: grid; grid-template-columns: 1fr 1fr; gap: 2px 10px; font-size: 11.5px; }
+.kgrid span { display: flex; align-items: center; gap: 5px; min-width: 0; white-space: nowrap; }
+.kgrid i { flex: none; width: 9px; height: 9px; border-radius: 2px; background: var(--kc); }
+.kgrid b { margin-left: auto; font-family: var(--font-data); font-weight: 500; font-variant-numeric: tabular-nums; }
+.kgrid .z { color: var(--faint); }
+.kgrid .z b { font-weight: 400; }
 .box + .box { border-top: 1px solid var(--line); }
 .box[data-dom="space"] { --c: var(--l-space); }
 .box[data-dom="air"] { --c: var(--l-air); }
@@ -192,6 +211,7 @@ textarea.report { width: 100%; min-height: 150px; font: 12px/1.5 var(--font-data
 .row { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
 .legend { display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: 12px; }
 .legend span { display: inline-flex; gap: 5px; align-items: center; }
+.legend .lgh { width: 100%; font-size: 11px; color: var(--muted); font-weight: 600; }
 .notes { color: var(--faint); font-size: 11.5px; margin: 6px 0 0; line-height: 1.55; }
 .notes a { color: var(--muted); }
 
@@ -229,11 +249,19 @@ textarea.report { width: 100%; min-height: 150px; font: 12px/1.5 var(--font-data
 .swath { fill: color-mix(in srgb, var(--l-space) 13%, transparent); stroke: color-mix(in srgb, var(--l-space) 50%, transparent); stroke-width: 1; vector-effect: non-scaling-stroke; }
 .satbar { stroke: var(--l-space); stroke-width: 2.4; vector-effect: non-scaling-stroke; }
 .sy { stroke: var(--halo); stroke-width: 1.3; vector-effect: non-scaling-stroke; }
-.sy.F { fill: var(--fr); } .sy.H { fill: var(--ho); } .sy.S { fill: var(--su); } .sy.U { fill: var(--un); } .sy.N { fill: var(--ne); } .sy.A { fill: var(--l-air); }
+.sy.F { fill: var(--fr); }
+.sy.sus { stroke: var(--su); stroke-width: 2.4; } .sy.H { fill: var(--ho); } .sy.S { fill: var(--su); } .sy.U { fill: var(--un); } .sy.N { fill: var(--ne); } .sy.A { fill: var(--l-air); }
 .ld { stroke-width: 1.3; vector-effect: non-scaling-stroke; }
 .ld.F { stroke: var(--fr); } .ld.H { stroke: var(--ho); } .ld.S { stroke: var(--su); } .ld.U { stroke: var(--un); } .ld.N { stroke: var(--ne); }
 .tid { font-family: var(--font-data); font-weight: 500; paint-order: stroke; stroke: var(--halo); stroke-width: 3px; stroke-linejoin: round; }
 .tid.F { fill: var(--fr); } .tid.H { fill: var(--ho); } .tid.S { fill: var(--su); } .tid.U { fill: var(--un); } .tid.A { fill: var(--l-air); }
+.sy.k-kn { fill: var(--k-kn); } .sy.k-kcg { fill: var(--k-kcg); } .sy.k-nkn { fill: var(--k-nkn); } .sy.k-cnn { fill: var(--k-cnn); }
+.sy.k-ccg { fill: var(--k-ccg); } .sy.k-jpn { fill: var(--k-jpn); } .sy.k-run { fill: var(--k-run); } .sy.k-merchant { fill: var(--k-merchant); }
+.sy.k-fishing { fill: var(--k-fishing); } .sy.k-other { fill: var(--k-other); } .sy.k-unk { fill: var(--k-unk); }
+.ld.k-kn { stroke: var(--k-kn); } .ld.k-kcg { stroke: var(--k-kcg); } .ld.k-nkn { stroke: var(--k-nkn); } .ld.k-cnn { stroke: var(--k-cnn); }
+.ld.k-ccg { stroke: var(--k-ccg); } .ld.k-jpn { stroke: var(--k-jpn); } .ld.k-run { stroke: var(--k-run); } .ld.k-merchant { stroke: var(--k-merchant); }
+.ld.k-fishing { stroke: var(--k-fishing); } .ld.k-other { stroke: var(--k-other); } .ld.k-unk { stroke: var(--k-unk); }
+.tid.k-cnn { fill: var(--k-cnn); } .tid.k-ccg { fill: var(--k-ccg); } .tid.k-jpn { fill: var(--k-jpn); } .tid.k-run { fill: var(--k-run); } .tid.k-kcg { fill: var(--k-kcg); }
 .lost { opacity: .4; }
 .selring { fill: none; stroke: var(--fg); stroke-width: 1.4; vector-effect: non-scaling-stroke; }
 .ic { stroke: var(--fr); stroke-width: 1.2; fill: none; vector-effect: non-scaling-stroke; opacity: .8; }
@@ -252,13 +280,14 @@ textarea.report { width: 100%; min-height: 150px; font: 12px/1.5 var(--font-data
   .box { padding: 4px 7px 5px; cursor: pointer; }
   .box .bh { margin-bottom: 2px; gap: 4px; }
   .box .bh h2 { font-size: 12px; }
-  .box .bh small, .box .assets, .box .feed { display: none; }
+  .box .bh small, .box .assets, .box .feed, .box .kbox { display: none; }
+  .clsum .kgrid { grid-template-columns: 1fr; font-size: 10.5px; }
   .box .sw { font-size: 10px; padding: 1px 6px; }
   .box .stats { gap: 2px 8px; }
   .box .stats div { min-width: 0; }
   .box .stats b { font-size: 13px; }
   .box .stats span { font-size: 9.5px; }
-  .box.open .assets, .box.open .feed { display: grid; }
+  .box.open .assets, .box.open .feed, .box.open .kbox { display: grid; }
   .box.open .assets li span:first-child { white-space: normal; }
   .bounds { width: calc(46% - 16px); max-width: none; gap: 2px 8px; padding: 3px 6px; font-size: 10.5px; }
   .bounds b { width: 100%; }
@@ -311,8 +340,9 @@ textarea.report { width: 100%; min-height: 150px; font: 12px/1.5 var(--font-data
       <label><input type="checkbox" id="bdINFRA" checked><svg width="22" height="6"><line x1="0" y1="3" x2="22" y2="3" class="cable" stroke-dasharray="7 2 1 2"/></svg>해양 기반시설</label>
     </div>
    </div>
-    <aside class="srcpanel" aria-label="출처별 센서 정보">
-      <h2>출처별 센서 정보</h2>
+    <aside class="srcpanel" aria-label="해양영역인식 종합 정보 현황">
+      <h2>해양영역인식 종합 정보 현황</h2>
+      <div class="clsum" id="clsum"></div>
       <section class="box" data-dom="space"></section>
       <section class="box" data-dom="air"></section>
       <section class="box" data-dom="ground"></section>
@@ -356,13 +386,15 @@ textarea.report { width: 100%; min-height: 150px; font: 12px/1.5 var(--font-data
     </section>
     <footer>
       <div class="legend">
-        <span><svg width="14" height="14" viewBox="-7 -7 14 14"><circle class="sy F" r="5.5"/></svg>아군</span>
-        <span><svg width="16" height="16" viewBox="-8 -8 16 16"><path class="sy H" d="M0,-7 L7,0 L0,7 L-7,0Z"/></svg>적성</span>
-        <span><svg width="16" height="16" viewBox="-8 -8 16 16"><path class="sy S" d="M0,-7 L7,0 L0,7 L-7,0Z"/></svg>의심</span>
-        <span><svg width="16" height="16" viewBox="-8 -8 16 16"><path class="sy U" d="M-2.3,-6.5H2.3V-2.3H6.5V2.3H2.3V6.5H-2.3V2.3H-6.5V-2.3H-2.3Z"/></svg>미상</span>
-        <span><svg width="14" height="14" viewBox="-7 -7 14 14"><rect class="sy N" x="-5" y="-5" width="10" height="10"/></svg>중립</span>
+        <b class="lgh">모양 = 식별</b>
+        <span><svg width="14" height="14" viewBox="-7 -7 14 14"><circle class="sy k-other" r="5.5"/></svg>아군</span>
+        <span><svg width="16" height="16" viewBox="-8 -8 16 16"><path class="sy k-other" d="M0,-7 L7,0 L0,7 L-7,0Z"/></svg>적성</span>
+        <span><svg width="16" height="16" viewBox="-8 -8 16 16"><path class="sy k-other sus" d="M0,-7 L7,0 L0,7 L-7,0Z"/></svg>의심</span>
+        <span><svg width="16" height="16" viewBox="-8 -8 16 16"><path class="sy k-unk" d="M-2.3,-6.5H2.3V-2.3H6.5V2.3H2.3V6.5H-2.3V2.3H-6.5V-2.3H-2.3Z"/></svg>미상</span>
+        <span><svg width="14" height="14" viewBox="-7 -7 14 14"><rect class="sy k-other" x="-5" y="-5" width="10" height="10"/></svg>중립</span>
+        <b class="lgh">색 = 선종 (오른쪽 종합 현황 참고)</b>
       </div>
-      <p class="notes">아래 반쪽 기호는 수중, 위 반쪽은 항공 표적입니다. 흐린 기호와 점선 원은 추적 소실 표적과 추정 위치 오차이고, 선은 30분 뒤 예상 위치입니다. 각 센서 칸의 가동 단추로 출처를 끄면 그 탐지가 융합에서 빠집니다.<br>해안선, NLL, KADIZ, EEZ는 개략이며 MCA(KTO)는 좌표가 입력된 경우에만 표시합니다. EEZ는 한·일 대륙붕 북부 경계 외에는 미획정 구간입니다. 표적과 센서 배치는 모두 가상입니다.<br>참고: 오경원·임경한·이숙연·김재호(2024), 「인도-태평양 전략 추진을 위한 한국형 해양영역인식 발전 방안」, 『한국해군과학기술학회지』 7(3), 327–334 · <a href="https://kims.or.kr/issubrief/kims-periscope/peri363/" target="_blank" rel="noopener">KIMS Periscope 363</a> · <a href="https://opendata.mofa.go.kr/mofapub/resource/Publication/14315.page" target="_blank" rel="noopener">외교부 발간자료</a></p>
+      <p class="notes">기호 모양은 식별 상태, 색은 선종입니다. 의심 표적은 주황 테두리를 두릅니다. 아래 반쪽 기호는 수중, 위 반쪽은 항공 표적입니다. 흐린 기호와 점선 원은 추적 소실 표적과 추정 위치 오차이고, 선은 30분 뒤 예상 위치입니다. 각 센서 칸의 가동 단추로 출처를 끄면 그 탐지가 융합에서 빠집니다.<br>해안선, NLL, KADIZ, EEZ는 개략이며 MCA(KTO)는 좌표가 입력된 경우에만 표시합니다. EEZ는 한·일 대륙붕 북부 경계 외에는 미획정 구간입니다. 표적과 센서 배치는 모두 가상입니다.<br>참고: 오경원·임경한·이숙연·김재호(2024), 「인도-태평양 전략 추진을 위한 한국형 해양영역인식 발전 방안」, 『한국해군과학기술학회지』 7(3), 327–334 · <a href="https://kims.or.kr/issubrief/kims-periscope/peri363/" target="_blank" rel="noopener">KIMS Periscope 363</a> · <a href="https://opendata.mofa.go.kr/mofapub/resource/Publication/14315.page" target="_blank" rel="noopener">외교부 발간자료</a></p>
     </footer>
   </aside>
 </main>
@@ -450,6 +482,14 @@ const DOMOF = {}; for (const [k, d] of Object.entries(DOMS)) for (const [t] of d
 // 해양영역정보 구분 (오경원 외 2024, Fig. 3): 비자연정보를 수집원에 따라 군사·기관·민간으로 나눈다
 const ICLASS = { ais: '민간', cctv: '기관', vpass: '기관', lrit: '기관', vts: '기관' };
 const iclass = k => ICLASS[k] || '군사';
+// 선종: 해상 표적을 소속·용도별로 나눠 색으로 구분한다
+const CLS = {
+  kn: '한국 해군', kcg: '한국 해경', nkn: '북한 해군', cnn: '중국 해군', ccg: '중국 해경', jpn: '일본 해상자위대', run: '러시아 해군',
+  merchant: '상선', fishing: '어선', other: '기타·조사선', unk: '미식별'
+};
+const FOREIGN_NAVY = new Set(['cnn', 'jpn', 'run', 'ccg']);
+// 미상(U)이면 선종을 아직 모르므로 '미식별'로 칠한다
+const clsOf = (t, tr) => t.kind === 'air' ? null : (tr.affil === 'U' ? 'unk' : t.cls);
 const AFF = { F: '아군', H: '적성', S: '의심', U: '미상', N: '중립' };
 const layerOn = { space: true, surface: true, under: true, air: true, ground: true };
 const showB = { nll: true, kadiz: true, eez: true, mca: true, infra: true };
@@ -472,7 +512,7 @@ function routeShip(route, i, o = {}) {
   const off = 0.04 * (rnd() - 0.5);
   const pos = [a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) * f + off];
   const mid = o.mid || ['440', '412', '431', '538', '636', '477'][Math.floor(rnd() * 6)];
-  return { kind: 'surface', truth: 'N', type: o.type || '상선', pos, hdg: 0, spd: (o.spd || 11) + rnd() * 7, ais: o.ais ?? true,
+  return { cls: 'merchant', kind: 'surface', truth: 'N', type: o.type || '상선', pos, hdg: 0, spd: (o.spd || 11) + rnd() * 7, ais: o.ais ?? true,
     lrit: !!o.lrit, lritPh: rnd() * 60, bg: !!o.bg,
     emitter: rnd() < 0.7 ? EMIT.nav : EMIT.navS, nk: !!o.nk,
     mode: 'route', wp: w.map(p => [p[0], p[1] + off]), wi: fwd ? seg + 1 : seg, dir: fwd ? 1 : -1,
@@ -488,7 +528,7 @@ function fishShip(cl, i, o = {}) {
   // 국내 어선은 해경 V-PASS로, 외국 어선은 AIS로 위치를 보고한다
   const flag = nk ? 'nk' : o.flag || (rnd() < 0.7 ? 'kr' : 'cn');
   const mid = { cn: '412', jp: '431' }[flag];
-  return { kind: 'surface', truth: 'N', type: { nk: '북측 어선', kr: '국내 어선', cn: '중국 어선', jp: '일본 어선' }[flag], pos, hdg: rnd() * 360, spd: 2 + rnd() * 4,
+  return { cls: 'fishing', kind: 'surface', truth: 'N', type: { nk: '북측 어선', kr: '국내 어선', cn: '중국 어선', jp: '일본 어선' }[flag], pos, hdg: rnd() * 360, spd: 2 + rnd() * 4,
     ais: !!mid, vpass: flag === 'kr', vpassId: flag === 'kr' ? 'VP-' + String(10000 + Math.floor(rnd() * 89999)) : null,
     emitter: nk && rnd() < 0.6 ? EMIT.vhf : null, nk, bg: !!o.bg,
     mode: 'fish', center: [cl[0], cl[1]], rad: cl[3], mmsi: mid ? mid + String(100000 + Math.floor(rnd() * 899999)) : null, id: 'N' + (100 + i) };
@@ -500,10 +540,17 @@ function init() {
   feeds = { space: [], air: [], ground: [], surface: [], under: [] };
   stats = { shared: 0, decided: 0, evaluated: 0 };
   flags = {}; nid = 0;
-  const friend = type => ([id, x, y]) => targets.push({ id, kind: 'surface', truth: 'F', type, pos: [x, y], home: [x, y],
+  const friend = (type, cls) => ([id, x, y]) => targets.push({ id, cls, kind: 'surface', truth: 'F', type, pos: [x, y], home: [x, y],
     hdg: 0, spd: 12, ais: true, emitter: EMIT.mil, mode: 'patrol', ph: rnd() * 360, orbitR: 14 + rnd() * 8 });
-  SC.friendlies.forEach(friend('아군 함정'));
-  SC.coastGuard.forEach(friend('해경 경비함'));
+  SC.friendlies.forEach(friend('아군 함정', 'kn'));
+  SC.coastGuard.forEach(friend('해경 경비함', 'kcg'));
+  // 주변국 함정: 해군은 AIS 미송출(레이더·RF·영상으로 식별), 중국 해경은 AIS 송출
+  const foreign = (list, cls, type, ais, mid) => list.forEach(([id, x, y, r]) => targets.push({ id, cls, kind: 'surface', truth: 'N', type, pos: [x, y], home: [x, y],
+    hdg: 0, spd: 12, ais, mmsi: ais ? mid + String(100000 + Math.floor(rnd() * 899999)) : null, emitter: EMIT.mil, mode: 'patrol', ph: rnd() * 360, orbitR: r }));
+  foreign(SC.cnNavy, 'cnn', '중국 해군 구축함', false);
+  foreign(SC.cnCoastGuard, 'ccg', '중국 해경함', true, '412');
+  foreign(SC.jpNavy, 'jpn', '일본 해상자위대 호위함', false);
+  foreign(SC.ruNavy, 'run', '러시아 해군 구축함', false);
   let n = 0;
   SC.routes.forEach(rt => { for (let k = 0; k < rt[0]; k++) targets.push(routeShip(rt, n++)); });
   SC.ferries.forEach(rt => { for (let k = 0; k < rt[0]; k++) targets.push(routeShip(rt, n++, { type: '연안 여객선', mid: '440', spd: 14 })); });
@@ -515,17 +562,17 @@ function init() {
   // 북측 해역: 어선은 AIS 없이, 화물선은 절반만 AIS를 켠 채로 다닌다
   SC.nkFishing.forEach(cl => { for (let k = 0; k < cl[2]; k++) targets.push(fishShip(cl, n++, { nk: true })); });
   SC.nkRoutes.forEach(rt => { for (let k = 0; k < rt[0]; k++) targets.push(routeShip(rt, n++, { type: '북측 화물선', mid: '445', nk: true, ais: rnd() < 0.5, spd: 8 })); });
-  SC.nkPatrol.forEach(([id, x, y, r]) => targets.push({ id, kind: 'surface', truth: 'H', type: '북측 경비정', pos: [x, y], home: [x, y],
+  SC.nkPatrol.forEach(([id, x, y, r]) => targets.push({ id, cls: 'nkn', kind: 'surface', truth: 'H', type: '북측 경비정', pos: [x, y], home: [x, y],
     hdg: 0, spd: 12, ais: false, emitter: EMIT.mil, nk: true, mode: 'patrol', ph: rnd() * 360, orbitR: r }));
-  targets.push({ id: 'H201', kind: 'surface', truth: 'H', type: '북측 경비정', pos: SC.h201.start.slice(), hdg: 150, spd: 2, ais: false, emitter: EMIT.mil, nk: true, mode: 'h201', st: 'loiter' });
-  targets.push({ id: 'D301', kind: 'surface', truth: 'N', type: '상선', name: SC.d301.name, mmsi: SC.d301.mmsi, pos: SC.d301.start.slice(), hdg: 182, spd: 13, ais: true, emitter: EMIT.nav, mode: 'd301', st: 'transit' });
-  targets.push({ id: 'D302', kind: 'surface', truth: 'N', type: '선박(AIS 미송출)', pos: SC.d302.start.slice(), hdg: 90, spd: 1.5, ais: false, emitter: null, mode: 'd302' });
-  targets.push({ id: 'C501', kind: 'surface', truth: 'N', type: '외국 어선', name: SC.c501.name, mmsi: SC.c501.mmsi, pos: SC.c501.start.slice(), hdg: 80, spd: 7, ais: true, emitter: EMIT.vhf, mode: 'c501', st: 'approach' });
-  targets.push({ id: 'U402', kind: 'sub', truth: 'H', type: '잠수함', pos: SC.u402.path[0].slice(), hdg: 190, spd: 8, ais: false, emitter: null, mode: 'path', wp: SC.u402.path, wi: 1, dir: 1, endHold: true });
+  targets.push({ id: 'H201', cls: 'nkn', kind: 'surface', truth: 'H', type: '북측 경비정', pos: SC.h201.start.slice(), hdg: 150, spd: 2, ais: false, emitter: EMIT.mil, nk: true, mode: 'h201', st: 'loiter' });
+  targets.push({ id: 'D301', cls: 'merchant', kind: 'surface', truth: 'N', type: '상선', name: SC.d301.name, mmsi: SC.d301.mmsi, pos: SC.d301.start.slice(), hdg: 182, spd: 13, ais: true, emitter: EMIT.nav, mode: 'd301', st: 'transit' });
+  targets.push({ id: 'D302', cls: 'merchant', kind: 'surface', truth: 'N', type: '선박(AIS 미송출)', pos: SC.d302.start.slice(), hdg: 90, spd: 1.5, ais: false, emitter: null, mode: 'd302' });
+  targets.push({ id: 'C501', cls: 'fishing', kind: 'surface', truth: 'N', type: '외국 어선', name: SC.c501.name, mmsi: SC.c501.mmsi, pos: SC.c501.start.slice(), hdg: 80, spd: 7, ais: true, emitter: EMIT.vhf, mode: 'c501', st: 'approach' });
+  targets.push({ id: 'U402', cls: 'nkn', kind: 'sub', truth: 'H', type: '잠수함', pos: SC.u402.path[0].slice(), hdg: 190, spd: 8, ais: false, emitter: null, mode: 'path', wp: SC.u402.path, wi: 1, dir: 1, endHold: true });
   targets.push({ id: 'U403', kind: 'air', truth: 'H', type: '외국 군용기', pos: SC.u403.start.slice(), hdg: 60, spd: 330, ais: false, emitter: EMIT.air, mode: 'path', wp: [SC.u403.start].concat(SC.u403.path), wi: 1, dir: 1, endHold: true, startAt: SC.u403.at });
-  targets.push({ id: 'L601', kind: 'surface', truth: 'N', type: '화물선', name: SC.l601.name, mmsi: SC.l601.mmsi, pos: SC.l601.start.slice(), hdg: 300, spd: 10,
+  targets.push({ id: 'L601', cls: 'merchant', kind: 'surface', truth: 'N', type: '화물선', name: SC.l601.name, mmsi: SC.l601.mmsi, pos: SC.l601.start.slice(), hdg: 300, spd: 10,
     ais: true, lrit: true, lritPh: 7, emitter: EMIT.nav, mode: 'l601', st: 'transit' });
-  targets.push({ id: 'R701', kind: 'surface', truth: 'N', type: '해양조사선', name: SC.r701.name, mmsi: SC.r701.mmsi, pos: SC.r701.start.slice(), hdg: 70, spd: 14,
+  targets.push({ id: 'R701', cls: 'other', kind: 'surface', truth: 'N', type: '해양조사선', name: SC.r701.name, mmsi: SC.r701.mmsi, pos: SC.r701.start.slice(), hdg: 70, spd: 14,
     ais: true, emitter: EMIT.navS, mode: 'r701', st: 'transit', startAt: SC.r701.at });
   byId = new Map(targets.map(t => [t.id, t]));
   mpa = { id: 'MPA', name: '해상초계기', pos: advance(SC.mpa.center, 0, SC.mpa.r), center: SC.mpa.center.slice(), r: SC.mpa.r, spd: 300, ph: 0, mode: 'orbit', hdg: 90, task: '동해 정찰 궤도' };
@@ -706,6 +753,11 @@ function step(dt) {
       if (!tr) { tr = { id: t.id, first: T, by: {}, affil: t.truth === 'F' ? 'F' : s.some(x => COOP.has(x)) ? 'N' : 'U', contact: 0 }; tracks.set(t.id, tr); onNew(t, tr, s); }
       if (tr.lost) { tr.lost = false; onReacq(t, tr, s); }
       if (s.includes('rf') && t.truth !== 'F') onRf(t, tr);
+      // 영상(EO 위성·무인기·초계기)으로 본 미상 군함은 선형으로 식별한다
+      if (tr.affil === 'U' && (FOREIGN_NAVY.has(t.cls) || (t.cls === 'nkn' && t.mode === 'patrol')) && s.some(x => x === 'eo' || x === 'uav' || x === 'mpa')) {
+        tr.affil = FOREIGN_NAVY.has(t.cls) ? 'N' : 'H'; tr.note = `영상 식별: ${CLS[t.cls]}`;
+        addLog(`${s.filter(x => x === 'eo' || x === 'uav' || x === 'mpa').map(x => SN[x]).join('·')} 영상으로 ${t.id} ${CLS[t.cls]} 식별.`);
+      }
       for (const x of s) {
         if (tr.by[x] == null && x !== 'link' && tr.affil !== 'N' && tr.affil !== 'F' && DOMOF[x] !== 'space') feed(DOMOF[x], `${t.id} ${SN[x]} 신규 접촉`);
         tr.by[x] = T;
@@ -763,7 +815,11 @@ function onRf(t, tr) {
   const err = 3 + (t.id.charCodeAt(t.id.length - 1) % 8);
   tr.rf = { t: T, type: e.type, band: e.band, mil: !!e.mil, err, ais: t.ais };
   if (t.kind === 'air' || tr.affil !== 'U') return;
-  if (e.mil) {
+  if (e.mil && FOREIGN_NAVY.has(t.cls)) {
+    tr.affil = 'N'; tr.note = `RF 식별: ${CLS[t.cls]} 함정 레이더`;
+    addLog(`RF 위성, ${t.id} 레이더 신호로 ${CLS[t.cls]} 함정 식별.`);
+    feed('space', `${t.id} ${CLS[t.cls]} 레이더 신호 식별`);
+  } else if (e.mil) {
     tr.affil = 'H'; tr.note = tr.note || 'RF 식별: 군용 수상탐색 레이더';
     addLog(`RF 위성, ${t.id} 군용 레이더 신호 식별. 적성 분류.`);
     feed('space', `${t.id} 군용 레이더 신호 · 적성 분류`);
@@ -986,8 +1042,8 @@ function drawStatic() {
   document.getElementById('gStatic').innerHTML = h;
 }
 
-function sym(aff, dom, x, y, z) {
-  const r = 6 * z, c = `class="sy ${aff}"`;
+function sym(aff, dom, x, y, z, k) {
+  const r = 6 * z, c = `class="sy ${aff}${k ? ' k-' + k : ''}${aff === 'S' ? ' sus' : ''}"`;
   if (dom === 'air') {
     if (aff === 'H' || aff === 'S') return `<path ${c} d="M${f1(x - r * 1.25)},${f1(y)} L${f1(x)},${f1(y - r * 1.25)} L${f1(x + r * 1.25)},${f1(y)} Z"/>`;
     if (aff === 'U') return `<path ${c} d="M${f1(x - r)},${f1(y)} V${f1(y - r * .55)} Q${f1(x - r)},${f1(y - r)} ${f1(x - r * .55)},${f1(y - r)} H${f1(x + r * .55)} Q${f1(x + r)},${f1(y - r)} ${f1(x + r)},${f1(y - r * .55)} V${f1(y)} Z"/>`;
@@ -1124,11 +1180,12 @@ function drawDyn() {
     const tr = tracks.get(t.id); if (!tr) continue;
     const x = X(tr.pos[0]), y = Y(tr.pos[1]);
     if (tr.lost && tr.affil !== 'N') h += `<circle class="rg unc" cx="${f1(x)}" cy="${f1(y)}" r="${f1(Math.min(90, KMMIN(tr.spd || 8) * (T - tr.seen) + 5) * PXKM)}"${dash(z, 2.5, 3)}/>`;
-    else if (tr.affil !== 'N' || z < 0.6) h += leader(tr.affil, tr, x, y);
+    const k = clsOf(t, tr), big = tr.affil !== 'N' || FOREIGN_NAVY.has(k);
+    if (!tr.lost && (big || z < 0.6)) h += leader(tr.affil + (k ? ' k-' + k : ''), tr, x, y);
     if (layerOn.space && tr.rf && tr.affil !== 'F' && T - tr.rf.t <= 15) h += `<ellipse class="rfe" cx="${f1(x)}" cy="${f1(y)}" rx="${f1(tr.rf.err * PXKM)}" ry="${f1(tr.rf.err * .55 * PXKM)}" transform="rotate(103 ${f1(x)} ${f1(y)})"${dash(z, 2, 2)}/>`;
     if (t.mode === 'intercept' && t.goal) { const g = t.goal(); if (g) h += `<line class="ic"${dash(z, 5, 4)} x1="${f1(x)}" y1="${f1(y)}" x2="${f1(X(g[0]))}" y2="${f1(Y(g[1]))}"/>`; }
-    h += `<g${tr.lost ? ' class="lost"' : ''}>${sym(tr.affil, t.kind, x, y, tr.affil === 'N' ? z * .72 : z)}</g>`;
-    if (tr.affil !== 'N') labels += `<g${tr.lost ? ' class="lost"' : ''}>` + txt('tid ' + tr.affil, x + 8 * z, y - 6 * z, 11 * z, t.id) + '</g>';
+    h += `<g${tr.lost ? ' class="lost"' : ''}>${sym(tr.affil, t.kind, x, y, big ? z : z * .72, k)}</g>`;
+    if (big) labels += `<g${tr.lost ? ' class="lost"' : ''}>` + txt('tid ' + tr.affil + (FOREIGN_NAVY.has(k) || k === 'kcg' ? ' k-' + k : ''), x + 8 * z, y - 6 * z, 11 * z, t.id) + '</g>';
     if (sel === t.id) h += `<circle class="selring" cx="${f1(x)}" cy="${f1(y)}" r="${f1(12 * z)}"/>`;
   }
   gDyn.innerHTML = h + labels;
@@ -1185,12 +1242,36 @@ function assets(dom) {
     }
   }
 }
+function kgrid(cnt, hideZero) {
+  const keys = Object.keys(CLS).filter(k => !hideZero || cnt[k]);
+  return keys.length ? `<div class="kgrid">${keys.map(k => `<span class="${cnt[k] ? '' : 'z'}" style="--kc: var(--k-${k})"><i></i>${CLS[k]}<b>${cnt[k] || 0}</b></span>`).join('')}</div>`
+    : '<p class="empty" style="font-size:11.5px">최근 10분 탐지 없음</p>';
+}
+// 출처별로 최근에 잡은 표적을 선종별로 센다
+function domainClsCounts() {
+  const out = {};
+  for (const [dom, d] of Object.entries(DOMS)) {
+    const c = {};
+    for (const tr of tracks.values()) {
+      const t = byId.get(tr.id), k = clsOf(t, tr); if (!k) continue;
+      if (d.types.some(([ty]) => tr.by[ty] != null && T - tr.by[ty] <= (ty === 'lrit' ? 60 : 10))) c[k] = (c[k] || 0) + 1;
+    }
+    out[dom] = c;
+  }
+  return out;
+}
+let domCls = {};
 function renderBoxes(det) {
+  domCls = domainClsCounts();
+  const all = {};
+  for (const tr of tracks.values()) { if (tr.lost) continue; const k = clsOf(byId.get(tr.id), tr); if (k) all[k] = (all[k] || 0) + 1; }
+  setHTML($('clsum'), 'clsum', `<h3>보유 해상 표적 선종별 (추적 중)</h3>${kgrid(all, false)}`);
   for (const [dom, d] of Object.entries(DOMS)) {
     const box = document.querySelector(`.box[data-dom="${dom}"]`);
     box.classList.toggle('off', !layerOn[dom]);
     const head = `<div class="bh"><h2>${d.nm}</h2><small>${d.sub}</small><button class="sw" type="button" data-layer="${dom}" aria-pressed="${layerOn[dom]}">${layerOn[dom] ? '가동' : '중지'}</button></div>`;
-    const st = `<div class="stats">${d.types.map(([k, n]) => `<div><b>${det[k]}</b><span>${n}</span></div>`).join('')}</div>`;
+    const st = `<div class="stats">${d.types.map(([k, n]) => `<div><b>${det[k]}</b><span>${n}</span></div>`).join('')}</div>`
+      + `<div class="kbox"><h3>탐지 표적 선종별</h3>${kgrid(domCls[dom], true)}</div>`;
     const as = `<ul class="assets">${assets(dom).map(([a, b]) => `<li><span>${a}</span><span>${esc(b)}</span></li>`).join('')}</ul>`;
     const fd = feeds[dom].slice(0, 2);
     const fh = `<ul class="feed">${fd.length ? fd.map(f => `<li><time>${clock(f.t).hm}</time><span>${esc(f.text)}</span></li>`).join('') : '<li class="none">최근 탐지 사건 없음</li>'}</ul>`;
@@ -1260,6 +1341,7 @@ function renderPanel() {
       : t.kind === 'surface' ? '<button class="btn" type="button" data-task="sar">SAR 긴급 촬영</button><button class="btn" type="button" data-task="uav">무인기 근접 감시</button>' + rfBtn : '';
     setHTML($('selActs'), 'selActs', acts);
     setHTML($('selBody'), 'selBody', `<div class="hd"><b>${esc(t.id)}</b><span class="chip ${tr.lost ? '' : 'act'}">${AFF[tr.affil]} · ${{ surface: '수상', sub: '수중', air: '항공' }[t.kind]}${tr.lost ? ' · 추적 소실' : ''}</span></div><dl>
+      <dt>선종</dt><dd>${t.kind === 'air' ? '항공기' : CLS[clsOf(t, tr)]}</dd>
       <dt>종류</dt><dd>${esc(known ? t.type : '식별 중')}</dd>
       ${t.name && (t.ais || tr.affil === 'S') ? `<dt>선명</dt><dd>${esc(t.name)}</dd>` : ''}
       ${t.mmsi && tr.affil !== 'U' ? `<dt>MMSI</dt><dd>${t.mmsi}${t.lrit ? ' · LRIT 보고 선박' : ''}</dd>` : ''}
