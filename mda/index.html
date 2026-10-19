@@ -97,6 +97,15 @@ button { font: inherit; color: inherit; }
 .kgrid i { flex: none; width: 9px; height: 9px; border-radius: 2px; background: var(--kc); }
 .kgrid b { margin-left: auto; font-family: var(--font-data); font-weight: 500; font-variant-numeric: tabular-nums; }
 .kgrid .z { color: var(--faint); }
+.ktab { width: 100%; border-collapse: collapse; font-size: 11.5px; font-variant-numeric: tabular-nums; }
+.ktab th { font-weight: 600; color: var(--muted); font-size: 10.5px; text-align: right; padding: 1px 0 3px 6px; border-bottom: 1px solid var(--line); }
+.ktab th:first-child, .ktab td:first-child { text-align: left; padding-left: 0; }
+.ktab td { padding: 2px 0 1px 6px; text-align: right; font-family: var(--font-data); white-space: nowrap; }
+.ktab td:first-child { font-family: var(--font-ui); }
+.ktab td:first-child i { display: inline-block; width: 8px; height: 8px; border-radius: 2px; background: var(--kc); margin-right: 5px; }
+.ktab td.z { color: var(--faint); }
+.ktab td.w { color: var(--su); } .ktab td.m { color: var(--ho); font-weight: 600; }
+.ktab tfoot td { border-top: 1px solid var(--line); font-weight: 600; padding-top: 3px; }
 .kgrid .z b { font-weight: 400; }
 .box + .box { border-top: 1px solid var(--line); }
 .box[data-dom="space"] { --c: var(--l-space); }
@@ -280,14 +289,15 @@ textarea.report { width: 100%; min-height: 150px; font: 12px/1.5 var(--font-data
   .box { padding: 4px 7px 5px; cursor: pointer; }
   .box .bh { margin-bottom: 2px; gap: 4px; }
   .box .bh h2 { font-size: 12px; }
-  .box .bh small, .box .assets, .box .feed, .box .kbox { display: none; }
+  .box .bh small, .box .assets, .box .feed { display: none; }
+  .ktab { font-size: 10.5px; } .ktab th { font-size: 9.5px; padding-left: 3px; } .ktab td { padding-left: 3px; }
   .clsum .kgrid { grid-template-columns: 1fr; font-size: 10.5px; }
   .box .sw { font-size: 10px; padding: 1px 6px; }
   .box .stats { gap: 2px 8px; }
   .box .stats div { min-width: 0; }
   .box .stats b { font-size: 13px; }
   .box .stats span { font-size: 9.5px; }
-  .box.open .assets, .box.open .feed, .box.open .kbox { display: grid; }
+  .box.open .assets, .box.open .feed { display: grid; }
   .box.open .assets li span:first-child { white-space: normal; }
   .bounds { width: calc(46% - 16px); max-width: none; gap: 2px 8px; padding: 3px 6px; font-size: 10.5px; }
   .bounds b { width: 100%; }
@@ -1247,18 +1257,34 @@ function kgrid(cnt, hideZero) {
   return keys.length ? `<div class="kgrid">${keys.map(k => `<span class="${cnt[k] ? '' : 'z'}" style="--kc: var(--k-${k})"><i></i>${CLS[k]}<b>${cnt[k] || 0}</b></span>`).join('')}</div>`
     : '<p class="empty" style="font-size:11.5px">최근 10분 탐지 없음</p>';
 }
-// 출처별로 최근에 잡은 표적을 선종별로 센다
+// 출처별·선종별 추적 관리 현황: 탐지(최근 10분), 추적(이 출처가 기여한 추적 중 표적), 소실, 관리(적성·의심·이상징후 대응 표적)
 function domainClsCounts() {
+  const managed = new Set();
+  for (const a of alerts) if (a.status !== 'done') a.tgt.split('·').forEach(id => managed.add(id));
   const out = {};
   for (const [dom, d] of Object.entries(DOMS)) {
     const c = {};
     for (const tr of tracks.values()) {
       const t = byId.get(tr.id), k = clsOf(t, tr); if (!k) continue;
-      if (d.types.some(([ty]) => tr.by[ty] != null && T - tr.by[ty] <= (ty === 'lrit' ? 60 : 10))) c[k] = (c[k] || 0) + 1;
+      if (!d.types.some(([ty]) => tr.by[ty] != null)) continue;
+      const r = c[k] || (c[k] = { det: 0, trk: 0, lost: 0, mng: 0 });
+      if (d.types.some(([ty]) => T - (tr.by[ty] ?? -1e9) <= (ty === 'lrit' ? 60 : 10))) r.det++;
+      if (tr.lost) r.lost++; else r.trk++;
+      if (managed.has(tr.id) || tr.affil === 'H' || tr.affil === 'S') r.mng++;
     }
     out[dom] = c;
   }
   return out;
+}
+function ktab(c) {
+  const keys = Object.keys(CLS).filter(k => c[k]);
+  if (!keys.length) return '<p class="empty" style="font-size:11.5px">이 출처로 잡은 표적이 아직 없습니다.</p>';
+  const tot = { det: 0, trk: 0, lost: 0, mng: 0 };
+  keys.forEach(k => { for (const f in tot) tot[f] += c[k][f]; });
+  const cell = (v, cls = '') => `<td class="${v ? cls : 'z'}">${v}</td>`;
+  return `<table class="ktab"><thead><tr><th>선종</th><th>탐지</th><th>추적</th><th>소실</th><th>관리</th></tr></thead><tbody>`
+    + keys.map(k => `<tr><td style="--kc: var(--k-${k})"><i></i>${CLS[k]}</td>${cell(c[k].det)}${cell(c[k].trk)}${cell(c[k].lost, 'w')}${cell(c[k].mng, 'm')}</tr>`).join('')
+    + `</tbody><tfoot><tr><td>계</td>${cell(tot.det)}${cell(tot.trk)}${cell(tot.lost, 'w')}${cell(tot.mng, 'm')}</tr></tfoot></table>`;
 }
 let domCls = {};
 function renderBoxes(det) {
@@ -1271,7 +1297,7 @@ function renderBoxes(det) {
     box.classList.toggle('off', !layerOn[dom]);
     const head = `<div class="bh"><h2>${d.nm}</h2><small>${d.sub}</small><button class="sw" type="button" data-layer="${dom}" aria-pressed="${layerOn[dom]}">${layerOn[dom] ? '가동' : '중지'}</button></div>`;
     const st = `<div class="stats">${d.types.map(([k, n]) => `<div><b>${det[k]}</b><span>${n}</span></div>`).join('')}</div>`
-      + `<div class="kbox"><h3>탐지 표적 선종별</h3>${kgrid(domCls[dom], true)}</div>`;
+      + `<div class="kbox"><h3>선종별 추적·관리 현황</h3>${ktab(domCls[dom])}</div>`;
     const as = `<ul class="assets">${assets(dom).map(([a, b]) => `<li><span>${a}</span><span>${esc(b)}</span></li>`).join('')}</ul>`;
     const fd = feeds[dom].slice(0, 2);
     const fh = `<ul class="feed">${fd.length ? fd.map(f => `<li><time>${clock(f.t).hm}</time><span>${esc(f.text)}</span></li>`).join('') : '<li class="none">최근 탐지 사건 없음</li>'}</ul>`;
