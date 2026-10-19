@@ -192,6 +192,17 @@ button { font: inherit; color: inherit; }
 .chip.shr { color: var(--l-surf); }
 .chip.done { color: var(--ne); border-color: color-mix(in srgb, var(--ne) 45%, transparent); }
 .empty { color: var(--muted); font-size: 12.5px; margin: 0; }
+.ctab, .stab { width: 100%; border-collapse: collapse; font-size: 11.5px; font-variant-numeric: tabular-nums; }
+.ctab th, .stab th { font-weight: 600; color: var(--muted); font-size: 10.5px; text-align: left; padding: 2px 4px 3px 0; border-bottom: 1px solid var(--line); position: sticky; top: 0; background: var(--panel); }
+.ctab td, .stab td { padding: 2px 4px 2px 0; border-bottom: 1px dotted var(--line); white-space: nowrap; }
+.ctab td.n, .ctab th.n { text-align: right; font-family: var(--font-data); }
+.ctab td small, .stab td small { color: var(--muted); }
+.stab tr.gh td { font-weight: 600; color: var(--muted); padding-top: 6px; border-bottom: 1px solid var(--line); }
+.stab td.st { text-align: right; }
+.sattab { max-height: 280px; overflow-y: auto; }
+.csum { display: flex; flex-wrap: wrap; gap: 3px 10px; font-size: 12px; color: var(--muted); margin-bottom: 6px; }
+.csum b { font-family: var(--font-data); font-weight: 500; color: var(--fg); }
+.chip.warn { color: var(--su); border-color: color-mix(in srgb, var(--su) 45%, transparent); }
 .rfsum { display: flex; gap: 4px 12px; flex-wrap: wrap; font-size: 12px; color: var(--muted); margin-bottom: 6px; }
 .rfsum b { font-family: var(--font-data); font-weight: 500; color: var(--fg); }
 .rfsum .w b { color: var(--su); } .rfsum .m b { color: var(--ho); }
@@ -254,6 +265,15 @@ textarea.report { width: 100%; min-height: 150px; font: 12px/1.5 var(--font-data
 .rg.air { stroke: color-mix(in srgb, var(--l-air) 70%, transparent); fill: color-mix(in srgb, var(--l-air) 6%, transparent); }
 .rg.space { stroke: color-mix(in srgb, var(--l-space) 60%, transparent); fill: color-mix(in srgb, var(--l-space) 5%, transparent); }
 .rg.unc { stroke: var(--muted); fill: none; }
+.rg.jamz { stroke: var(--ho); fill: color-mix(in srgb, var(--ho) 6%, transparent); }
+.rg.yam { stroke: var(--infra); fill: color-mix(in srgb, var(--infra) 6%, transparent); }
+.swl { fill: none; stroke: var(--l-space); stroke-linecap: butt; stroke-linejoin: round; }
+.f-comm { fill: var(--l-surf); opacity: .85; }
+.clink { stroke: var(--l-surf); stroke-width: 1.4; vector-effect: non-scaling-stroke; }
+.sat rect { fill: var(--l-space); stroke: var(--halo); stroke-width: .8; vector-effect: non-scaling-stroke; }
+.sat.allied rect { fill: #8f6ff0; } .sat.commercial rect { fill: #a993f5; } .sat.foreign rect { fill: var(--ho); }
+.sat.foreign .satbar { stroke: var(--ho); }
+.t-foe { fill: var(--ho); }
 .rfe { fill: color-mix(in srgb, var(--l-space) 10%, transparent); stroke: var(--l-space); stroke-width: 1; vector-effect: non-scaling-stroke; }
 .f-ground { fill: var(--l-ground); } .f-surf { fill: var(--l-surf); } .f-under { fill: var(--l-under); } .f-air { fill: var(--l-air); } .f-space { fill: var(--l-space); }
 .t-ground { fill: var(--l-ground); } .t-surf { fill: var(--l-surf); } .t-under { fill: var(--l-under); } .t-air { fill: var(--l-air); } .t-space { fill: var(--l-space); }
@@ -380,12 +400,20 @@ textarea.report { width: 100%; min-height: 150px; font: 12px/1.5 var(--font-data
       <ul class="log" id="shareLog"></ul>
     </section>
     <section>
+      <h2>우군 함정 위성통신 현황</h2>
+      <div id="commInfo"></div>
+    </section>
+    <section>
       <h2>이상징후와 조치 권고</h2>
       <div class="alerts" id="alerts"></div>
     </section>
     <section>
       <h2>RF 위성 신호 정보</h2>
       <div id="rfInfo"></div>
+    </section>
+    <section>
+      <h2>위성 운용 현황</h2>
+      <div class="sattab" id="satInfo"></div>
     </section>
     <section>
       <h2>수집 요청</h2>
@@ -423,7 +451,7 @@ textarea.report { width: 100%; min-height: 150px; font: 12px/1.5 var(--font-data
 const LAND = window.MDA_LAND, SC = window.MDA_SCENARIO;
 
 // ── 투영과 거리 ──────────────────────────────────────────
-const LON0 = 119.8, LON1 = 133.4, LAT0 = 31.5, LAT1 = 42.2;
+const LON0 = 119.8, LON1 = 136.0, LAT0 = 31.5, LAT1 = 42.2;
 const ML = 46, MT = 12, MR = 12, MB = 28;
 const KX = 1000 / (LON1 - LON0), KY = KX / Math.cos(37 * Math.PI / 180);
 const MW = 1000, MH = (LAT1 - LAT0) * KY;
@@ -484,7 +512,7 @@ const VTS = SC.vts.map(([n, x, y]) => ({ name: n, pos: [x, y], r: 35 }));
 const COOP = new Set(['ais', 'vpass', 'lrit']);
 const PORTS = SC.ports.map(([n, x, y]) => ({ name: n, pos: [x, y], r: 12 }));
 const ARRAYS = SC.arrays.map(([n, x, y]) => ({ name: n, pos: [x, y], r: 30 }));
-const SHIP_R = 40, SHIP_AIR_R = 150, SONAR_R = 12, MPA_R = 120, UAV_R = 50, BUOY_R = 22, LOST_AFTER = 12, SAT_KMMIN = 420;
+const SHIP_R = 40, SHIP_AIR_R = 150, SONAR_R = 12, MPA_R = 120, UAV_R = 50, BUOY_R = 22, LOST_AFTER = 12;
 const SN = { ais: 'AIS', vpass: 'V-PASS', lrit: 'LRIT', vts: '해경 VTS', sar: 'SAR 위성', eo: 'EO 위성', rf: 'RF 위성 군집', radar: '레이더 감시대', adradar: '방공 레이더', cctv: '해안 CCTV',
   shipradar: '함정 레이더', fixed: '고정형 수중감시', buoy: '소노부이', sonar: '함정 소나', mpa: '해상초계기', uav: '무인기', link: '전술데이터링크' };
 const DOMS = {
@@ -608,12 +636,8 @@ function init() {
   byId = new Map(targets.map(t => [t.id, t]));
   mpa = { id: 'MPA', name: '해상초계기', pos: advance(SC.mpa.center, 0, SC.mpa.r), center: SC.mpa.center.slice(), r: SC.mpa.r, spd: 300, ph: 0, mode: 'orbit', hdg: 90, task: '동해 정찰 궤도' };
   uav = { id: 'UAV', name: '무인기', pos: advance(SC.uav.center, 0, SC.uav.r), center: SC.uav.center.slice(), r: SC.uav.r, spd: 80, ph: 0, mode: 'orbit', hdg: 90, task: '서해 정찰 궤도' };
-  passes = [];
-  for (let k = 0; k < 30; k++) {
-    passes.push({ sat: 'sar', tc: 8 + k * 97, through: [121.8 + ((k * 3.7) % 9), 36.8], brg: 193, halfW: 50 });
-    passes.push({ sat: 'eo', tc: 46 + k * 97, through: [126.6 + ((k * 5.3) % 6.5), 36.8], brg: 193, halfW: 30 });
-    passes.push({ sat: 'rf', tc: 4 + k * 97, through: [127.0 - ((k * 4.1) % 5) + ((k * 2.3) % 3), 36.8], brg: 193, halfW: 280 });
-  }
+  passes = []; tasks = []; comm = {}; commAt = -1;
+  buildSats();
   addLog('훈련 시나리오 개시. 전 센서 출처 가동.');
   for (let i = 0; i < 30; i++) step(0.2);
 }
@@ -721,25 +745,107 @@ function sendAir(a, dest, r, task, onArrive) {
   a.task = '이동 중 · ' + task; a.arriveTask = task;
 }
 
-// ── 위성 통과 ─────────────────────────────────────────
-function passGeom(p) {
-  if (!p.through && p.aim && T >= p.tc - 3) p.through = predicted(byId.get(p.aim), p.tc - T);
-  return p.through;
+// ── 위성 궤도 (원궤도 근사, 지구 자전 반영) ─────────────────
+const RE = 6378.137, MU = 398600.4418, WE = 360 / 1436.07;
+const SAT_MIS = { sar: 'SAR', eo: 'EO', rf: 'RF', met: '기상', ocean: '해양관측', comm: '통신', crew: '유인' };
+const ORB = { SSO: '태양동기', INC: '경사', GEO: '정지' };
+let SATS = [], GEOS = [], COMMS = [], tasks = [];
+const periodMin = alt => 2 * Math.PI * Math.sqrt((RE + alt) ** 3 / MU) / 60;
+function buildSats() {
+  SATS = SC.satellites.map(([name, cc, op, mis, orbit, alt, inc, raan, u0, hw]) => ({ name, cc, op, mis, orbit, alt, inc, raan, u0, hw,
+    P: periodMin(alt), use: op !== 'foreign' && ['sar', 'eo', 'rf'].includes(mis), cur: null }));
+  GEOS = SC.geo.map(([name, cc, op, mis, lon]) => ({ name, cc, op, mis, lon, orbit: 'GEO' }));
+  COMMS = [];
+  SC.comms.forEach(([name, cc, alt, inc, planes, per, cov], ci) => {
+    for (let pl = 0; pl < planes; pl++) for (let k = 0; k < per; k++)
+      COMMS.push({ name, cc, alt, inc, cov, P: periodMin(alt), raan: pl * 360 / planes + ci * 7, u0: k * 360 / per + pl * 360 / per / planes, id: `${name} ${pl + 1}-${k + 1}` });
+  });
 }
-const subpoint = (p, t) => advance(p.through, p.brg, (t - p.tc) * SAT_KMMIN);
-function swept(p, pos, t0, t1) {
-  const d = toLocal(p.through, pos), ux = Math.sin(p.brg * D2R), uy = Math.cos(p.brg * D2R);
-  const along = d[0] * ux + d[1] * uy, cross = Math.abs(d[0] * uy - d[1] * ux);
-  if (p.sat === 'rf') return Math.hypot(along - (t1 - p.tc) * SAT_KMMIN, cross) <= p.halfW;
-  return cross <= p.halfW && along >= (t0 - p.tc) * SAT_KMMIN && along <= (t1 - p.tc) * SAT_KMMIN;
+function satPos(o, t) {
+  const u = (o.u0 + 360 * t / o.P) * D2R, i = o.inc * D2R;
+  const lat = Math.asin(Math.sin(i) * Math.sin(u)) / D2R;
+  const lon = o.raan + Math.atan2(Math.cos(i) * Math.sin(u), Math.cos(u)) / D2R - WE * t;
+  return [((lon + 180) % 360 + 360) % 360 - 180, lat];
+}
+const inView = (q, m = 0) => q[0] >= LON0 - m && q[0] <= LON1 + m && q[1] >= LAT0 - m && q[1] <= LAT1 + m;
+// 다음 상공 통과 시각 (5분마다 다시 계산)
+function nextPass(o) {
+  if (o.nextAt != null && T - o.nextAt < 5 && (o.next == null || o.next > T)) return o.next;
+  o.nextAt = T; o.next = null;
+  for (let t = Math.ceil(T); t < T + 720; t += 1) if (inView(satPos(o, t))) { o.next = t; break; }
+  return o.next;
+}
+function endPass(o) {
+  const ps = o.cur; o.cur = null; ps.done = true; ps.end = T;
+  if (!o.use || !layerOn.space) return;
+  if (ps.sat === 'rf') { const ids = [...ps.rfIds]; feed('space', `${ps.name} 통과 · 신호 ${ids.length}개 · AIS 미대조 ${ids.filter(id => !byId.get(id).ais).length}개`); }
+  else feed('space', `${ps.name} 통과 · 표적 ${ps.seen.size}개 촬영`);
+}
+// 긴급 수집: 4시간 안에 표적 가까이(SAR 450km, RF 600km) 지나가는 위성을 찾아 예약한다
+function planTask(id, mis, reach) {
+  const t = byId.get(id); let best = null;
+  for (const o of SATS) {
+    if (!o.use || o.mis !== mis) continue;
+    for (let tt = T + 3; tt < T + 240 && (!best || tt < best.tc); tt += 0.5) {
+      const q = satPos(o, tt); if (!inView(q, 5)) continue;
+      if (dist(q, predicted(t, tt - T)) <= reach) { best = { o, tc: tt }; break; }
+    }
+  }
+  return best;
+}
+function spaceSense(t, s, act, taskHit) {
+  for (const x of act) {
+    const m = x.o.mis;
+    if (m === 'rf' ? !t.emitter : t.kind !== 'surface') continue;
+    if (s.includes(m) || distToLine(t.pos, [x.a, x.b]) > x.o.hw) continue;
+    s.push(m); x.ps.seen.add(t.id); if (m === 'rf' && t.truth !== 'F') x.ps.rfIds.add(t.id);
+  }
+  const k = taskHit.get(t.id);
+  if (k && !s.includes(k.mis)) { s.push(k.mis); k.ps.seen.add(t.id); if (k.mis === 'rf' && t.truth !== 'F') k.ps.rfIds.add(t.id); }
 }
 
+// ── 우군 함정 위성통신 ───────────────────────────────────
+const LINKS = {
+  anasis: { nm: '아나시스 2호', sub: '군 위성통신 · 정지궤도', rate: 6, lat: 560 },
+  koreasat: { nm: '무궁화 5A호', sub: '상용 위성통신 · 정지궤도', rate: 16, lat: 580 },
+  inmarsat: { nm: 'Inmarsat-4 F1', sub: '해상 위성통신 · 정지궤도', rate: 0.45, lat: 650 },
+  starlink: { nm: 'Starlink', sub: '저궤도 위성통신', rate: 120, lat: 45, leo: true },
+  oneweb: { nm: 'OneWeb', sub: '저궤도 위성통신', rate: 80, lat: 70, leo: true },
+  hf: { nm: 'HF 무선', sub: '위성 우회', rate: 0.0096, lat: 1200 }
+};
+let comm = {}, commAt = -1;
+function nearestLeo(q, name, pos) {
+  let best = null, bd = 1e9;
+  COMMS.forEach((c, i) => { if (c.name !== name) return; const d = dist(q, pos[i]); if (d < c.cov && d < bd) { bd = d; best = c; } });
+  return best;
+}
+function updateComms() {
+  const pos = COMMS.map(c => satPos(c, T)), jam = SC.jam, jamOn = T >= jam.at;
+  targets.filter(t => t.cls === 'kn' || t.cls === 'kcg').forEach((t, i) => {
+    const inZone = jamOn && dist(t.pos, jam.center) <= jam.r;
+    let key = t.cls === 'kn' ? 'anasis' : 'koreasat', sat = null;
+    // 재밍 대응을 승인하면 영향권 함정은 저궤도 통신으로, 그것도 없으면 HF·Inmarsat으로 우회한다
+    if (inZone && flags.jamAct != null) {
+      const sl = nearestLeo(t.pos, 'Starlink', pos), ow = sl ? null : nearestLeo(t.pos, 'OneWeb', pos);
+      if (sl) { key = 'starlink'; sat = sl; } else if (ow) { key = 'oneweb'; sat = ow; } else key = t.cls === 'kn' ? 'hf' : 'inmarsat';
+    }
+    const L = LINKS[key], q = 0.8 + 0.2 * Math.sin(T / 9 + i * 1.7);
+    let rate = L.rate * q, lat = L.lat + (L.leo ? 15 : 35) * Math.sin(T / 5 + i), loss = 0.2 + 0.4 * (1 - q);
+    if (inZone && key !== 'hf') {
+      if (L.leo) { rate *= 0.55; loss = 4 + 2 * Math.sin(T / 3 + i); } else { rate *= 0.04; loss = 32 + 8 * Math.sin(T / 4 + i); }
+    }
+    const status = key === 'hf' ? '우회' : (loss >= 20 || rate < L.rate * 0.1) ? '두절' : (loss >= 3 || rate < L.rate * 0.5) ? '저하' : '정상';
+    const prev = comm[t.id];
+    comm[t.id] = { key, sat, rate, lat, loss, status, inZone, since: prev && prev.status === status ? prev.since : T };
+  });
+}
+const fmtRate = r => r >= 1 ? `${r.toFixed(1)} Mbps` : `${(r * 1000).toFixed(r < 0.1 ? 1 : 0)} kbps`;
+
 // ── 탐지와 융합 ───────────────────────────────────────
-function sense(t, friends, act, t0) {
+function sense(t, friends, act, t0, taskHit) {
   const s = [];
   if (t.truth === 'F') s.push('link');
   const near = list => list.some(x => dist(x.pos, t.pos) <= x.r);
-  const sat = (p, sid) => { s.push(sid); (p.seen = p.seen || new Set()).add(t.id); if (sid === 'rf' && t.truth !== 'F') (p.rfIds = p.rfIds || new Set()).add(t.id); if (p.req && t.id === p.aim) p.aimHit = true; };
   if (t.kind === 'surface') {
     if (layerOn.surface) {
       if (t.ais) s.push('ais');
@@ -756,15 +862,12 @@ function sense(t, friends, act, t0) {
       if (dist(mpa.pos, t.pos) <= MPA_R) s.push('mpa');
       if (dist(uav.pos, t.pos) <= UAV_R) s.push('uav');
     }
-    if (layerOn.space) for (const p of act) {
-      if (p.sat === 'rf' && !t.emitter) continue;
-      if (!s.includes(p.sat) && swept(p, t.pos, t0, T)) sat(p, p.sat);
-    }
+    if (layerOn.space) spaceSense(t, s, act, taskHit);
   } else if (t.kind === 'air') {
     if (layerOn.ground && near(ADRADARS)) s.push('adradar');
     if (layerOn.surface && friends.some(f => dist(f.pos, t.pos) <= SHIP_AIR_R)) s.push('shipradar');
     if (layerOn.air && dist(mpa.pos, t.pos) <= MPA_R) s.push('mpa');
-    if (layerOn.space) for (const p of act) if (p.sat === 'rf' && !s.includes('rf') && swept(p, t.pos, t0, T)) sat(p, 'rf');
+    if (layerOn.space) spaceSense(t, s, act, taskHit);
   } else if (layerOn.under) {
     if (near(ARRAYS)) s.push('fixed');
     if (buoys.some(b => T < b.until && dist(b.pos, t.pos) <= BUOY_R)) s.push('buoy');
@@ -780,11 +883,40 @@ function step(dt) {
   for (const t of targets) moveTarget(t, dt);
   moveAir(mpa, dt); moveAir(uav, dt);
   const friends = targets.filter(t => t.truth === 'F');
-  const act = passes.filter(p => { passGeom(p); return p.through && (Math.abs((T - p.tc) * SAT_KMMIN) < 1050 || Math.abs((t0 - p.tc) * SAT_KMMIN) < 1050); });
+  // 위성: 해도 상공에 들어오면 통과 기록을 열고, 관측 위성은 지나간 구간을 훑어 탐지한다
+  const act = [];
+  for (const o of SATS) {
+    const a = satPos(o, t0), b = satPos(o, T);
+    if (inView(b, 2)) {
+      if (!o.cur) {
+        o.cur = { sat: o.mis, name: o.name, o, tc: T, seen: new Set(), rfIds: new Set(), pts: [] }; passes.push(o.cur);
+        if (o.op === 'foreign' && layerOn.space) feed('space', `${o.name}(${o.cc}) 상공 통과 · 우군 함정 노출 주의`);
+      }
+      o.cur.pts.push(b); o.cur.end = T;
+      if (o.use) act.push({ o, a, b, ps: o.cur });
+    } else if (o.cur) endPass(o);
+  }
+  // 예약된 긴급 수집 실행
+  const taskHit = new Map();
+  for (const k of tasks) {
+    if (k.done || k.tc > T) continue;
+    k.done = true;
+    const aim = byId.get(k.aim);
+    k.ps = { sat: k.mis, name: k.o.name + ' (긴급)', o: k.o, tc: T, end: T, done: true, seen: new Set(), rfIds: new Set(), pts: [] };
+    passes.push(k.ps);
+    for (const t of targets) {
+      if (!active(t) || (k.mis === 'rf' ? !t.emitter : t.kind !== 'surface')) continue;
+      if (dist(t.pos, aim.pos) <= k.hw) taskHit.set(t.id, k);
+    }
+    const hit = taskHit.has(k.aim);
+    k.req.status = hit ? '완료' : (k.mis === 'rf' ? '신호 없음' : '미탐지');
+    addLog(`${k.o.name} ${k.mis === 'rf' ? '신호 수집' : '긴급 촬영'} ${hit ? '완료' : '종료 (목표 미탐지)'}.`);
+  }
+  if (T - commAt >= 0.5) { commAt = T; updateComms(); }
   for (const t of targets) {
     let tr = tracks.get(t.id);
     if (!active(t)) { if (tr && t.gone) { tracks.delete(t.id); if (sel === t.id) sel = null; } continue; }
-    const s = sense(t, friends, act, t0);
+    const s = sense(t, friends, act, t0, taskHit);
     if (s.length) {
       if (!tr) { tr = { id: t.id, first: T, by: {}, affil: t.truth === 'F' ? 'F' : s.some(x => COOP.has(x)) ? 'N' : 'U', contact: 0 }; tracks.set(t.id, tr); onNew(t, tr, s); }
       if (tr.lost) { tr.lost = false; onReacq(t, tr, s); }
@@ -814,16 +946,7 @@ function step(dt) {
       if (tr.lost && T - tr.seen > 120 && tr.affil === 'N') tracks.delete(t.id);
     }
   }
-  for (const p of passes) {
-    if (!p.through || p.done || (T - p.tc) * SAT_KMMIN < 1050) continue;
-    p.done = true;
-    if (p.req && p.req.status === '예정') { p.req.status = p.aimHit ? '완료' : '미탐지'; addLog(`${SN[p.sat]} ${p.sat === 'rf' ? '신호 수집' : '긴급 촬영'} ${p.aimHit ? '완료' : '종료 (목표 미탐지)'}.`); }
-    if (p.req && p.req.status === '미탐지' && p.sat === 'rf') p.req.status = '신호 없음';
-    if (layerOn.space && p.sat === 'rf') {
-      const ids = [...(p.rfIds || [])], dark = ids.filter(id => !byId.get(id).ais).length;
-      feed('space', `RF 군집 통과 완료 · 신호 ${ids.length}개 · AIS 미대조 ${dark}개`);
-    } else if (layerOn.space) feed('space', `${SN[p.sat]} 통과 완료 · 표적 ${p.seen ? p.seen.size : 0}개 촬영`);
-  }
+  if (passes.length > 400) passes = passes.filter(ps => !ps.done || T - ps.end < 180 || ps.rfIds.size);
   scenario(dt);
 }
 
@@ -877,9 +1000,11 @@ function onRf(t, tr) {
   }
 }
 function taskRf(id) {
-  const r = addReq(`RF 위성 신호 수집 · ${id}`, '예정');
-  passes.push({ sat: 'rf', tc: T + 20, aim: id, brg: 193, halfW: 280, req: r });
-  feed('space', `${id} RF 신호 수집 과업 접수 · ${clock(T + 20).hm} 통과 예정`);
+  const b = planTask(id, 'rf', 600);
+  const r = addReq(`RF 위성 신호 수집 · ${id}${b ? ` · ${b.o.name} ${clock(b.tc).hm}` : ''}`, b ? '예정' : '불가');
+  if (!b) { addLog(`${id} 4시간 안에 신호를 수집할 RF 위성 없음.`); return; }
+  tasks.push({ o: b.o, tc: b.tc, aim: id, mis: 'rf', hw: 300, req: r });
+  feed('space', `${id} RF 수집 과업 · ${b.o.name} ${clock(b.tc).hm} 예정`);
 }
 
 // IFC 방식의 사건 유형과 공유 범위: 민간·기관 정보로 만든 사건은 협력국과 공유, 군사 위협은 국내 한정
@@ -892,6 +1017,7 @@ const CAT = {
   cable: ['해양 기반시설 위협', '국외 공유 가능', ['해경', '해수부']],
   shadow: ['제재 회피·그림자선단 의심', '국외 공유 가능', ['해경', '해수부', '해외 IFC']],
   jointex: ['주변국 연합 군사활동', '국내 한정', ['해경']],
+  jam: ['전자전·위성통신 방해', '국내 한정', ['해경']],
   survey: ['무단 해양과학조사 의심', '국내 한정', ['해경', '해수부', '외교부']]
 };
 function raise(a) {
@@ -915,10 +1041,12 @@ function approve(id) {
 function addReq(text, status) { const r = { t: T, text, status }; reqs.unshift(r); return r; }
 
 // 수집 과업 (조치 승인과 선택 표적 단추가 함께 쓴다)
-function taskSar(id, halfW = 50) {
-  const r = addReq(`SAR 위성 긴급 촬영 · ${id} 예상 해역`, '예정');
-  passes.push({ sat: 'sar', tc: T + 15, aim: id, brg: 193, halfW, req: r });
-  feed('space', `${id} 긴급 촬영 과업 접수 · ${clock(T + 15).hm} 통과 예정`);
+function taskSar(id, hw = 50) {
+  const b = planTask(id, 'sar', 450);
+  const r = addReq(`SAR 위성 긴급 촬영 · ${id}${b ? ` · ${b.o.name} ${clock(b.tc).hm}` : ''}`, b ? '예정' : '불가');
+  if (!b) { addLog(`${id} 4시간 안에 촬영할 SAR 위성 없음.`); return; }
+  tasks.push({ o: b.o, tc: b.tc, aim: id, mis: 'sar', hw, req: r });
+  feed('space', `${id} 긴급 촬영 과업 · ${b.o.name} ${clock(b.tc).hm} 촬영 예정`);
 }
 function taskUav(id) {
   const tr = tracks.get(id); if (!tr) return;
@@ -966,6 +1094,20 @@ function distToLine(p, line) {
   return best;
 }
 function scenario(dt = 0) {
+  // 위성통신 재밍: 영향권 함정 2척 이상이 5분 넘게 두절되면
+  const jammed = Object.entries(comm).filter(([, c]) => c.inZone && c.status === '두절' && T - c.since >= 5).map(([id]) => id);
+  if (jammed.length >= 2) raise({ id: 'jam', sev: 'crit', title: '위성통신 이상 (재밍 의심, 서해 북부)', tgt: jammed.join('·'),
+    rec: '저궤도 위성통신 우회·주파수 전환, RF 위성 재밍원 탐지', approve: () => {
+      flags.jamAct = T; addReq('RF 위성 재밍원 탐지 · 서해 북부', '수행'); feed('surface', '서해 북부 함정 저궤도 위성통신 우회'); commAt = -1;
+    } });
+  if (flags.jamAct != null && !flags.jamLoc) {
+    const rfo = SATS.find(o => o.use && o.mis === 'rf' && o.cur && dist(satPos(o, T), SC.jam.center) < 700);
+    if (rfo) { flags.jamLoc = T; addLog(`${rfo.name} 재밍 신호원 위치 추정: 옹진반도 일대 (오차 ±8km).`); feed('space', `${rfo.name} 재밍원 위치 추정 · 옹진반도 일대`); }
+  }
+  if (flags.jamAct != null && !flags.jamDone && ((flags.jamLoc && T - flags.jamAct > 30) || T - flags.jamAct > 150)) {
+    flags.jamDone = true;
+    closeAlert('jam', flags.jamLoc ? '저궤도 우회로 통신 회복, 재밍원 위치 추정·공유' : '저궤도 우회로 통신 회복 (재밍원 추가 탐지 필요)');
+  }
   // 그림자선단: 의심 유조선 2척 이상이 확인되면
   const sf = SC.shadowFleet.ships.map(([id]) => tracks.get(id)).filter(tr => tr && !tr.lost && tr.affil === 'S');
   if (sf.length >= 2) raise({ id: 'shadow', sev: 'warn', title: '그림자선단 의심 (AIS 위장·환적)', tgt: sf.map(tr => tr.id).join('·'),
@@ -976,16 +1118,15 @@ function scenario(dt = 0) {
     closeAlert('shadow', '선박 간 환적 확인, 협력국·제재 이행 기관 공유');
   }
   // 중·러 연합해상훈련: 편대 함정 3척 이상을 30분 넘게 추적하면
-  const jt = targets.filter(t => t.jx).map(t => tracks.get(t.id)).filter(tr => tr && !tr.lost);
-  flags.jxT = jt.length >= 3 ? (flags.jxT || 0) + dt : 0;
-  if (flags.jxT > 30) raise({ id: 'jointex', sev: 'warn', title: '동해 함정 편대 기동 (중·러 연합훈련 추정)', tgt: jt.map(tr => tr.id).join('·'),
-    rec: '해상초계기 감시·식별, 구축함 근접 감시, 합참·외교부 통보 (가상)', approve: () => {
-      sendAir(mpa, SC.jointEx.area, 20, '중·러 연합훈련 감시', () => feed('air', '해상초계기 연합훈련 해역 도착'));
-      addReq('해상초계기 감시 · 중·러 연합훈련 식별', '수행'); flags.jxAct = T;
-      const f = byId.get('F101'); f.mode = 'intercept'; f.goal = () => fromLocal(jx.pos, -25, -20);
+  // 대화퇴 부근 함정 편대: 위성 등으로 2척 이상 잡히면 (우리 감시 자산 밖이라 위성이 첫 단서)
+  const jt = targets.filter(t => t.jx).map(t => tracks.get(t.id)).filter(Boolean);
+  if (jt.length >= 2) raise({ id: 'jointex', sev: 'warn', title: '대화퇴 부근 함정 편대 (중·러 연합훈련 추정)', tgt: jt.map(tr => tr.id).join('·'),
+    rec: '해상초계기 원거리 감시·식별, SAR 위성 추가 촬영, 합참·외교부 통보 (가상)', approve: () => {
+      sendAir(mpa, SC.jointEx.area, 20, '중·러 연합훈련 감시', () => feed('air', '해상초계기 대화퇴 해역 도착'));
+      addReq('해상초계기 감시 · 중·러 연합훈련 식별', '수행'); flags.jxAct = T; taskSar(jt[0].id, 60);
     } });
   if (flags.jxAct != null && !flags.jxDone && T - flags.jxAct > SC.jointEx.leaveAfter) {
-    flags.jxDone = true; jx.st = 'leave'; byId.get('F101').mode = 'return';
+    flags.jxDone = true; jx.st = 'leave';
     if (!flags.mpaHome) sendAir(mpa, SC.mpa.center, SC.mpa.r, '동해 정찰 궤도');
     closeAlert('jointex', '중·러 연합해상훈련 확인, 훈련 종료 후 북상 이탈');
   }
@@ -1162,6 +1303,9 @@ function drawDyn() {
     h += txt('btx eez', X(132.45) + 6 * z, Y(37.3), 10.5 * z, 'EEZ(미획정)');
   }
   if (showB.infra) {
+    const ya = SC.yamato;
+    h += `<ellipse class="rg yam" cx="${f1(X(ya.center[0]))}" cy="${f1(Y(ya.center[1]))}" rx="${f1(ya.rx * PXKM)}" ry="${f1(ya.ry * PXKM)}"${dash(z, 5, 4)}/>`
+      + txt('btx infra', X(ya.center[0]), Y(ya.center[1]) - ya.ry * PXKM - 4 * z, 10.5 * z, ya.name, 'middle');
     for (const [n, line] of SC.cables) {
       h += `<path class="cable" d="${pathD(line)}"${dash(z, 7, 2, 1, 2)}/>`;
       const m = line[1]; h += txt('btx infra', X(m[0]) + 5 * z, Y(m[1]) + 12 * z, 9.5 * z, n);
@@ -1173,7 +1317,7 @@ function drawDyn() {
       h += txt('btx infra', X(b[0]) + 4 * z, Y(y) + 3 * z, 9.5 * z, n);
     }
   }
-  if (flags.jxT > 0 && !jx.gone) {
+  if (alerts.some(al => al.id === 'jointex') && !jx.gone) {
     const a = SC.jointEx.area;
     h += circ('air', a, SC.jointEx.r + 14, z, true) + txt('btx mca', X(a[0]), Y(a[1]) - (SC.jointEx.r + 17) * PXKM, 10.5 * z, '연합훈련 추정 구역 (개략)', 'middle');
   }
@@ -1188,27 +1332,42 @@ function drawDyn() {
     h += txt('btx nll', X(SC.nllEast[1][0]) - 2 * z, Y(SC.nllEast[1][1]) - 7 * z, 11 * z, 'NLL', 'end');
   }
 
-  // 우주
-  if (layerOn.space) for (const p of passes) {
-    if (!p.through) continue;
-    const dtc = T - p.tc;
-    if (dtc < -18 || dtc > 30) continue;
-    const a = subpoint(p, p.tc - 3), b = subpoint(p, p.tc + 3);
-    h += `<line class="orbit"${dash(z, 2, 4)} x1="${f1(X(a[0]))}" y1="${f1(Y(a[1]))}" x2="${f1(X(b[0]))}" y2="${f1(Y(b[1]))}"/>`;
-    if (p.sat !== 'rf' && dtc > -2.6) {
-      const s1 = Math.min(1050, dtc * SAT_KMMIN);
-      const L0 = advance(p.through, p.brg, -1050), L1 = advance(p.through, p.brg, s1), w = p.halfW, nb = p.brg + 90;
-      const q = [advance(L0, nb, w), advance(L1, nb, w), advance(L1, nb, -w), advance(L0, nb, -w)];
-      h += `<path class="swath" opacity="${dtc > 3 ? f1(Math.max(.15, 1 - (dtc - 3) / 30)) : 1}" d="${pathD(q, true)}"/>`;
+  // 우주: 관측폭 흔적, 저궤도 통신위성, 관측·정찰 위성과 궤적, 정지궤도 위성
+  if (layerOn.space) {
+    for (const ps of passes) {
+      if (!ps.o || !ps.o.use || ps.sat === 'rf' || ps.pts.length < 2) continue;
+      const age = ps.done ? T - ps.end : 0; if (age > 25) continue;
+      h += `<path class="swl" stroke-width="${f1(2 * ps.o.hw * PXKM)}" opacity="${f1(Math.max(.1, .5 - age / 50))}" d="${pathD(ps.pts)}"/>`;
     }
-    if (Math.abs(dtc * SAT_KMMIN) < 1050) {
-      const sp = subpoint(p, T), x = X(sp[0]), y = Y(sp[1]);
-      if (p.sat === 'rf') {
-        for (const off of [-45, 0, 45]) { const q = advance(sp, p.brg, off); h += `<rect class="f-space" x="${f1(X(q[0]) - 3.5 * z)}" y="${f1(Y(q[1]) - 3.5 * z)}" width="${f1(7 * z)}" height="${f1(7 * z)}"/>`; }
-        h += circ('space', sp, p.halfW, z, true);
-      } else h += `<line class="satbar" x1="${f1(x - 13 * z)}" y1="${f1(y)}" x2="${f1(x + 13 * z)}" y2="${f1(y)}"/><rect class="f-space" x="${f1(x - 4 * z)}" y="${f1(y - 4 * z)}" width="${f1(8 * z)}" height="${f1(8 * z)}"/>`;
-      h += txt('lbl t-space', x + 16 * z, y + 4 * z, 11.5 * z, (p.sat === 'sar' ? 'SAR 위성' : p.sat === 'eo' ? 'EO 위성' : 'RF 위성 군집 (3기)') + (p.req ? ' · 긴급' : ''));
+    for (const c of COMMS) { const q = satPos(c, T); if (inView(q)) h += `<circle class="f-comm" cx="${f1(X(q[0]))}" cy="${f1(Y(q[1]))}" r="${f1(2.2 * z)}"/>`; }
+    for (const o of SATS) {
+      const q = satPos(o, T); if (!inView(q, 1)) continue;
+      const tr6 = []; for (let k = -6; k <= 6; k++) tr6.push(satPos(o, T + k * 0.5));
+      h += `<path class="orbit"${dash(z, 2, 4)} d="${pathD(tr6)}"/>`;
+      if (o.mis === 'rf' && o.use) h += circ('space', q, o.hw, z, true);
+      const x = X(q[0]), y = Y(q[1]);
+      h += `<g class="sat ${o.op}"><line class="satbar" x1="${f1(x - 12 * z)}" y1="${f1(y)}" x2="${f1(x + 12 * z)}" y2="${f1(y)}"/><rect x="${f1(x - 4 * z)}" y="${f1(y - 4 * z)}" width="${f1(8 * z)}" height="${f1(8 * z)}"/></g>`;
+      h += txt('lbl ' + (o.op === 'foreign' ? 't-foe' : 't-space'), x + 15 * z, y + 4 * z, 10.5 * z, `${o.name} (${o.cc})`);
     }
+    // 정지궤도 위성은 적도 상공이라 해도 밖: 해도 아래 가장자리에 경도 위치로 표시
+    const by = Math.min(MT + MH, vb.y + vb.h) - 58 * z, xl = Math.max(ML, vb.x) + 6 * z, xr = Math.min(ML + MW, vb.x + vb.w) - 6 * z;
+    const grp = {}; GEOS.forEach(g => (grp[g.lon] = grp[g.lon] || []).push(g));
+    const side = { l: 0, r: 0, m: 0 };
+    Object.keys(grp).map(Number).sort((p1, p2) => p1 - p2).forEach(lon => {
+      const gx = X(lon), sd = gx < xl ? 'l' : gx > xr ? 'r' : 'm', x = sd === 'l' ? xl : sd === 'r' ? xr : gx, y = by - side[sd]++ * 13 * z;
+      const nm = `${sd === 'l' ? '◀ ' : ''}${grp[lon].map(g => g.name).join('·')} ${lon}°E${sd === 'r' ? ' ▶' : ''} (정지)`;
+      h += `<path class="f-space" d="M${f1(x)},${f1(y + 4 * z)} l${f1(4 * z)},${f1(-7 * z)} h${f1(-8 * z)}Z"/>` + txt('lbl t-space', x + (sd === 'r' ? -7 : 7) * z, y + 2 * z, 10 * z, nm, sd === 'r' ? 'end' : 'start');
+    });
+  }
+  // 위성통신 재밍 의심 구역
+  if (alerts.some(al => al.id === 'jam')) {
+    h += `<circle class="rg jamz" cx="${f1(X(SC.jam.center[0]))}" cy="${f1(Y(SC.jam.center[1]))}" r="${f1(SC.jam.r * PXKM)}"${dash(z, 6, 4)}/>`;
+    h += txt('btx nll', X(SC.jam.center[0]), Y(SC.jam.center[1]) - SC.jam.r * PXKM - 4 * z, 10.5 * z, '위성통신 재밍 의심 구역', 'middle');
+  }
+  // 선택한 우군 함정의 저궤도 통신 링크
+  if (sel && comm[sel] && comm[sel].sat) {
+    const sh = byId.get(sel), q = satPos(comm[sel].sat, T);
+    h += `<line class="clink"${dash(z, 4, 3)} x1="${f1(X(sh.pos[0]))}" y1="${f1(Y(sh.pos[1]))}" x2="${f1(X(q[0]))}" y2="${f1(Y(q[1]))}"/>` + `<circle class="f-comm" cx="${f1(X(q[0]))}" cy="${f1(Y(q[1]))}" r="${f1(4 * z)}"/>`;
   }
   // 지상
   if (layerOn.ground) {
@@ -1285,18 +1444,22 @@ function detCounts() {
   return det;
 }
 function lastRf() { return passes.filter(p => p.sat === 'rf' && p.rfIds && p.rfIds.size).sort((a, b) => b.tc - a.tc)[0]; }
-function satStatus(sat) {
-  const now = passes.find(p => p.sat === sat && p.through && Math.abs((T - p.tc) * SAT_KMMIN) < 1050);
-  if (now) return now.req ? '긴급 촬영 중' : (sat === 'rf' ? '신호 수집 중' : '촬영 중');
-  const nx = passes.filter(p => p.sat === sat && p.tc > T).sort((a, b) => a.tc - b.tc)[0];
-  return nx ? `다음 ${clock(nx.tc).hm}${nx.req ? ' (긴급)' : ''}` : '–';
+function satStatus(m) {
+  const list = SATS.filter(o => o.use && o.mis === m), now = list.filter(o => inView(satPos(o, T)));
+  if (now.length) return `상공 ${now.map(o => o.name).join(', ')}`;
+  const nx = list.map(o => [o, nextPass(o)]).filter(x => x[1] != null).sort((p1, p2) => p1[1] - p2[1])[0];
+  return nx ? `다음 ${clock(nx[1]).hm} ${nx[0].name}` : '–';
 }
 function assets(dom) {
   switch (dom) {
     case 'space': {
       const lp = lastRf();
       const ids = lp ? [...lp.rfIds] : [];
-      return [['SAR 위성', satStatus('sar')], ['EO 위성', satStatus('eo')], ['RF 위성 군집 (3기)', satStatus('rf')],
+      const cnt = o => SATS.filter(x => x.orbit === o).length, foe = SATS.filter(o => o.op === 'foreign' && inView(satPos(o, T)));
+      return [['SAR 위성', satStatus('sar')], ['EO 위성', satStatus('eo')], ['RF 위성', satStatus('rf')],
+        ['궤도별 보유', `태양동기 ${cnt('SSO')} · 경사 ${cnt('INC')} · 정지 ${GEOS.length}`],
+        ['저궤도 통신 상공', `${COMMS.filter(c => inView(satPos(c, T))).length}기 (표본 ${COMMS.length}기)`],
+        ['주변국 정찰위성', foe.length ? `상공 ${foe.map(o => o.name).join(', ')}` : '상공 없음'],
         ['최근 RF 수집', lp ? `신호 ${ids.length} · AIS 미대조 ${ids.filter(id => !byId.get(id).ais).length}` : '–']];
     }
     case 'air': return [['해상초계기', mpa.task], ['무인기', uav.task]];
@@ -1441,6 +1604,9 @@ function renderPanel() {
       <dt>탐지 출처</dt><dd>${recent.length ? recent.join(', ') : '없음'}</dd>
       <dt>최초·최종</dt><dd>${clock(tr.first).hm} · ${clock(tr.seen).hm}</dd>
       ${tr.note ? `<dt>비고</dt><dd>${esc(tr.note)}</dd>` : ''}
+      ${comm[t.id] ? `<dt class="rfh">위성통신</dt><dd class="rfh">${LINKS[comm[t.id].key].nm}${comm[t.id].sat ? ` (${comm[t.id].sat.id})` : ''} · ${LINKS[comm[t.id].key].sub}</dd>
+        <dt>전송·지연</dt><dd>${fmtRate(comm[t.id].rate)} · ${Math.round(comm[t.id].lat)}ms · 손실 ${comm[t.id].loss.toFixed(1)}%</dd>
+        <dt>통신 상태</dt><dd class="${comm[t.id].status === '정상' ? '' : 'warn'}">${comm[t.id].status}${comm[t.id].inZone ? ' (재밍 영향권)' : ''}</dd>` : ''}
       ${tr.rf ? `<dt class="rfh">RF 신호</dt><dd class="rfh">${esc(tr.rf.type)}</dd><dt>주파수</dt><dd>${esc(tr.rf.band)}</dd>
         <dt>RF 수신</dt><dd>${clock(tr.rf.t).hm} · 위치 오차 ±${tr.rf.err}km</dd>
         <dt>AIS 대조</dt><dd class="${tr.rf.ais ? '' : 'warn'}">${tr.rf.ais ? `일치 (MMSI ${t.mmsi})` : 'AIS 미수신 · 신호원과 대조 불가'}</dd>` : ''}</dl>`);
@@ -1452,6 +1618,28 @@ function renderPanel() {
     <div class="r">${a.status === 'done' ? '평가: ' + esc(a.result) : '→ ' + esc(a.rec)}</div>
     <div class="a"><span class="chip ${a.status}">${stName[a.status]}</span><span class="chip">${esc(a.cat)}</span><span class="chip ${a.share === '국내 한정' ? 'cls' : 'shr'}">${a.share}</span><span class="chip">→ ${a.to.length ? a.to.join('·') : '군 내부'}</span>${a.status === 'open' ? `<button class="btn go" type="button" data-approve="${a.id}">조치 승인</button>` : ''}<span class="empty">${clock(a.t).hm}</span></div></div>`).join('')
     : '<p class="empty">현재 이상징후가 없습니다. 시나리오가 진행되면 AIS 신호 소실, EEZ 침범, NLL 침범, 수중 접촉, KADIZ 진입이 차례로 나타납니다.</p>');
+  // 우군 함정 위성통신
+  {
+    const rows = targets.filter(t => comm[t.id]).map(t => [t, comm[t.id]]);
+    const n = st => rows.filter(([, c]) => c.status === st).length, avg = rows.reduce((a2, [, c]) => a2 + c.rate, 0) / (rows.length || 1);
+    const chipCls = { 정상: 'done', 저하: 'warn', 우회: 'warn', 두절: 'open' };
+    setHTML($('commInfo'), 'comm', `<div class="csum"><span>정상 <b>${n('정상')}</b></span><span>저하 <b>${n('저하')}</b></span><span>우회 <b>${n('우회')}</b></span><span>두절 <b>${n('두절')}</b></span><span>평균 전송 <b>${fmtRate(avg)}</b></span></div>
+      <table class="ctab"><thead><tr><th>함정</th><th>링크</th><th class="n">전송</th><th class="n">지연</th><th class="n">손실</th><th>상태</th></tr></thead><tbody>`
+      + rows.map(([t, c]) => `<tr><td>${t.id}</td><td>${LINKS[c.key].nm}</td><td class="n">${fmtRate(c.rate)}</td><td class="n">${Math.round(c.lat)}ms</td><td class="n">${c.loss.toFixed(1)}%</td><td><span class="chip ${chipCls[c.status]}">${c.status}</span></td></tr>`).join('')
+      + '</tbody></table>');
+  }
+  // 위성 운용 현황
+  {
+    const st = o => inView(satPos(o, T)) ? '<span class="chip done">상공</span>' : (nextPass(o) != null ? `<small>다음 ${clock(nextPass(o)).hm}</small>` : '<small>–</small>');
+    const row = o => `<tr><td>${o.name}</td><td><small>${o.cc}</small></td><td><small>${SAT_MIS[o.mis]}</small></td><td class="st">${st(o)}</td></tr>`;
+    const grpRow = t2 => `<tr class="gh"><td colspan="4">${t2}</td></tr>`;
+    const comms = SC.comms.map(([nm, cc]) => `<tr><td>${nm}</td><td><small>${cc}</small></td><td><small>통신</small></td><td class="st"><small>상공 ${COMMS.filter(c => c.name === nm && inView(satPos(c, T))).length}기</small></td></tr>`).join('');
+    setHTML($('satInfo'), 'sat', `<table class="stab"><thead><tr><th>위성</th><th>국가</th><th>임무</th><th style="text-align:right">상태</th></tr></thead><tbody>`
+      + grpRow(`태양동기궤도 (${SATS.filter(o => o.orbit === 'SSO').length}기)`) + SATS.filter(o => o.orbit === 'SSO').map(row).join('')
+      + grpRow(`경사궤도 (${SATS.filter(o => o.orbit === 'INC').length}기)`) + SATS.filter(o => o.orbit === 'INC').map(row).join('')
+      + grpRow(`정지궤도 (${GEOS.length}기)`) + GEOS.map(g => `<tr><td>${g.name}</td><td><small>${g.cc}</small></td><td><small>${SAT_MIS[g.mis]}</small></td><td class="st"><small>${g.lon}°E</small></td></tr>`).join('')
+      + grpRow(`저궤도 통신 위성군 (표본 ${COMMS.length}기)`) + comms + '</tbody></table>');
+  }
   const lp = lastRf();
   let rh = '<p class="empty">RF 위성 군집이 통과하면 수신한 신호와 AIS 대조 결과가 여기에 나옵니다.</p>';
   if (lp) {
