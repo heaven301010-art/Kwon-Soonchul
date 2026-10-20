@@ -506,7 +506,7 @@ textarea.report { width: 100%; min-height: 150px; font: 12px/1.5 var(--font-data
         <label>우선순위<select id="rqPri"><option>긴급</option><option selected>우선</option><option>일상</option></select></label>
         <label class="w2">수집 목적<input id="rqWhy" type="text" maxlength="40" placeholder="예: 불법 환적 의심 선박 확인"></label>
         <div class="w2 rqdom" id="rqDom" role="group" aria-label="센서 영역">
-          <label><input type="checkbox" value="sar" checked>위성 SAR</label><label><input type="checkbox" value="eo" checked>위성 EO</label><label><input type="checkbox" value="rf" checked>위성 RF</label>
+          <label><input type="checkbox" value="sar" checked>위성 SAR</label><label><input type="checkbox" value="eo" checked>위성 EO/IR</label><label><input type="checkbox" value="msi" checked>위성 다분광</label><label><input type="checkbox" value="hsi" checked>위성 초분광</label><label><input type="checkbox" value="rf" checked>위성 RF</label>
           <label><input type="checkbox" value="air" checked>항공</label><label><input type="checkbox" value="surface" checked>해상</label><label><input type="checkbox" value="ground" checked>지상</label><label><input type="checkbox" value="under" checked>수중</label>
         </div>
         <div class="w2 row"><button class="btn" type="button" id="rqPick" aria-pressed="false">지도에서 해역 지정</button><button class="btn go" type="button" id="rqAuto">최적 센서 자동 요청</button></div>
@@ -611,10 +611,10 @@ const COOP = new Set(['ais', 'vpass', 'lrit']);
 const PORTS = SC.ports.map(([n, x, y]) => ({ name: n, pos: [x, y], r: 12 }));
 const ARRAYS = SC.arrays.map(([n, x, y]) => ({ name: n, pos: [x, y], r: 30 }));
 const SHIP_R = 40, SHIP_AIR_R = 150, SONAR_R = 12, MPA_R = 120, UAV_R = 50, BUOY_R = 22, LOST_AFTER = 12;
-const SN = { ais: 'AIS', vpass: 'V-PASS', lrit: 'LRIT', vts: '해경 VTS', sar: 'SAR 위성', eo: 'EO 위성', rf: 'RF 위성 군집', radar: '레이더 감시대', adradar: '방공 레이더', cctv: '해안 CCTV',
+const SN = { ais: 'AIS', vpass: 'V-PASS', lrit: 'LRIT', vts: '해경 VTS', sar: 'SAR 위성', eo: 'EO/IR 위성', msi: '다분광 위성', hsi: '초분광 위성', rf: 'RF 위성 군집', radar: '레이더 감시대', adradar: '방공 레이더', cctv: '해안 CCTV',
   shipradar: '함정 레이더', fixed: '고정형 수중감시', buoy: '소노부이', sonar: '함정 소나', mpa: '해상초계기', uav: '무인기', link: '전술데이터링크' };
 const DOMS = {
-  space: { nm: '우주정보', sub: '위성 영상·신호', types: [['sar', 'SAR'], ['eo', 'EO'], ['rf', 'RF 군집']] },
+  space: { nm: '우주정보', sub: '위성 영상·신호', types: [['sar', 'SAR'], ['eo', 'EO/IR'], ['msi', '다분광'], ['hsi', '초분광'], ['rf', 'RF']] },
   air: { nm: '항공정보', sub: '초계기·무인기', types: [['mpa', '해상초계기'], ['uav', '무인기']] },
   ground: { nm: '지상정보', sub: '해안·방공 레이더', types: [['radar', '감시대'], ['adradar', '방공']] },
   surface: { nm: '수상정보', sub: 'GICOMS·해경 연계', types: [['ais', 'AIS'], ['vpass', 'V-PASS'], ['lrit', 'LRIT'], ['vts', 'VTS'], ['shipradar', '함정'], ['cctv', 'CCTV']] },
@@ -846,13 +846,15 @@ function sendAir(a, dest, r, task, onArrive) {
 
 // ── 위성 궤도 (원궤도 근사, 지구 자전 반영) ─────────────────
 const RE = 6378.137, MU = 398600.4418, WE = 360 / 1436.07;
-const SAT_MIS = { sar: 'SAR', eo: 'EO', rf: 'RF', met: '기상', ocean: '해양관측', comm: '통신', crew: '유인' };
+const SAT_MIS = { sar: 'SAR', eo: 'EO/IR', msi: '다분광', hsi: '초분광', rf: 'RF', met: '기상', ocean: '해양관측', comm: '통신', crew: '유인' };
 const ORB = { SSO: '태양동기', INC: '경사', GEO: '정지' };
 let SATS = [], GEOS = [], COMMS = [], tasks = [];
 const periodMin = alt => 2 * Math.PI * Math.sqrt((RE + alt) ** 3 / MU) / 60;
 function buildSats() {
   SATS = SC.satellites.map(([name, cc, op, mis, orbit, alt, inc, raan, u0, hw]) => ({ name, cc, op, mis, orbit, alt, inc, raan, u0, hw,
-    P: periodMin(alt), use: op !== 'foreign' && ['sar', 'eo', 'rf'].includes(mis), cur: null }));
+    P: periodMin(alt), use: op !== 'foreign' && ['sar', 'eo', 'msi', 'hsi', 'rf'].includes(mis), cur: null }));
+  // 선박 탐지에 쓸 수 있는 해상도(30m 이하)와 야간 관측(SAR·RF·적외선) 여부
+  for (const o of SATS) { const ms = satModes(o); o.det = o.mis === 'rf' || Math.min(...ms.map(m => m[0])) <= 30; o.night = o.mis === 'sar' || o.mis === 'rf' || ms.some(m => m[3]); }
   GEOS = SC.geo.map(([name, cc, op, mis, lon]) => ({ name, cc, op, mis, lon, orbit: 'GEO' }));
   COMMS = [];
   SC.comms.forEach(([name, cc, alt, inc, planes, per, cov], ci) => {
@@ -892,9 +894,12 @@ function planTask(id, mis, reach) {
   }
   return best;
 }
+const daylight = t => { const h = +clock(t).hm.slice(0, 2); return h >= 7 && h < 18; };
 function spaceSense(t, s, act, taskHit) {
+  const dark = !daylight(T);
   for (const x of act) {
     const m = x.o.mis;
+    if (!x.o.det || (dark && !x.o.night)) continue;
     if (m === 'rf' ? !t.emitter : t.kind !== 'surface') continue;
     if (s.includes(m) || distToLine(t.pos, [x.a, x.b]) > x.o.hw) continue;
     s.push(m); x.ps.seen.add(t.id); if (m === 'rf' && t.truth !== 'F') x.ps.rfIds.add(t.id);
@@ -1108,7 +1113,7 @@ function step(dt) {
     }
     if (!k.aim) {
       const n = targets.filter(t => taskHit.get(t.id) === k).length;
-      k.req.status = '완료'; k.req.result = k.mis === 'rf' ? `신호 ${n}건 수집` : `표적 ${n}척 촬영`;
+      k.req.status = '완료'; k.req.result = k.mis === 'rf' ? `신호 ${n}건 수집` : k.mis === 'hsi' ? `초분광 영상 · 표적 ${n}척 분광 분석` : k.mis === 'msi' ? `다분광 영상 · 표적 ${n}척` : `표적 ${n}척 촬영`;
       addLog(`${k.o.name} ${k.req.rid} 해역 ${k.mis === 'rf' ? '신호 수집' : '촬영'} 완료 (${k.req.result}).`);
       feed('space', `${k.req.rid} ${k.o.name} ${k.req.result}`);
       continue;
@@ -1607,7 +1612,7 @@ function drawDyn() {
       if (o.mis === 'rf' && o.use) h += circ('space', q, o.hw, z, true);
       const x = X(q[0]), y = Y(q[1]);
       h += `<g class="sat ${o.op}"><line class="satbar" x1="${f1(x - 12 * z)}" y1="${f1(y)}" x2="${f1(x + 12 * z)}" y2="${f1(y)}"/><rect x="${f1(x - 4 * z)}" y="${f1(y - 4 * z)}" width="${f1(8 * z)}" height="${f1(8 * z)}"/></g>`;
-      h += txt('lbl ' + (o.op === 'foreign' ? 't-foe' : 't-space'), x + 15 * z, y + 4 * z, 10.5 * z, `${o.name} (${o.cc})`);
+      h += txt('lbl ' + (o.op === 'foreign' ? 't-foe' : 't-space'), x + 15 * z, y + 4 * z, 10.5 * z, `${o.name} (${o.cc}·${SAT_MIS[o.mis]})`);
     }
     // 정지궤도 위성은 적도 상공이라 해도 밖: 해도 아래 가장자리에 경도 위치로 표시
     const by = Math.min(MT + MH, vb.y + vb.h) - 58 * z, xl = Math.max(ML, vb.x) + 6 * z, xr = Math.min(ML + MW, vb.x + vb.w) - 6 * z;
@@ -1802,7 +1807,7 @@ function assets(dom) {
       const lp = lastRf();
       const ids = lp ? [...lp.rfIds] : [];
       const cnt = o => SATS.filter(x => x.orbit === o).length, foe = SATS.filter(o => o.op === 'foreign' && inView(satPos(o, T)));
-      return [['SAR 위성', satStatus('sar')], ['EO 위성', satStatus('eo')], ['RF 위성', satStatus('rf')],
+      return [['SAR 위성', satStatus('sar')], ['EO/IR 위성', satStatus('eo')], ['다분광 위성', satStatus('msi')], ['초분광 위성', satStatus('hsi')], ['RF 위성', satStatus('rf')],
         ['궤도별 보유', `태양동기 ${cnt('SSO')} · 경사 ${cnt('INC')} · 정지 ${GEOS.length}`],
         ['저궤도 통신 상공', `${COMMS.filter(c => inView(satPos(c, T))).length}기 (표본 ${COMMS.length}기)`],
         ['주변국 정찰위성', foe.length ? `상공 ${foe.map(o => o.name).join(', ')}` : '상공 없음'],
@@ -2062,14 +2067,21 @@ $('bReset').onclick = () => { init(); elCache.clear(); if (arcView) { drawArc();
 // 위성 촬영 모드 [해상도 m, 관측폭 km, 모드] (공개 제원 기반 개략값). RF는 해상도 대신 위치 오차를 적는다.
 const SAT_MODES = [
   [/^아리랑 3호/, [[0.7, 15, '고해상도 광학']]],
-  [/^아리랑 3A/, [[0.55, 12, '고해상도 광학']]],
+  [/^아리랑 3A/, [[0.55, 12, '전정색 (주간)'], [5.5, 12, '중적외선 (주야간)', true]]],
   [/^아리랑 5/, [[1, 5, '고해상도'], [3, 30, '표준'], [20, 100, '광역']]],
-  [/^군 정찰위성 1/, [[0.3, 10, 'EO/IR']]],
+  [/^군 정찰위성 1/, [[0.3, 10, 'EO 전정색 (주간)'], [1.5, 10, 'IR 열영상 (주야간)', true]]],
   [/^군 정찰위성/, [[0.5, 5, '스포트라이트'], [1, 10, '스트립맵'], [3, 40, '스캔']]],
   [/^차세대중형/, [[0.5, 12, '광학']]],
   [/^Sentinel-1/, [[5, 80, 'SM'], [20, 250, 'IW'], [40, 400, 'EW']]],
-  [/^Sentinel-2/, [[10, 290, 'MSI']]],
-  [/^Landsat/, [[15, 185, 'OLI 전정색']]],
+  [/^Sentinel-2/, [[10, 290, 'MSI 13밴드']]],
+  [/^Landsat/, [[15, 185, 'OLI 전정색'], [30, 185, 'OLI 다분광 · TIRS 열적외 (주야간)', true]]],
+  [/^차세대중형위성 4/, [[5, 120, '다분광 5밴드']]],
+  [/^PlanetScope/, [[3.7, 32, '다분광 8밴드']]],
+  [/^PRISMA/, [[30, 30, '초분광 VNIR·SWIR 240밴드'], [5, 30, '전정색']]],
+  [/^EnMAP/, [[30, 30, '초분광 VNIR·SWIR 242밴드']]],
+  [/^Pixxel/, [[5, 40, '초분광 VNIR 150밴드']]],
+  [/^Wyvern/, [[5.3, 20, '초분광 VNIR 31밴드']]],
+  [/^가오펀 5/, [[30, 60, '초분광 AHSI 330밴드']]],
   [/^RCM/, [[3, 20, '초고해상도'], [16, 125, '중해상도'], [50, 350, '저해상도·선박탐지']]],
   [/광학 \(IGS\)/, [[0.4, 10, '광학']]],
   [/레이더 \(IGS\)/, [[1, 10, '고해상도'], [3, 40, '표준']]],
@@ -2080,16 +2092,15 @@ const SAT_MODES = [
   [/^Unseenlabs/, [[5000, 600, '신호 수집 · 위치 오차 약 5km']]]
 ];
 const satModes = o => (SAT_MODES.find(([re]) => re.test(o.name)) || [, [[10, 2 * o.hw, '기본']]])[1];
-const RQ_REACH = { sar: 450, eo: 300, rf: 600 };
+const RQ_REACH = { sar: 450, eo: 300, msi: 150, hsi: 250, rf: 600 };
 const RQ_AREAS = [
   ['서해 북부 (NLL 인근)', 125.20, 37.70], ['서해 중부', 124.80, 36.30], ['서해 남부·흑산도', 125.00, 34.60], ['제주 남방·이어도', 125.20, 32.40],
   ['남해·대한해협', 128.80, 34.40], ['동해 남부', 130.00, 35.90], ['동해 중부', 130.60, 37.40], ['울릉도·독도', 131.40, 37.40],
   ['동해 북부', 130.50, 39.30], ['대화퇴 (동해퇴)', 134.50, 39.40]
 ];
-const RQ_GRP = [['sar', '우주 · SAR 위성'], ['eo', '우주 · EO 위성 (주간만)'], ['rf', '우주 · RF 위성'], ['air', '항공 · 초계기·무인기'], ['surface', '해상 · 함정'], ['ground', '지상 · 해안 감시'], ['under', '수중 · 음향 탐지']];
+const RQ_GRP = [['sar', '우주 · SAR 위성 (주야간·전천후)'], ['eo', '우주 · EO/IR 위성 (IR은 야간 가능)'], ['msi', '우주 · 다분광 위성 (해색·적조·유류·광역 탐지)'], ['hsi', '우주 · 초분광 위성 (유막·물질 판별·위장 탐지)'], ['rf', '우주 · RF 위성'], ['air', '항공 · 초계기·무인기'], ['surface', '해상 · 함정'], ['ground', '지상 · 해안 감시'], ['under', '수중 · 음향 탐지']];
 const FIT = { ok: ['적합', 'done'], part: ['부분', 'act'], no: ['불가', ''] };
 const rq = { pick: false, show: false, rows: [], at: -1, n: 0 };
-const kstHour = t => +clock(t).hm.slice(0, 2);
 
 function rqArea() {
   const v = $('rqArea').value, tr = v === 'sel' && sel ? tracks.get(sel) : null;
@@ -2117,15 +2128,29 @@ function rqCatalog(a) {
   // 우주: 시한 안에 해역 가까이 지나가는 첫 통과
   for (const o of SATS) {
     if (!o.use) continue;
-    const [m, resOk] = o.mis === 'rf' ? [satModes(o)[0], true] : pickMode(satModes(o), a);
-    let t = null, why = '';
+    // 광학(EO·다분광·초분광)은 주간에만, 적외선 모드는 야간에도 쓴다. 해상도를 만족하는 첫 통과를 고르고, 없으면 첫 접근 통과
+    const ms = satModes(o), reach = Math.max(RQ_REACH[o.mis], ...ms.map(x => x[1] / 2));
+    let t = null, why = '', m = ms[0], resOk = o.mis === 'rf', first = null;
     for (let tt = T + 3; tt <= end; tt += 0.5) {
-      const q = satPos(o, tt); if (!inView(q, 6) || dist(q, a.pos) > RQ_REACH[o.mis]) continue;
-      if (o.mis === 'eo' && (kstHour(tt) < 7 || kstHour(tt) >= 18)) { why = '야간 통과만 있음 (광학 불가)'; continue; }
-      t = tt; break;
+      const q = satPos(o, tt); if (!inView(q, 6) || dist(q, a.pos) > reach) continue;
+      if (o.mis === 'rf') { t = tt; break; }
+      const avail = o.mis === 'sar' || daylight(tt) ? ms : ms.filter(x => x[3]);
+      if (!avail.length) { why = '야간 통과만 있음 (광학 불가)'; tt += 10; continue; }
+      const [pm, ok] = pickMode(avail, a);
+      if (ok) { t = tt; m = pm; resOk = true; break; }
+      if (!first) first = [tt, pm];
+      tt += 10;
     }
+    if (t == null && first) [t, m] = first;
     const r = { grp: o.mis, name: o.name, sub: `${o.cc} · ${m[2]}`, res: m[0], w: m[1], t, why, o, m, rf: o.mis === 'rf' };
     [r.fit, r.why] = judge(r, a, resOk); rows.push(r);
+  }
+  // 정지궤도 해색 위성 (천리안 2B호 GOCI-II): 주간 매시 정각 관측
+  const geo = GEOS.find(g => g.mis === 'ocean');
+  if (geo) {
+    let gt = null; for (let tt = Math.ceil((T + 1) / 60) * 60; tt <= end; tt += 60) if (daylight(tt)) { gt = tt; break; }
+    const r = { grp: 'msi', name: geo.name + ' GOCI-II', sub: `${geo.cc} · 정지궤도 해색 12밴드 · 매시 관측`, res: 250, w: 2500, t: gt, why: gt == null ? '시한 안에 주간 관측 없음' : '', geo };
+    [r.fit, r.why] = judge(r, a, a.res >= 250); if (r.fit === 'no' && gt != null) r.why = '해상도 미달 (250m · 해색·적조·유류 확산용)'; rows.push(r);
   }
   // 항공
   for (const [as, modes] of [[mpa, [[0.3, 20, 'EO/IR'], [3, 2 * MPA_R, '해상 수색 레이더']]], [uav, [[0.15, 10, 'EO/IR'], [1, 60, 'SAR']]]]) {
@@ -2184,7 +2209,10 @@ function rqSubmit(rows) {
     const rid = `R-${String(++rq.n).padStart(2, '0')}`, area = { pos: a.pos.slice(), w: a.w };
     const sub = `${a.name} ${fmtPos(a.pos)} · 관측폭 ${a.w}km · 해상도 ${a.res}m 이하${a.why ? ' · ' + a.why : ''}`;
     let r;
-    if (row.o) {
+    if (row.geo) {
+      r = addReq(`정지궤도 ${row.name} 해색 관측 · ${clock(row.t).hm}`, '예정'); r.at = row.t; r.dur = 0;
+      r.tick = () => { if (r.status === '예정' && T >= row.t) { r.status = '수행'; r.at = T; r.result = '해색·적조·유류 확산 영상 수신'; feed('space', `${rid} GOCI-II 해색 영상 수신`); } };
+    } else if (row.o) {
       r = addReq(`${SAT_MIS[row.o.mis]} 위성 ${row.o.name} · ${row.m[2]}${row.rf ? '' : ` ${row.res}m/${row.w}km`} · ${clock(row.t).hm} ${row.rf ? '신호 수집' : '촬영'}`, '예정');
       tasks.push({ o: row.o, tc: row.t, pos: area.pos, mis: row.o.mis, hw: Math.min(row.w, a.w) / 2, req: r });
       feed('space', `${rid} ${row.o.name} ${clock(row.t).hm} 예정 · ${a.name}`);

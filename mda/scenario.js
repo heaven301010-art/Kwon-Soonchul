@@ -176,8 +176,8 @@ window.MDA_SCENARIO = {
     ["군 정찰위성 5호 (SAR)", "KR", "ours", "sar", "SSO", 510, 97.4, 60, 60.0, 50],
     ["차세대중형위성 1호", "KR", "ours", "eo", "SSO", 497, 97.5, 55, 106.0, 6],
     ["Sentinel-1A", "EU", "allied", "sar", "SSO", 693, 98.2, 130, 326.0, 125],
-    ["Sentinel-2B", "EU", "allied", "eo", "SSO", 786, 98.6, 130, 26.0, 145],
-    ["Landsat 9", "US", "allied", "eo", "SSO", 705, 98.2, 110, 110.0, 92],
+    ["Sentinel-2B", "EU", "allied", "msi", "SSO", 786, 98.6, 130, 26.0, 145],
+    ["Landsat 9", "US", "allied", "msi", "SSO", 705, 98.2, 110, 110.0, 92],
     ["RCM-1", "CA", "allied", "sar", "SSO", 600, 97.7, 165, 44.0, 175],
     ["정보수집위성 광학 (IGS)", "JP", "allied", "eo", "SSO", 490, 97.3, 35, 56.0, 6],
     ["정보수집위성 레이더 (IGS)", "JP", "allied", "sar", "SSO", 500, 97.4, 10, 66.0, 50],
@@ -202,6 +202,19 @@ window.MDA_SCENARIO = {
     ["Capella-G", "US", "commercial", "sar", "INC", 525, 45.0, 210, 168.0, 10],
     ["Capella-H", "US", "commercial", "sar", "INC", 525, 53.0, 245, 188.0, 10],
     ["WorldView Legion", "US", "commercial", "eo", "INC", 518, 45.0, 165, 138.0, 7],
+    // 다분광 (해색·적조·유류 확산·광역 선박 탐지)
+    ["Sentinel-2A", "EU", "allied", "msi", "SSO", 786, 98.6, 174, 180.0, 145],
+    ["Landsat 8", "US", "allied", "msi", "SSO", 705, 98.2, 354, 132.0, 92],
+    ["차세대중형위성 4호 (농림)", "KR", "ours", "msi", "SSO", 500, 97.4, 150, 128.0, 60],
+    ["PlanetScope SuperDove-1", "US", "commercial", "msi", "SSO", 475, 97.3, 156, 48.0, 16],
+    ["PlanetScope SuperDove-2", "US", "commercial", "msi", "SSO", 475, 97.3, 150, 190.0, 16],
+    ["PlanetScope SuperDove-3", "US", "commercial", "msi", "SSO", 475, 97.3, 345, 172.0, 16],
+    // 초분광 (유막·물질 판별, 위장 선박·해양 오염 분석)
+    ["PRISMA", "IT", "allied", "hsi", "SSO", 615, 97.85, 138, 288.0, 15],
+    ["EnMAP", "DE", "allied", "hsi", "SSO", 653, 97.96, 160, 250.0, 15],
+    ["Pixxel Firefly-1", "IN", "commercial", "hsi", "SSO", 550, 97.5, 186, 324.0, 20],
+    ["Pixxel Firefly-2", "IN", "commercial", "hsi", "SSO", 550, 97.5, 155, 330.0, 20],
+    ["Wyvern Dragonette-1", "CA", "commercial", "hsi", "SSO", 520, 97.5, 168, 260.0, 10],
     ["HawkEye 360 C1 (3기 군집)", "US", "commercial", "rf", "SSO", 575, 97.6, 130, 22.0, 300],
     ["HawkEye 360 C2 (3기 군집)", "US", "commercial", "rf", "SSO", 575, 97.6, 158, 141.5, 300],
     ["HawkEye 360 C3 (3기 군집)", "US", "commercial", "rf", "SSO", 575, 97.6, 0, 334.0, 300],
@@ -217,7 +230,8 @@ window.MDA_SCENARIO = {
     ["ISS", "INT", "allied", "crew", "INC", 420, 51.6, 40, 298.0, 0],
     ["요우간 (遙感) SAR", "CN", "foreign", "sar", "INC", 490, 35.0, 20, 256.0, 0],
     ["요우간 (遙感) 광학", "CN", "foreign", "eo", "SSO", 500, 97.4, 40, 8.0, 0],
-    ["Bars-M 정찰위성", "RU", "foreign", "eo", "SSO", 550, 97.6, 30, 180.0, 0]
+    ["Bars-M 정찰위성", "RU", "foreign", "eo", "SSO", 550, 97.6, 30, 180.0, 0],
+    ["가오펀 5호 (高分) 초분광", "CN", "foreign", "hsi", "SSO", 705, 98.2, 60, 120.0, 0]
   ],
   // 정지궤도: [이름, 국가, 운용, 임무, 경도°E]
   geo: [
