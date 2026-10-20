@@ -93,6 +93,21 @@ button { font: inherit; color: inherit; }
   box-shadow: 0 2px 10px color-mix(in srgb, var(--fg) 14%, transparent); }
 .srcpanel > h2 { position: sticky; top: 0; z-index: 1; margin: 0; padding: 7px 11px; font-size: 13.5px; font-weight: 700; background: var(--panel); border-bottom: 1px solid var(--line); }
 .box { border-left: 3px solid var(--c); padding: 7px 10px 8px; }
+.prio .phd { display: flex; gap: 6px; flex-wrap: wrap; margin: 2px 0 6px; }
+.prio .pk { flex: 1 1 0; min-width: 0; border: 1px solid var(--line); border-left: 3px solid var(--pc); border-radius: 4px; padding: 4px 7px; background: var(--panel); font-size: 10.5px; color: var(--muted); }
+.prio .pk b { display: block; font-size: 17px; color: var(--pc); font-variant-numeric: tabular-nums; line-height: 1.2; }
+.prio .pk small { color: var(--muted); }
+.prio .pk.h { --pc: var(--ho); } .prio .pk.u { --pc: var(--un); }
+.prio h4 { margin: 6px 0 2px; font-size: 11px; color: var(--pc); font-weight: 700; } .prio h4.h { --pc: var(--ho); } .prio h4.u { --pc: var(--un); }
+.prio .pr { display: block; width: 100%; text-align: left; font: inherit; background: none; border: 0; border-bottom: 1px dotted var(--line); padding: 4px 2px; cursor: pointer; color: var(--fg); }
+.prio .pr:hover, .prio .pr.on { background: var(--panel-2); }
+.prio .pr .l1 { display: flex; align-items: center; gap: 6px; font-size: 11.5px; }
+.prio .pr .l1 b { color: var(--ac); } .prio .pr.H { --ac: var(--ho); } .prio .pr.S { --ac: var(--su); } .prio .pr.U { --ac: var(--un); }
+.prio .pr .k { flex: 1; min-width: 0; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.prio .pr .chip { font-size: 10px; }
+.prio .pr .l2 { display: block; font-size: 10.5px; color: var(--muted); }
+.prio .lost { color: var(--faint); }
+.prio .more { font-size: 10.5px; color: var(--muted); margin-top: 3px; }
 .clsum { padding: 7px 10px 8px; border-bottom: 1px solid var(--line); }
 .clsum h3, .box h3 { margin: 0 0 4px; font-size: 11px; font-weight: 600; color: var(--muted); }
 .kgrid { display: grid; grid-template-columns: 1fr 1fr; gap: 2px 10px; font-size: 11.5px; }
@@ -454,6 +469,7 @@ textarea.report { width: 100%; min-height: 150px; font: 12px/1.5 var(--font-data
     <aside class="srcpanel" id="srcpanel" aria-label="해양영역인식 종합 정보 현황">
       <h2>해양영역인식 종합 정보 현황</h2>
       <div class="clsum" id="clsum"></div>
+      <div class="clsum prio" id="prio"></div>
       <section class="box" data-dom="space"></section>
       <section class="box" data-dom="air"></section>
       <section class="box" data-dom="ground"></section>
@@ -1864,12 +1880,51 @@ function ktab(c) {
     + keys.map(k => `<tr><td style="--kc: var(--k-${k})"><i></i>${CLS[k]}</td>${cell(c[k].det)}${cell(c[k].trk)}${cell(c[k].lost, 'w')}${cell(c[k].mng, 'm')}</tr>`).join('')
     + `</tbody><tfoot><tr><td>계</td>${cell(tot.det)}${cell(tot.trk)}${cell(tot.lost, 'w')}${cell(tot.mng, 'm')}</tr></tfoot></table>`;
 }
+// 긴급대응표적(적성)과 관심표적(미식별·의심): 우선 대응·식별이 필요한 표적을 따로 모아 관리한다
+const KIND = { surface: '수상', sub: '수중', air: '항공' };
+const PST = { open: '결심 대기', act: '조치 중', done: '평가 완료' };
+function whereOf(p) {
+  let best = null, bd = 160;
+  for (const [n, x, y] of RQ_AREAS) { const d = dist(p, [x, y]); if (d < bd) { bd = d; best = n; } }
+  return best || fmtPos(p);
+}
+const fmtAge = m => m < 60 ? `${Math.floor(m)}분` : `${Math.floor(m / 60)}시간 ${Math.floor(m % 60)}분`;
+function prioRows(test) {
+  const friends = targets.filter(f => f.truth === 'F' && f.kind === 'surface' && active(f));
+  return [...tracks.values()].filter(tr => test(tr.affil)).map(tr => {
+    const t = byId.get(tr.id), al = alerts.find(a => String(a.tgt).split('·').includes(tr.id));
+    let nf = null, nd = 1e9; for (const f of friends) { const d = dist(f.pos, tr.pos); if (d < nd) { nd = d; nf = f; } }
+    return { tr, t, al, nf, nd };
+  }).sort((a, b) => (+!!a.tr.lost - +!!b.tr.lost) || (a.al && a.al.status !== 'done' ? 0 : 1) - (b.al && b.al.status !== 'done' ? 0 : 1) || a.nd - b.nd);
+}
+function prioTable(rows, urgent) {
+  if (!rows.length) return '<p class="empty" style="font-size:11px;margin:2px 0">해당 표적 없음</p>';
+  const cut = rows.slice(0, 8);
+  return cut.map(({ tr, t, al, nf, nd }) => {
+      const kind = t.kind === 'air' ? '항공기' : tr.affil === 'U' && !tr.note ? `${KIND[t.kind]} · 식별 중` : CLS[clsOf(t, tr)] || KIND[t.kind];
+      const src = tr.lost ? `<span class="lost">소실 ${fmtAge(T - tr.seen)}</span>` : (tr.now || []).map(x => SN[x]).slice(0, 2).join('·') || '–';
+      const act = al ? `<span class="chip ${al.status === 'done' ? 'done' : 'act'}">${PST[al.status]}</span>` : urgent ? '<span class="chip act">감시 유지</span>'
+        : `<span class="chip">${t.kind === 'sub' ? '소노부이·소나 확인' : t.kind === 'air' ? '레이더·전투기 식별' : !t.ais ? 'EO·무인기 식별' : 'AIS 대조·검문'}</span>`;
+      return `<button type="button" class="pr ${tr.affil}${sel === tr.id ? ' on' : ''}" data-sel="${tr.id}"><span class="l1"><b>${tr.id}</b><span class="k">${esc(kind)}</span>${act}</span>`
+        + `<span class="l2">${esc(whereOf(tr.pos))} · ${f1(tr.spd ?? 0)}kn ${Math.round(tr.hdg ?? 0)}° · 최근접 ${nf ? `${nf.id} ${Math.round(nd)}km` : '–'}</span>`
+        + `<span class="l2">${src} · ${fmtAge(T - tr.first)} 경과</span></button>`;
+    }).join('') + (rows.length > cut.length ? `<p class="more">외 ${rows.length - cut.length}개</p>` : '');
+}
+function renderPrio() {
+  const H = prioRows(a => a === 'H'), U = prioRows(a => a === 'U' || a === 'S');
+  const live = r => r.filter(x => !x.tr.lost).length;
+  setHTML($('prio'), 'prio', `<h3>긴급대응표적 · 관심표적 현황</h3>
+    <div class="phd"><div class="pk h"><b>${live(H)}</b>긴급대응표적 (적성)<small> · 소실 ${H.length - live(H)}</small></div><div class="pk u"><b>${live(U)}</b>관심표적 (미식별·의심)<small> · 소실 ${U.length - live(U)}</small></div></div>
+    <h4 class="h">긴급대응표적 · 적성</h4>${prioTable(H, true)}
+    <h4 class="u">관심표적 · 미식별·의심</h4>${prioTable(U, false)}`);
+}
 let domCls = {};
 function renderBoxes(det) {
   domCls = domainClsCounts();
   const all = {};
   for (const tr of tracks.values()) { if (tr.lost) continue; const k = clsOf(byId.get(tr.id), tr); if (k) all[k] = (all[k] || 0) + 1; }
   setHTML($('clsum'), 'clsum', `<h3>해양표적 식별 및 추적현황</h3>${kgrid(all, false)}`);
+  renderPrio();
   for (const [dom, d] of Object.entries(DOMS)) {
     const box = document.querySelector(`.box[data-dom="${dom}"]`);
     box.classList.toggle('off', !layerOn[dom]);
