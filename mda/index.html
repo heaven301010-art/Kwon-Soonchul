@@ -254,6 +254,27 @@ button { font: inherit; color: inherit; }
 .rfrow small { display: block; color: var(--muted); font-size: 11px; }
 .rfrow em { font-style: normal; font-size: 11px; white-space: nowrap; color: var(--muted); }
 .rfrow em.w { color: var(--su); font-weight: 600; } .rfrow em.m { color: var(--ho); font-weight: 600; }
+.rqform { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 8px; font-size: 11.5px; margin-bottom: 6px; }
+.rqform > label { display: flex; flex-direction: column; gap: 2px; color: var(--muted); min-width: 0; }
+.rqform .w2 { grid-column: 1 / -1; }
+.rqform input[type=number], .rqform input[type=text], .rqform select { font: inherit; font-size: 12.5px; color: var(--fg); background: var(--panel); border: 1px solid var(--line); border-radius: 4px; padding: 4px 6px; min-width: 0; width: 100%; box-sizing: border-box; }
+.rqdom { display: flex; flex-wrap: wrap; gap: 4px 10px; }
+.rqdom label { display: inline-flex; align-items: center; gap: 3px; color: var(--fg); }
+.rqform .row { display: flex; gap: 6px; flex-wrap: wrap; }
+#rqPick[aria-pressed="true"] { background: var(--fg); color: var(--panel); }
+.rqmsg { font-size: 11.5px; margin: 2px 0 6px; }
+.rqcand { max-height: 330px; overflow: auto; border: 1px solid var(--line); border-radius: 5px; }
+.rqtab { width: 100%; border-collapse: collapse; font-size: 11.5px; font-variant-numeric: tabular-nums; }
+.rqtab th { position: sticky; top: 0; background: var(--panel-2); text-align: left; font-weight: 600; color: var(--muted); font-size: 10.5px; padding: 3px 4px; }
+.rqtab td { padding: 3px 4px; border-top: 1px dotted var(--line); vertical-align: top; }
+.rqtab td small { display: block; color: var(--muted); font-size: 10px; }
+.rqtab tr.grp td { background: var(--panel-2); font-weight: 600; font-size: 11px; }
+.rqtab tr.no td { color: var(--faint); }
+.rqtab .btn { padding: 2px 7px; font-size: 11px; }
+.rqh { margin: 10px 0 6px; font-size: 12px; color: var(--muted); font-weight: 600; }
+.rqarea { fill: color-mix(in srgb, var(--fg) 5%, transparent); stroke: var(--fg); stroke-width: 1.4; vector-effect: non-scaling-stroke; }
+.rqarea.prev { fill: none; stroke: var(--l-space); }
+.req small { display: block; color: var(--muted); font-size: 10.5px; }
 .req { display: flex; justify-content: space-between; gap: 10px; font-size: 12.5px; }
 .req span:first-child { min-width: 0; }
 .sel { background: var(--panel-2); border: 1px solid var(--line); border-radius: 4px; padding: 9px 11px; }
@@ -475,6 +496,24 @@ textarea.report { width: 100%; min-height: 150px; font: 12px/1.5 var(--font-data
     </section>
     <section>
       <h2>수집 요청</h2>
+      <div class="rqform" id="rqForm">
+        <label class="w2">관측 해역<select id="rqArea"></select></label>
+        <label>위도 (°N)<input id="rqLat" type="number" step="0.01" min="31.5" max="42.2" value="37.70"></label>
+        <label>경도 (°E)<input id="rqLon" type="number" step="0.01" min="119.8" max="136" value="125.20"></label>
+        <label>관측폭 (km)<input id="rqW" type="number" step="1" min="1" max="400" value="30"></label>
+        <label>요구 해상도 (m 이하)<input id="rqRes" type="number" step="0.1" min="0.2" max="100" value="3"></label>
+        <label>수집 시한<select id="rqWin"><option value="60">1시간 이내</option><option value="120">2시간 이내</option><option value="240" selected>4시간 이내</option><option value="720">12시간 이내</option></select></label>
+        <label>우선순위<select id="rqPri"><option>긴급</option><option selected>우선</option><option>일상</option></select></label>
+        <label class="w2">수집 목적<input id="rqWhy" type="text" maxlength="40" placeholder="예: 불법 환적 의심 선박 확인"></label>
+        <div class="w2 rqdom" id="rqDom" role="group" aria-label="센서 영역">
+          <label><input type="checkbox" value="sar" checked>위성 SAR</label><label><input type="checkbox" value="eo" checked>위성 EO</label><label><input type="checkbox" value="rf" checked>위성 RF</label>
+          <label><input type="checkbox" value="air" checked>항공</label><label><input type="checkbox" value="surface" checked>해상</label><label><input type="checkbox" value="ground" checked>지상</label><label><input type="checkbox" value="under" checked>수중</label>
+        </div>
+        <div class="w2 row"><button class="btn" type="button" id="rqPick" aria-pressed="false">지도에서 해역 지정</button><button class="btn go" type="button" id="rqAuto">최적 센서 자동 요청</button></div>
+      </div>
+      <p class="empty rqmsg" id="rqMsg"></p>
+      <div class="rqcand" id="rqCand"></div>
+      <h3 class="rqh">요청 현황</h3>
       <div class="reqs" id="reqs"></div>
     </section>
     <section>
@@ -639,6 +678,7 @@ function fishShip(cl, i, o = {}) {
 
 function init() {
   rnd = mulberry32(20261018);
+  rq.n = 0; rq.at = -1; rq.show = false;
   T = 0; targets = []; tracks = new Map(); alerts = []; reqs = []; logs = []; shares = []; buoys = []; sel = null;
   feeds = { space: [], air: [], ground: [], surface: [], under: [] };
   stats = { shared: 0, decided: 0, evaluated: 0 };
@@ -1059,12 +1099,19 @@ function step(dt) {
   for (const k of tasks) {
     if (k.done || k.tc > T) continue;
     k.done = true;
-    const aim = byId.get(k.aim);
-    k.ps = { sat: k.mis, name: k.o.name + ' (긴급)', o: k.o, tc: T, end: T, done: true, seen: new Set(), rfIds: new Set(), pts: [] };
+    const aim = k.aim ? byId.get(k.aim) : { pos: k.pos };
+    k.ps = { sat: k.mis, name: k.o.name + (k.aim ? ' (긴급)' : ' (수집 요청)'), o: k.o, tc: T, end: T, done: true, seen: new Set(), rfIds: new Set(), pts: [] };
     passes.push(k.ps);
     for (const t of targets) {
       if (!active(t) || (k.mis === 'rf' ? !t.emitter : t.kind !== 'surface')) continue;
       if (dist(t.pos, aim.pos) <= k.hw) taskHit.set(t.id, k);
+    }
+    if (!k.aim) {
+      const n = targets.filter(t => taskHit.get(t.id) === k).length;
+      k.req.status = '완료'; k.req.result = k.mis === 'rf' ? `신호 ${n}건 수집` : `표적 ${n}척 촬영`;
+      addLog(`${k.o.name} ${k.req.rid} 해역 ${k.mis === 'rf' ? '신호 수집' : '촬영'} 완료 (${k.req.result}).`);
+      feed('space', `${k.req.rid} ${k.o.name} ${k.req.result}`);
+      continue;
     }
     const hit = taskHit.has(k.aim);
     k.req.status = hit ? '완료' : (k.mis === 'rf' ? '신호 없음' : '미탐지');
@@ -1436,7 +1483,7 @@ function scenario(dt = 0) {
     }
   }
   if (flags.subDone && !flags.mpaHome && T - flags.lastDrop > 60) { flags.mpaHome = true; sendAir(mpa, SC.mpa.center, SC.mpa.r, '동해 정찰 궤도'); }
-  for (const r of reqs) if (r.status === '수행' && T - r.t > 30) r.status = '완료';
+  for (const r of reqs) { if (r.tick) r.tick(); if (r.status === '수행' && T - (r.at ?? r.t) > (r.dur ?? 30)) { r.status = '완료'; if (r.done) r.done(); } }
 }
 
 // ── 시각 ─────────────────────────────────────────────
@@ -1621,6 +1668,11 @@ function drawDyn() {
     for (const a of ARRAYS) h += circ('under', a.pos, a.r, z, true) + grid(a.pos, 7, 2.6) + txt('lbl t-under', X(a.pos[0]), Y(a.pos[1]) - a.r * PXKM - 4 * z, 10 * z, a.name, 'middle');
     for (const b of buoys) if (T < b.until) h += circ('under', b.pos, BUOY_R, z) + grid(b.pos, 6, 2);
   }
+  // 수집 요청 해역
+  for (const r of reqs) if (r.area && (r.status !== '완료' || T - (r.at ?? r.t) < 40)) {
+    h += `<circle class="rqarea" cx="${f1(X(r.area.pos[0]))}" cy="${f1(Y(r.area.pos[1]))}" r="${f1(Math.max(r.area.w / 2, 2) * PXKM)}"${dash(z, 6, 3)}/>` + txt('lbl', X(r.area.pos[0]), Y(r.area.pos[1]) - Math.max(r.area.w / 2, 2) * PXKM - 4 * z, 10.5 * z, r.rid, 'middle');
+  }
+  if (rq.show) { const a = rqArea(); h += `<circle class="rqarea prev" cx="${f1(X(a.pos[0]))}" cy="${f1(Y(a.pos[1]))}" r="${f1(Math.max(a.w / 2, 2) * PXKM)}"${dash(z, 3, 3)}/>` + txt('lbl', X(a.pos[0]), Y(a.pos[1]) + Math.max(a.w / 2, 2) * PXKM + 12 * z, 10.5 * z, '요청 해역', 'middle'); }
   // 항공 자산
   if (layerOn.air) for (const a of [mpa, uav]) {
     const x = X(a.pos[0]), y = Y(a.pos[1]);
@@ -1974,7 +2026,7 @@ function renderPanel() {
         : '<p class="empty">이번 통과의 신호는 모두 AIS와 일치합니다.</p>');
   }
   setHTML($('rfInfo'), 'rf', rh);
-  setHTML($('reqs'), 'reqs', reqs.length ? reqs.map(r => `<div class="req"><span>${esc(r.text)}</span><span class="chip ${r.status === '완료' ? 'done' : (r.status === '미탐지' || r.status === '신호 없음') ? '' : 'act'}">${r.status}</span></div>`).join('') : '<p class="empty">없음</p>');
+  setHTML($('reqs'), 'reqs', reqs.length ? reqs.map(r => `<div class="req"><span>${r.rid ? `<b>${r.rid}</b> · ${r.pri} · ` : ''}${esc(r.text)}${r.sub ? `<small>${esc(r.sub)}${r.result ? ` · 결과: ${esc(r.result)}` : ''}</small>` : ''}</span><span class="chip ${r.status === '완료' ? 'done' : (r.status === '미탐지' || r.status === '신호 없음') ? '' : 'act'}">${r.status}</span></div>`).join('') : '<p class="empty">없음</p>');
   setHTML($('log'), 'log', logs.slice(0, 40).map(l => `<li><time>${clock(l.t).hm}</time><span>${esc(l.text)}</span></li>`).join(''));
 }
 
@@ -2006,6 +2058,184 @@ function setPlay() {
 $('bPlay').onclick = () => { running = !running; setPlay(); renderPanel(); };
 document.querySelectorAll('[data-speed]').forEach(b => b.onclick = () => { speed = +b.dataset.speed; running = true; setPlay(); });
 $('bReset').onclick = () => { init(); elCache.clear(); if (arcView) { drawArc(); renderArcPanel(); } else drawDyn(); renderPanel(); };
+// ── 수집 요청: 해역·해상도·관측폭을 받아 전 가용 센서의 수집 가능 여부를 따진다 ──
+// 위성 촬영 모드 [해상도 m, 관측폭 km, 모드] (공개 제원 기반 개략값). RF는 해상도 대신 위치 오차를 적는다.
+const SAT_MODES = [
+  [/^아리랑 3호/, [[0.7, 15, '고해상도 광학']]],
+  [/^아리랑 3A/, [[0.55, 12, '고해상도 광학']]],
+  [/^아리랑 5/, [[1, 5, '고해상도'], [3, 30, '표준'], [20, 100, '광역']]],
+  [/^군 정찰위성 1/, [[0.3, 10, 'EO/IR']]],
+  [/^군 정찰위성/, [[0.5, 5, '스포트라이트'], [1, 10, '스트립맵'], [3, 40, '스캔']]],
+  [/^차세대중형/, [[0.5, 12, '광학']]],
+  [/^Sentinel-1/, [[5, 80, 'SM'], [20, 250, 'IW'], [40, 400, 'EW']]],
+  [/^Sentinel-2/, [[10, 290, 'MSI']]],
+  [/^Landsat/, [[15, 185, 'OLI 전정색']]],
+  [/^RCM/, [[3, 20, '초고해상도'], [16, 125, '중해상도'], [50, 350, '저해상도·선박탐지']]],
+  [/광학 \(IGS\)/, [[0.4, 10, '광학']]],
+  [/레이더 \(IGS\)/, [[1, 10, '고해상도'], [3, 40, '표준']]],
+  [/^ICEYE/, [[0.5, 5, '스포트'], [1, 15, '스트립'], [15, 100, '스캔']]],
+  [/^Capella/, [[0.5, 5, '스포트'], [1.2, 10, '스트립']]],
+  [/^WorldView/, [[0.3, 10, '광학']]],
+  [/^HawkEye/, [[2000, 600, '신호 수집 · 위치 오차 약 2km']]],
+  [/^Unseenlabs/, [[5000, 600, '신호 수집 · 위치 오차 약 5km']]]
+];
+const satModes = o => (SAT_MODES.find(([re]) => re.test(o.name)) || [, [[10, 2 * o.hw, '기본']]])[1];
+const RQ_REACH = { sar: 450, eo: 300, rf: 600 };
+const RQ_AREAS = [
+  ['서해 북부 (NLL 인근)', 125.20, 37.70], ['서해 중부', 124.80, 36.30], ['서해 남부·흑산도', 125.00, 34.60], ['제주 남방·이어도', 125.20, 32.40],
+  ['남해·대한해협', 128.80, 34.40], ['동해 남부', 130.00, 35.90], ['동해 중부', 130.60, 37.40], ['울릉도·독도', 131.40, 37.40],
+  ['동해 북부', 130.50, 39.30], ['대화퇴 (동해퇴)', 134.50, 39.40]
+];
+const RQ_GRP = [['sar', '우주 · SAR 위성'], ['eo', '우주 · EO 위성 (주간만)'], ['rf', '우주 · RF 위성'], ['air', '항공 · 초계기·무인기'], ['surface', '해상 · 함정'], ['ground', '지상 · 해안 감시'], ['under', '수중 · 음향 탐지']];
+const FIT = { ok: ['적합', 'done'], part: ['부분', 'act'], no: ['불가', ''] };
+const rq = { pick: false, show: false, rows: [], at: -1, n: 0 };
+const kstHour = t => +clock(t).hm.slice(0, 2);
+
+function rqArea() {
+  const v = $('rqArea').value, tr = v === 'sel' && sel ? tracks.get(sel) : null;
+  const pos = tr ? tr.pos.slice() : [+$('rqLon').value || 125, +$('rqLat').value || 37];
+  const name = tr ? `${sel} 주변` : v === 'custom' ? '지정 해역' : RQ_AREAS[+v]?.[0] ?? '지정 해역';
+  return { pos, name, w: Math.max(1, +$('rqW').value || 30), res: Math.max(0.1, +$('rqRes').value || 3), win: +$('rqWin').value, pri: $('rqPri').value, why: $('rqWhy').value.trim() };
+}
+function rqSet(pos, v) {
+  $('rqLon').value = pos[0].toFixed(2); $('rqLat').value = pos[1].toFixed(2); $('rqArea').value = v;
+  rq.show = true; rqRefresh();
+}
+// 모드 중 요구 해상도를 만족하면서 관측폭이 가장 넓은 것, 없으면 가장 좋은 해상도
+function pickMode(modes, a) {
+  const ok = modes.filter(m => m[0] <= a.res);
+  return ok.length ? [ok.reduce((b, m) => m[1] > b[1] ? m : b), true] : [modes.reduce((b, m) => m[0] < b[0] ? m : b), false];
+}
+function judge(r, a, resOk) {
+  if (r.t == null) return ['no', r.why || `${a.win / 60}시간 안에 접근 불가`];
+  if (!resOk) return ['no', `해상도 미달 (최고 ${r.res}m)`];
+  if (r.w < a.w) return ['part', `관측폭 부족 · ${Math.ceil(a.w / r.w)}회 분할 필요`];
+  return ['ok', r.t <= T + 0.5 ? '현재 감시 중' : ''];
+}
+function rqCatalog(a) {
+  const rows = [], end = T + a.win;
+  // 우주: 시한 안에 해역 가까이 지나가는 첫 통과
+  for (const o of SATS) {
+    if (!o.use) continue;
+    const [m, resOk] = o.mis === 'rf' ? [satModes(o)[0], true] : pickMode(satModes(o), a);
+    let t = null, why = '';
+    for (let tt = T + 3; tt <= end; tt += 0.5) {
+      const q = satPos(o, tt); if (!inView(q, 6) || dist(q, a.pos) > RQ_REACH[o.mis]) continue;
+      if (o.mis === 'eo' && (kstHour(tt) < 7 || kstHour(tt) >= 18)) { why = '야간 통과만 있음 (광학 불가)'; continue; }
+      t = tt; break;
+    }
+    const r = { grp: o.mis, name: o.name, sub: `${o.cc} · ${m[2]}`, res: m[0], w: m[1], t, why, o, m, rf: o.mis === 'rf' };
+    [r.fit, r.why] = judge(r, a, resOk); rows.push(r);
+  }
+  // 항공
+  for (const [as, modes] of [[mpa, [[0.3, 20, 'EO/IR'], [3, 2 * MPA_R, '해상 수색 레이더']]], [uav, [[0.15, 10, 'EO/IR'], [1, 60, 'SAR']]]]) {
+    const [m, resOk] = pickMode(modes, a), d = dist(as.pos, a.pos), t = T + d / KMMIN(as.spd);
+    const r = { grp: 'air', name: as.name, sub: `${m[2]} · 현 임무: ${as.task}`, res: m[0], w: m[1], t: t <= end ? t : null, as, m };
+    [r.fit, r.why] = judge(r, a, resOk); rows.push(r);
+  }
+  // 해상: 아군 함정·해경 경비함 (레이더 탐지 반경 40km, 근접 EO/IR 식별)
+  for (const f of targets) {
+    if (f.truth !== 'F' || f.kind !== 'surface' || !active(f)) continue;
+    const d = dist(f.pos, a.pos), t = d <= SHIP_R / 2 ? T : T + (d - SHIP_R / 2) / KMMIN(24);
+    const r = { grp: 'surface', name: `${f.id} ${f.type}`, sub: `${f.cls === 'usn' ? '연합 자산 (협조 요청) · ' : ''}함정 레이더·EO/IR · ${Math.round(d)}km`, res: 0.5, w: 2 * SHIP_R, t: t <= end ? t : null, now: t === T, f };
+    [r.fit, r.why] = judge(r, a, a.res >= 0.5);
+    if (f.mode === 'intercept') { r.fit = 'no'; r.why = '다른 임무 수행 중'; }
+    rows.push(r);
+  }
+  // 지상·수중: 고정 센서는 탐지 범위 안에 들 때만 상시 감시
+  const fixed = (grp, list, kind) => list.forEach(x => {
+    const d = dist(x.pos, a.pos), inR = d <= x.r;
+    const r = { grp, name: x.name, sub: `${kind} · 탐지 반경 ${x.r}km`, res: null, w: 2 * x.r, t: inR ? T : null, now: inR, x };
+    r.fit = !inR ? 'no' : d + a.w / 2 <= x.r ? 'ok' : 'part';
+    r.why = !inR ? `탐지 범위 밖 (${Math.round(d - x.r)}km)` : r.fit === 'part' ? '해역 일부만 탐지 범위' : '상시 감시 중 (탐지·추적)';
+    rows.push(r);
+  });
+  fixed('ground', RADARS, '해안 레이더');
+  fixed('ground', VTS.filter(x => dist(x.pos, a.pos) <= x.r + 60), '해경 VTS 레이더');
+  fixed('ground', PORTS.filter(x => dist(x.pos, a.pos) <= x.r + 30), '항만 CCTV');
+  fixed('under', ARRAYS, '고정형 수중감시');
+  const bt = T + dist(mpa.pos, a.pos) / KMMIN(mpa.spd);
+  rows.push({ grp: 'under', name: '소노부이 (해상초계기 투하)', sub: `3×3 부이 필드 · 탐지 반경 ${BUOY_R}km`, res: null, w: 2 * BUOY_R + 28, t: bt <= end ? bt : null, as: mpa, buoy: true,
+    fit: bt > end ? 'no' : 2 * BUOY_R + 28 >= a.w ? 'ok' : 'part', why: bt > end ? '시한 안에 도착 불가' : '수중 표적 탐지 (3시간 운용)' });
+  const ord = { ok: 0, part: 1, no: 2 };
+  return rows.sort((p, q) => ord[p.fit] - ord[q.fit] || (p.t ?? 1e9) - (q.t ?? 1e9));
+}
+function rqRefresh() { rq.rows = rqCatalog(rqArea()); rq.at = T; renderRq(); drawDyn(); }
+function renderRq() {
+  const on = new Set([...document.querySelectorAll('#rqDom input:checked')].map(i => i.value)), a = rqArea();
+  const fmtT = r => r.t == null ? '–' : r.now ? '상시' : clock(r.t).hm;
+  let h = '';
+  for (const [g, nm] of RQ_GRP) {
+    if (!on.has(g)) continue;
+    const list = rq.rows.map((r, i) => [r, i]).filter(([r]) => r.grp === g);
+    if (!list.length) continue;
+    h += `<tr class="grp"><td colspan="4">${nm} <small style="display:inline">· 적합 ${list.filter(([r]) => r.fit === 'ok').length} / ${list.length}</small></td></tr>`
+      + list.map(([r, i]) => `<tr class="${r.fit === 'no' ? 'no' : ''}"><td>${esc(r.name)}<small>${esc(r.sub)}</small></td><td>${r.rf ? `오차 ${r.res / 1000}km` : r.res == null ? '탐지·추적' : r.res + 'm'}<small>폭 ${r.w}km</small></td><td>${fmtT(r)}</td>`
+        + `<td><span class="chip ${FIT[r.fit][1]}">${FIT[r.fit][0]}</span>${r.fit !== 'no' ? ` <button class="btn" type="button" data-rq="${i}">요청</button>` : ''}${r.why ? `<small>${esc(r.why)}</small>` : ''}</td></tr>`).join('');
+  }
+  setHTML($('rqMsg'), 'rqMsg', `${esc(a.name)} ${fmtPos(a.pos)} · 관측폭 ${a.w}km · 해상도 ${a.res}m 이하 · ${a.win / 60}시간 이내 · 기준 ${clock(rq.at).hm}`);
+  setHTML($('rqCand'), 'rqCand', h ? `<table class="rqtab"><thead><tr><th>센서</th><th>해상도·폭</th><th>가용</th><th>판정</th></tr></thead><tbody>${h}</tbody></table>` : '<p class="empty" style="padding:6px">센서 영역을 하나 이상 고르세요.</p>');
+}
+function rqSubmit(rows) {
+  const a = rqArea(), done = [], fresh = rqCatalog(a);
+  for (const old of rows) {
+    const row = old && fresh.find(x => x.grp === old.grp && x.name === old.name);
+    if (!row || row.fit === 'no') continue;
+    const rid = `R-${String(++rq.n).padStart(2, '0')}`, area = { pos: a.pos.slice(), w: a.w };
+    const sub = `${a.name} ${fmtPos(a.pos)} · 관측폭 ${a.w}km · 해상도 ${a.res}m 이하${a.why ? ' · ' + a.why : ''}`;
+    let r;
+    if (row.o) {
+      r = addReq(`${SAT_MIS[row.o.mis]} 위성 ${row.o.name} · ${row.m[2]}${row.rf ? '' : ` ${row.res}m/${row.w}km`} · ${clock(row.t).hm} ${row.rf ? '신호 수집' : '촬영'}`, '예정');
+      tasks.push({ o: row.o, tc: row.t, pos: area.pos, mis: row.o.mis, hw: Math.min(row.w, a.w) / 2, req: r });
+      feed('space', `${rid} ${row.o.name} ${clock(row.t).hm} 예정 · ${a.name}`);
+    } else if (row.as) {
+      const as = row.as, tag = `${rid} ${row.buoy ? '대잠 탐색' : '수집'}`;
+      r = addReq(row.buoy ? `해상초계기 소노부이 부설 · 도착 ${clock(row.t).hm}` : `${as.name} ${row.m[2]} ${row.res}m · 도착 ${clock(row.t).hm}`, '이동');
+      sendAir(as, area.pos, Math.max(8, Math.min(a.w / 2, 40)), tag, () => {
+        r.status = '수행'; r.at = T; feed('air', `${as.name} ${rid} 해역 도착 · 수집 개시`);
+        if (row.buoy) dropBuoys(area.pos, rid);
+      });
+      r.done = () => { if (as.task === tag) sendAir(as, as === mpa ? SC.mpa.center : SC.uav.center, as === mpa ? SC.mpa.r : SC.uav.r, as === mpa ? '동해 정찰 궤도' : '서해 정찰 궤도'); };
+      feed('air', `${as.name} ${rid} 해역으로 이동`);
+    } else if (row.f) {
+      const f = row.f, g = () => area.pos;
+      r = addReq(`${f.id} ${f.type} 해역 감시 · 도착 ${clock(row.t).hm}`, row.now ? '수행' : '이동');
+      if (r.status === '수행') r.at = T;
+      f.mode = 'intercept'; f.goal = g;
+      r.tick = () => { if (r.status === '이동' && dist(f.pos, area.pos) <= SHIP_R / 2) { r.status = '수행'; r.at = T; feed('surface', `${f.id} ${rid} 해역 도착 · 감시 개시`); } };
+      r.done = () => { if (f.goal === g) { f.mode = 'return'; f.goal = null; } };
+      feed('surface', `${f.id} ${rid} 해역 감시 이동`);
+    } else {
+      r = addReq(`${row.x.name} 집중 감시 (추적 주기 단축)`, '수행'); r.at = T; r.dur = 60;
+      feed(row.grp, `${row.x.name} ${rid} 해역 집중 감시`);
+    }
+    Object.assign(r, { rid, pri: a.pri, area, sub }); done.push(rid);
+    addLog(`수집 요청 ${rid} (${a.pri}): ${a.name}, ${row.name}.`);
+  }
+  rq.show = false; rq.rows = fresh; rq.at = T; renderPanel(); renderRq(); drawDyn();
+  return done;
+}
+function rqAuto() {
+  const on = new Set([...document.querySelectorAll('#rqDom input:checked')].map(i => i.value));
+  const a = rqArea(), split = r => r.w ? Math.ceil(a.w / r.w) : 1;
+  const pick = RQ_GRP.map(([g]) => on.has(g) && (rq.rows.find(r => r.grp === g && r.fit === 'ok') || rq.rows.filter(r => r.grp === g && r.fit === 'part').sort((p, q) => split(p) - split(q) || p.t - q.t)[0])).filter(Boolean);
+  if (!pick.length) { setHTML($('rqMsg'), 'rqMsg', '조건을 만족하는 센서가 없습니다. 해상도·관측폭·시한을 조정해 보세요.'); return; }
+  const ids = rqSubmit(pick);
+  addLog(`최적 센서 자동 요청 ${ids.length}건: ${pick.map(r => r.name).join(', ')}.`);
+}
+$('rqArea').innerHTML = '<option value="sel">선택 표적 주변</option>' + RQ_AREAS.map(([n], i) => `<option value="${i}"${i === 0 ? ' selected' : ''}>${n}</option>`).join('') + '<option value="custom">직접 입력·지도 지정</option>';
+$('rqArea').onchange = e => {
+  const v = e.target.value;
+  if (RQ_AREAS[+v]) { $('rqLon').value = RQ_AREAS[+v][1].toFixed(2); $('rqLat').value = RQ_AREAS[+v][2].toFixed(2); }
+  if (v === 'sel' && sel && tracks.get(sel)) { const p = tracks.get(sel).pos; $('rqLon').value = p[0].toFixed(2); $('rqLat').value = p[1].toFixed(2); }
+  rq.show = true; rqRefresh();
+};
+for (const id of ['rqLat', 'rqLon']) $(id).addEventListener('change', () => { $('rqArea').value = 'custom'; rq.show = true; rqRefresh(); });
+for (const id of ['rqW', 'rqRes', 'rqWin']) $(id).addEventListener('change', () => { rq.show = true; rqRefresh(); });
+$('rqDom').addEventListener('change', renderRq);
+$('rqPick').onclick = () => { rq.pick = !rq.pick; $('rqPick').setAttribute('aria-pressed', String(rq.pick)); if (rq.pick) setView('kr'); };
+$('rqAuto').onclick = rqAuto;
+
 function setView(v) {
   arcView = v === 'arc';
   $('map').toggleAttribute('hidden', arcView); $('arc').toggleAttribute('hidden', !arcView);
@@ -2044,6 +2274,8 @@ document.querySelector('.grid').addEventListener('click', e => {
   const a = e.target.closest('[data-approve]'); if (a) { approve(a.dataset.approve); renderPanel(); drawDyn(); return; }
   const sr = e.target.closest('[data-sel]');
   if (sr) { sel = sr.dataset.sel; renderPanel(); drawDyn(); return; }
+  const rc = e.target.closest('[data-rq]');
+  if (rc) { rqSubmit([rq.rows[+rc.dataset.rq]]); return; }
   const tk = e.target.closest('[data-task]');
   if (tk && sel) { ({ sar: taskSar, uav: taskUav, buoy: taskBuoy, rf: taskRf })[tk.dataset.task](sel); addLog(`수집 요청: ${sel} ${tk.textContent}.`); renderPanel(); drawDyn(); return; }
   const l = e.target.closest('[data-layer]');
@@ -2076,6 +2308,11 @@ svg.addEventListener('pointermove', e => {
   if (drag.moved) { const k = svg.getScreenCTM().a; vb.x = drag.vx - dx / k; vb.y = drag.vy - dy / k; clampVB(); setVB(); drawDyn(); }
 });
 svg.addEventListener('pointerup', e => {
+  if (drag && !drag.moved && rq.pick) {
+    const p = svgPt(e); rq.pick = false; $('rqPick').setAttribute('aria-pressed', 'false');
+    rqSet([LON0 + (p.x - ML) / KX, LAT1 - (p.y - MT) / KY], 'custom');
+    drag = null; svg.classList.remove('drag'); return;
+  }
   if (drag && !drag.moved) {
     const p = svgPt(e); let best = null, bd = 14 * vb.w / VW;
     for (const tr of tracks.values()) { const d = Math.hypot(X(tr.pos[0]) - p.x, Y(tr.pos[1]) - p.y); if (d < bd) { bd = d; best = tr.id; } }
@@ -2097,7 +2334,10 @@ function frame(now) {
     while (sim > 0) { const d = Math.min(0.5, sim); step(d); sim -= d; }
     if (now - drawAt > 100) { drawAt = now; if (arcView) drawArc(); else drawDyn(); }
   }
-  if (now - panelAt > 250) { panelAt = now; renderPanel(); if (arcView) renderArcPanel(); }
+  if (now - panelAt > 250) {
+    panelAt = now; renderPanel(); if (arcView) renderArcPanel();
+    if (rq.at < 0 || T - rq.at >= 10) { rq.rows = rqCatalog(rqArea()); rq.at = T; } renderRq();
+  }
   requestAnimationFrame(frame);
 }
 
