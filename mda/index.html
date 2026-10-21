@@ -135,8 +135,29 @@ button { font: inherit; color: inherit; }
 [hidden] { display: none !important; }
 .viewsw { position: absolute; top: 8px; left: 50%; transform: translateX(-50%); z-index: 3; }
 .viewsw .btn { padding: 4px 10px; }
-@media (max-width: 860px) { .viewsw { left: 8px; transform: none; } }
-#arc { width: 100%; height: 100%; display: block; background: var(--bg); }
+@media (max-width: 860px) { .viewsw { left: 8px; transform: none; } #spre { left: 8px; transform: none; top: auto; bottom: 8px; } #spre .btn { padding: 3px 6px; font-size: 10.5px; } }
+#arc, #sloc { width: 100%; height: 100%; display: block; background: var(--bg); }
+.spre { position: absolute; top: 44px; left: 50%; transform: translateX(-50%); z-index: 3; }
+.spre .btn { padding: 3px 9px; font-size: 11.5px; white-space: nowrap; }
+#sloc .atx { stroke-width: var(--hw, 3px); }
+#slocpanel .atab td:nth-child(2) { white-space: normal; } #slocpanel .stab td:first-child { white-space: nowrap; }
+.sz { stroke-dasharray: 6 4; }
+.sz.hra { fill: color-mix(in srgb, var(--su) 7%, transparent); stroke: var(--su); }
+.sz.chd { fill: color-mix(in srgb, var(--fr) 6%, transparent); stroke: var(--fr); stroke-dasharray: 10 4; }
+.sz.pir, .sz.hou, .sz.irg { fill: color-mix(in srgb, var(--ho) 8%, transparent); stroke: var(--ho); }
+.sz.rec { fill: color-mix(in srgb, var(--un) 10%, transparent); stroke: var(--un); }
+.sz.sts { fill: color-mix(in srgb, var(--k-shadow) 10%, transparent); stroke: var(--k-shadow); }
+.sroute { fill: none; stroke-linejoin: round; }
+.sroute.ME { stroke: #c2410c; } .sroute.LNG { stroke: #2b8a3e; } .sroute.EU { stroke: #0b7285; } .sroute.CAPE { stroke: #868e96; stroke-dasharray: 8 6; } .sroute.LOMBOK { stroke: #b08900; stroke-dasharray: 3 4; }
+.atx.rt.ME { fill: #c2410c; } .atx.rt.LNG { fill: #2b8a3e; } .atx.rt.EU { fill: #0b7285; } .atx.rt.CAPE { fill: #868e96; } .atx.rt.LOMBOK { fill: #b08900; }
+.choke { fill: #c2410c; stroke: var(--halo); stroke-width: 1; vector-effect: non-scaling-stroke; }
+.atx.ck { fill: #9a3412; font-weight: 700; }
+.sbase { stroke: var(--halo); stroke-width: 1; vector-effect: non-scaling-stroke; } .sbase.kr { fill: var(--fr); } .sbase.us { fill: var(--k-usn); } .sbase.cn { fill: var(--k-cnn); } .sbase.co { fill: #7048e8; } .sbase.info { fill: var(--l-space); }
+.atx.sb { fill: var(--muted); } .atx.sb.kr { fill: var(--fr); font-weight: 600; } .atx.sb.info { fill: var(--l-space); }
+.atx.zchd { fill: var(--fr); font-weight: 600; } .atx.zhra { fill: var(--su); } .atx.zhou, .atx.zpir, .atx.zirg { fill: var(--ho); } .atx.zrec { fill: #8a6d00; } .atx.zsts { fill: var(--k-shadow); }
+.ssh { stroke: var(--halo); stroke-width: 1; vector-effect: non-scaling-stroke; }
+.ssh.kr { fill: #1e6bd0; color: #1e6bd0; } .ssh.chd { fill: #0b4fb3; color: #0b4fb3; } .ssh.co { fill: #7048e8; color: #7048e8; } .ssh.us { fill: var(--k-usn); color: var(--k-usn); } .ssh.cn { fill: var(--k-cnn); color: var(--k-cnn); }
+.ssh.ir { fill: var(--ho); color: var(--ho); } .ssh.pir { fill: #b91c1c; color: #b91c1c; } .ssh.shd { fill: var(--k-shadow); color: var(--k-shadow); } .ssh.mer { fill: #9aa7b1; color: #9aa7b1; }
 .asea { fill: var(--sea); }
 .aland { fill: var(--land); }
 .aice { fill: #f4f8fb; stroke: #a9c3d3; stroke-width: 1; opacity: .92; }
@@ -449,7 +470,14 @@ textarea.report { width: 100%; min-height: 150px; font: 12px/1.5 var(--font-data
     <div class="viewsw seg" role="group" aria-label="해도 전환">
       <button class="btn" type="button" data-view="kr" aria-pressed="true">한반도 해역</button>
       <button class="btn" type="button" data-view="arc" aria-pressed="false">북극항로</button>
+      <button class="btn" type="button" data-view="sloc" aria-pressed="false">원해 SLOC</button>
     </div>
+    <div class="spre seg" id="spre" hidden role="group" aria-label="관심해역 확대">
+      <button class="btn" type="button" data-sp="all" aria-pressed="true">전체</button><button class="btn" type="button" data-sp="hormuz" aria-pressed="false">호르무즈</button><button class="btn" type="button" data-sp="aden" aria-pressed="false">아덴만·홍해</button><button class="btn" type="button" data-sp="malacca" aria-pressed="false">말라카</button>
+    </div>
+    <svg id="sloc" viewBox="0 0 1414 810" preserveAspectRatio="xMinYMid meet" hidden role="img" aria-label="원해 해상교통로 관심해역 상황도 (호르무즈·아덴만·홍해·말라카)">
+      <g id="sStatic"></g><g id="sDyn"></g>
+    </svg>
     <svg id="arc" viewBox="0 0 1000 1000" preserveAspectRatio="xMinYMid meet" hidden role="img" aria-label="북극 해역 상황도 (북극점 중심 투영)">
       <defs><clipPath id="aclip"><circle cx="500" cy="500" r="482"></circle></clipPath></defs>
       <g clip-path="url(#aclip)"><g id="aStatic"></g><g id="aDyn"></g></g>
@@ -466,6 +494,10 @@ textarea.report { width: 100%; min-height: 150px; font: 12px/1.5 var(--font-data
     <aside class="srcpanel arcpanel" id="arcpanel" hidden aria-label="북극항로 표적관리 현황">
       <h2>북극항로 표적관리 현황</h2>
       <div id="arcInfo"></div>
+    </aside>
+    <aside class="srcpanel arcpanel" id="slocpanel" hidden aria-label="원해 해상교통로 관심해역 현황">
+      <h2>원해 해상교통로(SLOC) 관심해역 현황</h2>
+      <div id="slocInfo"></div>
     </aside>
     <aside class="srcpanel" id="srcpanel" aria-label="해양영역인식 종합 정보 현황">
       <h2>해양영역인식 종합 정보 현황</h2>
@@ -559,6 +591,7 @@ textarea.report { width: 100%; min-height: 150px; font: 12px/1.5 var(--font-data
 
 <script src="land.js"></script>
 <script src="arcticland.js"></script>
+<script src="slocland.js"></script>
 <script src="scenario.js"></script>
 <script>
 (() => {
@@ -753,7 +786,7 @@ function init() {
   mpa = { id: 'MPA', name: '해상초계기', pos: advance(SC.mpa.center, 0, SC.mpa.r), center: SC.mpa.center.slice(), r: SC.mpa.r, spd: 300, ph: 0, mode: 'orbit', hdg: 90, task: '동해 정찰 궤도' };
   uav = { id: 'UAV', name: '무인기', pos: advance(SC.uav.center, 0, SC.uav.r), center: SC.uav.center.slice(), r: SC.uav.r, spd: 80, ph: 0, mode: 'orbit', hdg: 90, task: '서해 정찰 궤도' };
   passes = []; tasks = []; comm = {}; commAt = -1;
-  buildSats(); buildArctic(); arcSel = null;
+  buildSats(); buildArctic(); arcSel = null; buildSloc();
   addLog('훈련 시나리오 개시. 전 센서 출처 가동.');
   for (let i = 0; i < 30; i++) step(0.2);
 }
@@ -1147,6 +1180,7 @@ function step(dt) {
   }
   if (T - commAt >= 0.5) { commAt = T; updateComms(); }
   arcStep(t0, dt);
+  slocStep(t0, dt);
   gnssMis = new Set();
   gnssZone = gnssOn() ? targets.filter(t => t.truth !== 'F' && (t.ais || t.vpass) && active(t) && dist(t.pos, SC.gnss.center) <= SC.gnss.r).length : 0;
   for (const t of targets) {
@@ -1263,6 +1297,9 @@ const CAT = {
   jam: ['전자전·위성통신 방해', '국내 한정', ['해경']],
   gnss: ['전자전·GPS 전파교란 (항행 안전)', '국외 공유 가능', ['해수부', '해경', '해외 IFC']],
   arcice: ['북극항로 항행 안전 (결빙)', '국외 공유 가능', ['해수부', '해외 IFC']],
+  hormuz: ['해상교통로 위협 (나포)', '국외 공유 가능', ['해수부', '해외 IFC']],
+  redsea: ['해상교통로 위협 (무력 공격)', '국외 공유 가능', ['해수부', '해외 IFC']],
+  piracy: ['해적 (원해)', '국외 공유 가능', ['해수부', '해경', '해외 IFC']],
   arcais: ['북극항로 위치 보고 공백', '국외 공유 가능', ['해수부', '해경']],
   arcmil: ['북극 군사활동 (항로 인접)', '국내 한정', ['해수부']],
   survey: ['무단 해양과학조사 의심', '국내 한정', ['해경', '해수부', '외교부']]
@@ -2132,7 +2169,7 @@ function setPlay() {
 }
 $('bPlay').onclick = () => { running = !running; setPlay(); renderPanel(); };
 document.querySelectorAll('[data-speed]').forEach(b => b.onclick = () => { speed = +b.dataset.speed; running = true; setPlay(); });
-$('bReset').onclick = () => { init(); elCache.clear(); if (arcView) { drawArc(); renderArcPanel(); } else drawDyn(); renderPanel(); };
+$('bReset').onclick = () => { init(); elCache.clear(); if (arcView) { drawArc(); renderArcPanel(); } else if (slocView) { drawSloc(); renderSlocPanel(); } else drawDyn(); renderPanel(); };
 // ── 수집 요청: 해역·해상도·관측폭을 받아 전 가용 센서의 수집 가능 여부를 따진다 ──
 // 위성 촬영 모드 [해상도 m, 관측폭 km, 모드] (공개 제원 기반 개략값). RF는 해상도 대신 위치 오차를 적는다.
 const SAT_MODES = [
@@ -2335,13 +2372,267 @@ $('rqDom').addEventListener('change', renderRq);
 $('rqPick').onclick = () => { rq.pick = !rq.pick; $('rqPick').setAttribute('aria-pressed', String(rq.pick)); if (rq.pick) setView('kr'); };
 $('rqAuto').onclick = rqAuto;
 
+// ── 원해 해상교통로(SLOC) 관심해역: 호르무즈·아덴만·홍해·말라카 ─────────
+const SL = SC.sloc, SLAND = window.MDA_SLOC_LAND || [];
+const SK = 13.5, SCOS = Math.cos(14 * D2R), SVW = (152 - 26) * SK * SCOS, SVH = 60 * SK;
+const SP = (lon, lat) => [(lon - 26) * SK * SCOS, (44 - lat) * SK];
+const spath = (pts, close) => 'M' + pts.map(p => SP(p[0], p[1]).map(f1).join(',')).join('L') + (close ? 'Z' : '');
+const SCLS = { kr: '우리 상선', chd: '청해부대', co: '연합 해군 (EU·일·인)', us: '미 해군', cn: '중국 해군', ir: '이란 (IRGCN·해군)', pir: '해적 의심', shd: '그림자선단 의심', mer: '외국 상선' };
+const NAVY = new Set(['chd', 'co', 'us', 'cn', 'ir']);
+// 해도 범위 프리셋: [서경, 북위, 동경, 남위]
+const SPRE = { all: ['전체', 26, 44, 152, -16], hormuz: ['호르무즈', 49.5, 30.5, 61.5, 21.5], aden: ['아덴만·홍해', 31, 31.5, 62, 6], malacca: ['말라카', 93, 10, 111, -3] };
+let SR = {}, slocShips = [], slocView = false, slocSel = null, slocPre = 'all', slocFx = [];
+const routeLen = k => SR[k].cum[SR[k].cum.length - 1];
+function routeAt(k, s) {
+  const r = SR[k], c = r.cum; let i = 1; while (i < c.length - 1 && c[i] < s) i++;
+  const a = r.pts[i - 1], b = r.pts[i], f = Math.min(1, Math.max(0, (s - c[i - 1]) / (c[i] - c[i - 1] || 1)));
+  return { pos: [a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) * f], hdg: bearing(a, b) };
+}
+function nearestS(k, p) {
+  const r = SR[k]; let best = 0, bd = 1e9;
+  for (let i = 1; i < r.pts.length; i++) for (let f = 0; f <= 1; f += 0.02) {
+    const a = r.pts[i - 1], b = r.pts[i], q = [a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) * f], d = gdist(q, p);
+    if (d < bd) { bd = d; best = r.cum[i - 1] + (r.cum[i] - r.cum[i - 1]) * f; }
+  }
+  return best;
+}
+function slocPlace(sh) { const q = routeAt(sh.route, sh.s); sh.pos = q.pos; sh.hdg = sh.dir > 0 ? q.hdg : (q.hdg + 180) % 360; }
+function buildSloc() {
+  SR = {};
+  for (const [k, r] of Object.entries(SL.routes)) { const cum = [0]; for (let i = 1; i < r.pts.length; i++) cum.push(cum[i - 1] + gdist(r.pts[i - 1], r.pts[i])); SR[k] = { pts: r.pts, cum }; }
+  slocShips = SL.ships.map(([id, name, flag, type, cls, route, p, dir, kn, ais]) => {
+    const sh = { id, name, flag, type, cls, route, dir: dir || 1, kn, spd: kn, ais, pos: p.slice(), hdg: 0, mode: route ? 'route' : 'station', center: p.slice(), ang: rnd() * 360, home: p.slice() };
+    if (route) { sh.s = nearestS(route, p); slocPlace(sh); }
+    return sh;
+  });
+  let n = 0;
+  for (const [k, cnt] of Object.entries(SL.traffic)) for (let i = 0; i < cnt; i++) {
+    const sh = { id: `M${String(++n).padStart(2, '0')}`, name: '외국 상선', flag: ['PA', 'LR', 'MH', 'SG', 'GR', 'CN', 'JP', 'IN'][n % 8], type: ['유조선', '컨테이너선', '벌크선', 'LNG운반선'][n % 4], cls: 'mer', route: k,
+      dir: rnd() < 0.5 ? 1 : -1, kn: 11 + rnd() * 6, ais: true, mode: 'route', s: rnd() * routeLen(k) };
+    sh.spd = sh.kn; slocPlace(sh); slocShips.push(sh);
+  }
+  for (const sh of slocShips) { sh.rep = { t: 0, pos: sh.pos.slice(), src: sh.ais ? 'S-AIS' : sh.cls === 'chd' ? '전술데이터링크' : '연합해군 공유 (CMF)' }; sh.ph = rnd() * 20; }
+  slocShips.filter(sh => ['cn', 'ir', 'pir', 'shd'].includes(sh.cls)).forEach(sh => { sh.rep.t = -999; sh.rep.src = '미탐지'; });
+  slocFx = []; slocSel = null;
+}
+const sById = id => slocShips.find(x => x.id === id);
+// 현지 시각 기준 주간 여부 (KST는 UTC+9)
+const localDay = (t, lon) => { const h = ((+clock(t).hm.slice(0, 2) - 9 + lon / 15) % 24 + 24) % 24; return h >= 6.5 && h < 18; };
+function slocStep(t0, dt) {
+  for (const sh of slocShips) {
+    if (sh.hold) { sh.spd = 0; continue; }
+    if (sh.mode === 'route') {
+      sh.spd = sh.kn; sh.s += sh.dir * KMMIN(sh.kn) * dt;
+      const L = routeLen(sh.route);
+      if (sh.s >= L) { sh.s = L; sh.dir = -1; } else if (sh.s <= 0) { sh.s = 0; sh.dir = 1; }
+      slocPlace(sh);
+    } else if (sh.mode === 'station') {
+      sh.ang = (sh.ang + KMMIN(sh.kn) * dt / 15 / D2R) % 360; sh.pos = advance(sh.center, sh.ang, 15); sh.hdg = (sh.ang + 90) % 360; sh.spd = sh.kn;
+    } else if (sh.mode === 'goto') {
+      const g = sh.goal(); sh.spd = sh.goKn; if (g && (moveToward(sh, g, sh.goKn, dt) || gdist(sh.pos, g) < 2) && sh.onArrive) { const f = sh.onArrive; sh.onArrive = null; f(); }
+    } else if (sh.mode === 'escort') {
+      const tg = sById(sh.goTo); sh.pos = advance(tg.pos, (tg.hdg + 140) % 360, sh.off || 2); sh.hdg = tg.hdg; sh.spd = tg.spd;
+    }
+  }
+  // 위치 보고: AIS(10분), 연합해군 공유(30분), 청해부대·연합 함정 레이더(60km), 위성 통과(관측 250km·RF 600km)
+  const chd = sById('CH1'), coal = slocShips.filter(x => x.cls === 'co' || x.cls === 'us');
+  const sp = SATS.map(o => o.use && o.det ? satPos(o, T) : null);
+  for (const sh of slocShips) {
+    const tick = per => Math.floor((t0 + sh.ph) / per) !== Math.floor((T + sh.ph) / per);
+    if (sh.cls === 'chd') { sh.rep = { t: T, pos: sh.pos.slice(), src: '전술데이터링크' }; continue; }
+    if (sh.ais && !sh.aisOff) { if (tick(10)) sh.rep = { t: T, pos: sh.pos.slice(), src: sh.cls === 'kr' ? 'LRIT·S-AIS' : 'S-AIS' }; continue; }
+    if ((sh.cls === 'co' || sh.cls === 'us') && tick(30)) { sh.rep = { t: T, pos: sh.pos.slice(), src: '연합해군 공유 (CMF)' }; continue; }
+    if (gdist(chd.pos, sh.pos) <= 60) { sh.rep = { t: T, pos: sh.pos.slice(), src: '청해부대 레이더' }; continue; }
+    if (coal.some(c => c !== sh && gdist(c.pos, sh.pos) <= 60)) { sh.rep = { t: T, pos: sh.pos.slice(), src: '연합해군 공유 (CMF)' }; continue; }
+    SATS.forEach((o, i) => {
+      const q = sp[i]; if (!q || (o.mis !== 'rf' && o.mis !== 'sar' && !o.night && !localDay(T, q[0]))) return;
+      if (o.mis === 'rf' && !NAVY.has(sh.cls) && sh.cls !== 'pir') return;
+      if (gdist(q, sh.pos) <= (o.mis === 'rf' ? 600 : 250)) sh.rep = { t: T, pos: sh.pos.slice(), src: `${SAT_MIS[o.mis]} 위성 (${o.name})` };
+    });
+  }
+  slocScenario(dt);
+}
+const inZone = (sh, k) => { const z = SL.zones[k]; return z.c ? gdist(sh.pos, z.c) <= z.r : inPoly(sh.pos, z.poly); };
+function inPoly(p, poly) { let ins = false; for (let j = 0, k = poly.length - 1; j < poly.length; k = j++) { const [xi, yi] = poly[j], [xk, yk] = poly[k]; if ((yi > p[1]) !== (yk > p[1]) && p[0] < (xk - xi) * (p[1] - yi) / (yk - yi) + xi) ins = !ins; } return ins; }
+function slocScenario(dt) {
+  const chd = sById('CH1');
+  // 원해 1: 호르무즈 해협, IRGCN 고속정이 우리 유조선에 접근 (나포 위협)
+  const H = SL.hormuz, k1 = sById(H.tgt), boats = H.boats.map(sById);
+  if (T >= H.at && !flags.hzStart) {
+    flags.hzStart = T;
+    boats.forEach((b, i) => { b.mode = 'goto'; b.goKn = 30; b.goal = () => advance(k1.pos, (k1.hdg + (i ? 60 : -60)) % 360, 1.2); });
+  }
+  if (flags.hzStart && !flags.hzDone && boats.some(b => gdist(b.pos, k1.pos) < 15)) raise({ id: 'hormuz', sev: 'crit', title: '[원해] 호르무즈 해협 IRGCN 고속정 접근 (나포 위협)', tgt: `${k1.id}·${boats.map(b => b.id).join('·')}`,
+    rec: '청해부대 근접 호위, UKMTO·IMSC 통보, 선사에 항로·속력 유지 권고', approve: () => {
+      chd.mode = 'goto'; chd.goKn = 28; chd.goal = () => k1.pos;
+      chd.onArrive = () => { chd.mode = 'escort'; chd.goTo = k1.id; chd.off = 1.5; flags.hzEsc = T; k1.hold = false; boats.forEach(b => { b.mode = 'goto'; b.goKn = 30; b.goal = () => b.home; b.onArrive = () => { b.mode = 'station'; b.center = b.home.slice(); }; });
+        addLog('청해부대, K01 근접 호위 개시. IRGCN 고속정 이탈.'); feed('surface', '[원해] 청해부대 K01 근접 호위 개시'); };
+      addReq('청해부대 근접 호위 · K01 호르무즈 통항', '수행'); addReq('UKMTO·IMSC 통보 · 호르무즈 고속정 접근', '완료');
+    } });
+  const ha = alerts.find(a => a.id === 'hormuz');
+  if (ha && ha.status === 'open' && !k1.hold && T - ha.t > 60) { k1.hold = true; ha.sev = 'crit'; addLog('IRGCN 고속정, K01에 정선 요구. 나포 위협 고조.'); feed('surface', '[원해] K01 정선 강요 (IRGCN)'); }
+  if (flags.hzEsc != null && !flags.hzDone && (boats.every(b => gdist(b.pos, k1.pos) > 15) || T - flags.hzEsc > 30)) { flags.hzDone = true; closeAlert('hormuz', '청해부대 근접 호위로 IRGCN 고속정 이탈, K01 호르무즈 해협 통과'); }
+  if (flags.hzDone && !flags.hzFree && k1.pos[0] > 58.8) { flags.hzFree = true; chd.mode = 'station'; chd.center = chd.pos.slice(); addLog('청해부대, K01 호위 종료 (오만만 통과). 초계 복귀.'); }
+  // 원해 2: 홍해 남부 후티 대함미사일·무인기 공격
+  const R = SL.redsea, k5 = sById(R.tgt);
+  if (T >= R.at && !flags.rsStart) {
+    flags.rsStart = T;
+    const vic = slocShips.filter(x => x.cls === 'mer' && x.route === 'EU' && x.pos[1] > 13 && x.pos[1] < 20).sort((a, b) => gdist(a.pos, R.launch) - gdist(b.pos, R.launch))[0] || slocShips.find(x => x.cls === 'mer');
+    flags.rsVic = vic.id; vic.hold = true; vic.hit = true;
+    slocFx.push({ a: R.launch, b: vic.pos.slice(), t: T, kind: 'msl' }, { a: [43.4, 15.6], b: vic.pos.slice(), t: T + 2, kind: 'uav' });
+    addLog(`후티, 홍해 남부 상선 ${vic.id} 공격 (대함미사일·무인기). 선박 피격.`); feed('space', `[원해] 홍해 남부 ${vic.id} 피격 · 발사 지점 호데이다 일대`);
+    raise({ id: 'redsea', sev: 'crit', title: '[원해] 홍해 남부 후티 대함미사일·무인기 공격', tgt: `${vic.id}·${k5.id}`,
+      rec: `${k5.id} 바브엘만데브 진입 보류·희망봉 우회 권고, 아스피데스·CMF 위협 정보 공유`, approve: () => {
+        k5.dir = -1; k5.reroute = true; flags.rsAct = T;
+        addReq(`${k5.id} 홍해 진입 보류 · 희망봉 우회 권고 (선사·해수부)`, '수행'); addReq('아스피데스·CMF 위협 정보 공유 · 홍해 남부', '완료');
+      } });
+  }
+  if (flags.rsAct != null && !flags.rsDone && T - flags.rsAct > 60) { flags.rsDone = true; closeAlert('redsea', `${k5.id} 홍해 진입 보류·희망봉 우회 결정, 연합해군과 위협 정보 공유`); }
+  if (k5.reroute && k5.route === 'EU' && k5.s <= 0) { k5.route = 'CAPE'; k5.s = 0; k5.dir = 1; addLog(`${k5.id}, 희망봉 우회 항로 진입.`); }
+  // 원해 3: 해적 의심 소형선(스키프)이 우리 벌크선에 접근
+  const P = SL.piracy, k6 = sById(P.tgt);
+  if (T >= P.at && !flags.pyStart) {
+    flags.pyStart = T; const m = sById('P01');
+    const sk = { id: P.skiff, name: '해적 의심 소형선 (스키프)', flag: 'XX', type: '소형 고속선', cls: 'pir', ais: false, pos: m.pos.slice(), hdg: 0, spd: 25, kn: 25, mode: 'goto', goKn: 25, home: m.pos.slice(),
+      goal: () => k6.pos, rep: { t: -999, pos: m.pos.slice(), src: '미탐지' }, ph: 0 };
+    slocShips.push(sk); addLog('해적 모선 의심 다우선에서 소형선 1척 출발 (미탐지).');
+  }
+  const sk = sById(P.skiff);
+  if (sk && !flags.pyDone && gdist(sk.pos, k6.pos) < 40) {
+    if (!sk.rep || sk.rep.t < T - 1) sk.rep = { t: T, pos: sk.pos.slice(), src: `UKMTO 보고 (${k6.id} 육안·레이더)` };
+    raise({ id: 'piracy', sev: 'crit', title: '[원해] 해적 의심 소형선 고속 접근 (소말리아 동방)', tgt: `${k6.id}·${sk.id}`,
+      rec: `연합해군(CTF-151) 함정 헬기 출동, ${k6.id} 증속·회피·시타델 대피 준비, MSCHOA·UKMTO 통보`, approve: () => {
+        const cand = slocShips.filter(x => x.cls === 'chd' || x.cls === 'co' || x.cls === 'us').sort((a, b) => gdist(a.pos, k6.pos) - gdist(b.pos, k6.pos));
+        const resp = cand.find(x => x.cls === 'chd' && gdist(x.pos, k6.pos) < 400) || cand[0];
+        flags.pyHeli = { pos: resp.pos.slice(), from: resp.id, nm: resp.name }; k6.kn = 16;
+        addReq(`${resp.name} 헬기 출동 · ${k6.id} 해적 대응`, '수행'); addReq('MSCHOA·UKMTO 통보 · 소말리아 동방 해적 접근', '완료');
+        addLog(`${resp.name} 헬기 이함, ${k6.id} 방향 (약 ${Math.round(gdist(resp.pos, k6.pos))}km).`); feed('air', `[원해] ${resp.id} 헬기 출동 · 해적 대응`);
+      } });
+  }
+  if (sk && !flags.pyDone && gdist(sk.pos, k6.pos) < 1 && !k6.hold && !flags.pyHeli) { k6.hold = true; addLog(`${sk.id}, ${k6.id}에 접현 시도. 선원 시타델 대피.`); feed('surface', `[원해] ${k6.id} 해적 접현 시도 · 시타델 대피`); }
+  const hl = flags.pyHeli;
+  if (hl && !hl.done) {
+    const tgt = sk.pos; if (moveToward(hl, tgt, 120, dt) || gdist(hl.pos, tgt) < 3) {
+      hl.done = true; flags.pyDone = true; k6.hold = false; sk.goal = () => sk.home; sk.onArrive = () => { sk.gone = true; };
+      closeAlert('piracy', `${hl.nm} 헬기 위협 비행·경고 사격으로 해적선 이탈, ${k6.id} 항해 재개`);
+    }
+  }
+  if (sk && sk.gone) slocShips.splice(slocShips.indexOf(sk), 1);
+}
+function slocStatus(sh) {
+  if (sh.hit) return ['피격', 3];
+  if (sh.hold) return [sh.cls === 'kr' ? (sh.id === SL.piracy.tgt ? '해적 접근 (시타델)' : '정선 강요') : '정지', 3];
+  if (slocShips.some(x => x.cls === 'chd' && x.mode === 'escort' && x.goTo === sh.id)) return ['청해부대 호위', 1];
+  if (sh.reroute) return ['희망봉 우회', 2];
+  if (sh.cls === 'kr' || sh.cls === 'mer') {
+    for (const k of ['houthi', 'irgcn', 'piracy']) if (inZone(sh, k)) return [{ houthi: '후티 위협권', irgcn: '나포 위험 해역', piracy: '해적 위험 해역' }[k], 2];
+    if (inZone(sh, 'hra')) return ['고위험해역 통항', 1];
+    if (inZone(sh, 'recaap')) return ['해상강도 주의', 1];
+  }
+  return ['정상', 0];
+}
+function slocWhere(p) {
+  let best = null, bd = 1e9; for (const [n, x, y] of SL.seas) { const d = gdist(p, [x, y]); if (d < bd) { bd = d; best = n; } }
+  for (const [n, x, y] of SL.chokes) if (gdist(p, [x, y]) < 150) return n;
+  return best;
+}
+function drawSlocStatic() {
+  const [, w0, n0, e0, s0] = SPRE[slocPre], a = SP(w0, n0), b = SP(e0, s0), vw = b[0] - a[0], vh = b[1] - a[1];
+  $('sloc').setAttribute('viewBox', `${f1(a[0])} ${f1(a[1])} ${f1(vw)} ${f1(vh)}`);
+  // 글자·기호 크기를 화면 픽셀 기준으로 맞춘다 (사용자 단위/픽셀)
+  const rc = $('sloc').getBoundingClientRect(), zz = rc.width ? Math.max(vw / rc.width, vh / rc.height) : vw / 1100, fs = v => (v * zz).toFixed(2);
+  let h = `<rect class="asea" x="0" y="0" width="${f1(SVW)}" height="${f1(SVH)}"/>`;
+  for (let lon = 30; lon <= 150; lon += 10) h += `<line class="agl" x1="${f1(SP(lon, 0)[0])}" y1="0" x2="${f1(SP(lon, 0)[0])}" y2="${f1(SVH)}" stroke-width="${fs(1)}"/>`;
+  for (let lat = -10; lat <= 40; lat += 10) h += `<line class="agl" x1="0" y1="${f1(SP(26, lat)[1])}" x2="${f1(SVW)}" y2="${f1(SP(26, lat)[1])}" stroke-width="${fs(1)}"/>`;
+  const zp = (k, cls) => { const zz = SL.zones[k]; if (zz.poly) return `<path class="${cls}" d="${spath(zz.poly, true)}" stroke-width="${fs(1.4)}"/>`; const c = SP(...zz.c); return `<circle class="${cls}" cx="${f1(c[0])}" cy="${f1(c[1])}" r="${f1(zz.r / 111.2 * SK)}" stroke-width="${fs(1.4)}"/>`; };
+  h += zp('hra', 'sz hra') + zp('cheonghae', 'sz chd') + zp('piracy', 'sz pir') + zp('houthi', 'sz hou') + zp('irgcn', 'sz irg') + zp('recaap', 'sz rec') + zp('sts', 'sz sts');
+  for (const ring of SLAND) h += `<path class="aland" d="${spath(ring, true)}" stroke="var(--land-edge)" stroke-width="${fs(0.6)}"/>`;
+  for (const ln of SL.irtc) h += `<path d="${spath(ln)}" stroke="#0b7285" stroke-width="${fs(1.2)}" fill="none" stroke-dasharray="${fs(4)} ${fs(3)}"/>`;
+  for (const [k, r] of Object.entries(SL.routes)) h += `<path class="sroute ${k}" d="${spath(r.pts)}" stroke-width="${fs(k === 'LNG' ? 2 : 2.8)}"/>`;
+  const zl = (k, p, cls, anchor = 'middle') => { const v = SP(...p); return `<text class="atx ${cls}" x="${f1(v[0])}" y="${f1(v[1])}" font-size="${fs(11)}" text-anchor="${anchor}">${SL.zones[k].nm}</text>`; };
+  h += zl('cheonghae', [57.5, 21.0], 'zchd') + zl('hra', [55.5, 2.0], 'zhra') + zl('houthi', [38.8, 12.0], 'zhou') + zl('piracy', [53.5, 4.0], 'zpir') + zl('irgcn', [53.0, 28.6], 'zirg') + zl('recaap', [104.5, -0.6], 'zrec') + zl('sts', [107.5, 3.6], 'zsts', 'start');
+  const lbl = { ME: [86, 7.5], EU: [70, 12.6], CAPE: [64, -5.0], LOMBOK: [102, -9.4], LNG: [52.0, 25.3] };
+  for (const [k, r] of Object.entries(SL.routes)) { const v = SP(...lbl[k]); h += `<text class="atx rt ${k}" x="${f1(v[0])}" y="${f1(v[1])}" font-size="${fs(12)}" text-anchor="middle">${r.nm}</text>`; }
+  { const v = SP(49.0, 15.0); h += `<text class="atx st" x="${f1(v[0])}" y="${f1(v[1])}" font-size="${fs(10)}" text-anchor="middle">IRTC 권고 통항 회랑</text>`; }
+  for (const [n, x, y, s] of SL.seas) { const v = SP(x, y); h += `<text class="atx sea" x="${f1(v[0])}" y="${f1(v[1])}" font-size="${fs(s)}" text-anchor="middle">${n}</text>`; }
+  for (const [n, x, y] of SL.ports) { const v = SP(x, y); h += `<circle cx="${f1(v[0])}" cy="${f1(v[1])}" r="${fs(2.6)}" fill="var(--muted)"/><text class="atx port" x="${f1(v[0] + 5 * zz)}" y="${f1(v[1] + 4 * zz)}" font-size="${fs(10)}">${n}</text>`; }
+  for (const [n, x, y] of SL.chokes) { const v = SP(x, y), d = 6 * zz; h += `<path d="M${f1(v[0])},${f1(v[1] - d)}l${f1(d)},${f1(d)}l${f1(-d)},${f1(d)}l${f1(-d)},${f1(-d)}Z" class="choke"/><text class="atx ck" x="${f1(v[0] + d + 3 * zz)}" y="${f1(v[1] - d)}" font-size="${fs(11.5)}">${n}</text>`; }
+  for (const [n, x, y, c] of SL.bases) { const v = SP(x, y), d = 3.2 * zz; h += `<rect class="sbase ${c}" x="${f1(v[0] - d)}" y="${f1(v[1] - d)}" width="${f1(2 * d)}" height="${f1(2 * d)}"/><text class="atx sb ${c}" x="${f1(v[0] + 2 * d)}" y="${f1(v[1] + 2 * d)}" font-size="${fs(9.5)}">${n}</text>`; }
+  { const v = SP(52.5, -15.8); h += `<text class="atx rt CAPE" x="${f1(v[0] - 4)}" y="${f1(v[1] - 6 * zz)}" font-size="${fs(10)}" text-anchor="end">→ 희망봉 (+10~14일)</text>`; }
+  $('sStatic').innerHTML = h; slocZ = zz; $('sloc').style.setProperty('--hw', f1(3 * zz) + 'px');
+}
+let slocZ = 1;
+function drawSloc() {
+  const z = slocZ; let h = '';
+  // 관측·정찰 위성 (관심해역 상공)
+  for (const o of SATS) {
+    const q = satPos(o, T); if (q[0] < 26 || q[0] > 152 || q[1] < -16 || q[1] > 44) continue; const v = SP(q[0], q[1]);
+    h += `<g class="sat ${o.op}"><rect x="${f1(v[0] - 3 * z)}" y="${f1(v[1] - 3 * z)}" width="${f1(6 * z)}" height="${f1(6 * z)}"/></g><text class="atx ${o.op === 'foreign' ? 'base' : 'geo'}" x="${f1(v[0] + 5 * z)}" y="${f1(v[1] + 3 * z)}" font-size="${f1(9 * z)}">${o.name}</text>`;
+  }
+  for (const fx of slocFx) {
+    if (T < fx.t || T - fx.t > 50) continue; const a = SP(...fx.a), b = SP(...fx.b);
+    h += `<line x1="${f1(a[0])}" y1="${f1(a[1])}" x2="${f1(b[0])}" y2="${f1(b[1])}" stroke="var(--ho)" stroke-width="${f1(1.8 * z)}" stroke-dasharray="${f1(6 * z)} ${f1(3 * z)}"/><text class="atx base" x="${f1((a[0] + b[0]) / 2 + 4 * z)}" y="${f1((a[1] + b[1]) / 2)}" font-size="${f1(9.5 * z)}">${fx.kind === 'msl' ? '대함미사일' : '자폭 무인기'}</text>`;
+  }
+  const hl = flags.pyHeli; if (hl && !hl.done) { const v = SP(...hl.pos); h += `<circle cx="${f1(v[0])}" cy="${f1(v[1])}" r="${f1(4 * z)}" fill="var(--fr)"/><text class="atx id" x="${f1(v[0] + 6 * z)}" y="${f1(v[1] - 4 * z)}" font-size="${f1(10 * z)}" fill="var(--fr)">헬기</text>`; }
+  for (const sh of slocShips) {
+    if (sh.rep.t < -1) continue;
+    const q = sh.rep.pos, v = SP(q[0], q[1]), age = T - sh.rep.t, st = slocStatus(sh), op = age > 60 ? ' opacity=".45"' : '';
+    const r = (sh.cls === 'mer' ? 2.6 : sh.cls === 'kr' ? 5 : 5.5) * z;
+    if (sh.cls === 'chd' && sh.mode === 'escort') { const w = SP(...sById(sh.goTo).pos); h += `<line x1="${f1(v[0])}" y1="${f1(v[1])}" x2="${f1(w[0])}" y2="${f1(w[1])}" stroke="var(--fr)" stroke-width="${f1(1.5 * z)}"/>`; }
+    h += NAVY.has(sh.cls) ? `<path class="ssh ${sh.cls}"${op} d="M${f1(v[0])},${f1(v[1] - r * 1.3)}l${f1(r * 1.3)},${f1(r * 1.3)}l${f1(-r * 1.3)},${f1(r * 1.3)}l${f1(-r * 1.3)},${f1(-r * 1.3)}Z"/>`
+      : sh.cls === 'pir' ? `<path class="ssh pir"${op} d="M${f1(v[0])},${f1(v[1] - r * 1.3)}l${f1(r * 1.2)},${f1(r * 2)}h${f1(-r * 2.4)}Z"/>`
+      : sh.cls === 'shd' ? `<rect class="ssh shd"${op} x="${f1(v[0] - r)}" y="${f1(v[1] - r)}" width="${f1(2 * r)}" height="${f1(2 * r)}"/>`
+      : `<circle class="ssh ${sh.cls}"${op} cx="${f1(v[0])}" cy="${f1(v[1])}" r="${f1(r)}"/>`;
+    if (st[1] >= 2 && sh.cls !== 'mer' || sh.hit) h += `<circle cx="${f1(v[0])}" cy="${f1(v[1])}" r="${f1(r + 4 * z)}" fill="none" stroke="${st[1] === 3 ? 'var(--ho)' : 'var(--su)'}" stroke-width="${f1(1.6 * z)}"/>`;
+    if (slocSel === sh.id) h += `<circle class="selring" cx="${f1(v[0])}" cy="${f1(v[1])}" r="${f1(r + 8 * z)}"/>`;
+    if (sh.cls !== 'mer' || sh.hit) h += `<text class="atx id" x="${f1(v[0] + r + 3 * z)}" y="${f1(v[1] - r)}" font-size="${f1(10.5 * z)}" fill="var(--fg)"${op}>${sh.id}</text>`;
+  }
+  $('sDyn').innerHTML = h;
+}
+function renderSlocPanel() {
+  const kr = slocShips.filter(sh => sh.cls === 'kr'), rows = kr.map(sh => [sh, slocStatus(sh)]);
+  const lv = ['done', 'act', 'warn', 'open'], chd = sById('CH1');
+  const risk = rows.filter(([, st]) => st[1] >= 2).length;
+  const chdTask = chd.mode === 'escort' ? `${chd.goTo} 근접 호위` : chd.mode === 'goto' ? '호위 대상으로 이동' : '초계';
+  const ck = SL.chokes.map(([n, x, y, info]) => {
+    const near = kr.filter(sh => gdist(sh.pos, [x, y]) < 400).length;
+    const al = { '호르무즈 해협': 'hormuz', '바브엘만데브 해협': 'redsea', '수에즈 운하': 'redsea' }[n], a = al && alerts.find(q => q.id === al);
+    const lvN = a && a.status !== 'done' ? 3 : n === '바브엘만데브 해협' ? 2 : n === '말라카·싱가포르 해협' || n === '호르무즈 해협' ? 1 : 0;
+    return `<tr><td>${n}<small>${esc(info)}</small></td><td>${near}</td><td><span class="chip ${lv[lvN]}">${['정상', '주의', '경계', '심각'][lvN]}</span></td></tr>`;
+  }).join('');
+  let selH = '';
+  const ss = slocSel && sById(slocSel);
+  if (ss) {
+    const st = slocStatus(ss);
+    selH = `<div class="ahd"><h3>선택 선박</h3><b>${ss.id}</b> ${esc(ss.name)} <small>(${ss.flag})</small> <span class="chip ${lv[st[1]]}">${st[0]}</span>
+      <div class="empty" style="font-size:11.5px;margin-top:3px">${SCLS[ss.cls]} · ${ss.type}${ss.route ? ` · ${SL.routes[ss.route].nm}` : ''} · ${slocWhere(ss.pos)}<br>
+      ${ss.rep.t < -1 ? '위치 미확인' : `${fmtPos(ss.rep.pos)} · ${f1(ss.spd)}kn · 최종 보고 ${clock(ss.rep.t).hm} (${esc(ss.rep.src)})`}</div></div>`;
+  }
+  const inA = SATS.filter(o => { const q = satPos(o, T); return o.use && q[0] >= 26 && q[0] <= 134 && q[1] >= -16 && q[1] <= 44; });
+  const thr = [['후티 (홍해 남부·바브엘만데브)', 'houthi', alerts.some(a => a.id === 'redsea' && a.status !== 'done') ? 3 : 2], ['IRGCN (호르무즈)', 'irgcn', alerts.some(a => a.id === 'hormuz' && a.status !== 'done') ? 3 : 1],
+    ['소말리아 해적', 'piracy', alerts.some(a => a.id === 'piracy' && a.status !== 'done') ? 3 : 1], ['해상강도 (싱가포르 해협)', 'recaap', 1], ['그림자선단 STS (말레이시아 동방)', 'sts', 1]];
+  setHTML($('slocInfo'), 'sloc', `<div class="ahd"><h3>우리 선박·청해부대</h3>
+      <div class="csum"><span>우리 선박 <b>${kr.length}</b></span><span>위험 상태 <b>${risk}</b></span><span>고위험해역 통항 <b>${kr.filter(sh => inZone(sh, 'hra')).length}</b></span><span>희망봉 우회 <b>${kr.filter(sh => sh.route === 'CAPE' || sh.reroute).length}</b></span></div>
+      <div class="empty" style="font-size:11.5px;margin-top:4px">청해부대 CH1 · ${slocWhere(chd.pos)} · ${chdTask} · ${f1(chd.spd)}kn</div></div>
+    ${selH}
+    <div class="ahd"><h3>초크포인트 현황</h3><table class="atab"><thead><tr><th>해협</th><th>우리 선박 (400km)</th><th>위협</th></tr></thead><tbody>${ck}</tbody></table></div>
+    <div class="ahd"><h3>우리 선박 추적</h3><table class="atab stab"><thead><tr><th>선박</th><th>선명·선종·해역</th><th>상태·속력</th><th>보고</th></tr></thead><tbody>`
+    + rows.map(([sh, st]) => `<tr data-sloc="${sh.id}" class="${slocSel === sh.id ? 'on' : ''}"><td><i class="ssh kr" style="background:currentColor"></i>${sh.id}</td><td>${esc(sh.name)}<small>${sh.type} · ${slocWhere(sh.pos)}</small></td><td><span class="chip ${lv[st[1]]}">${st[0]}</span><small>${f1(sh.spd)}kn</small></td><td>${clock(sh.rep.t).hm}<small>${esc(sh.rep.src.replace(/ \(.*/, ''))}</small></td></tr>`).join('')
+    + `</tbody></table></div>
+    <div class="ahd"><h3>위협 현황</h3><table class="atab"><tbody>${thr.map(([n, k, l]) => `<tr><td>${n}<small>${SL.zones[k].nm}</small></td><td><span class="chip ${lv[l]}">${['정상', '주의', '경계', '심각'][l]}</span></td><td>${kr.filter(sh => inZone(sh, k)).length}척</td></tr>`).join('')}</tbody></table></div>
+    <div class="ahd"><h3>관심 함정 (연합·주변국·위협)</h3><table class="atab stab"><tbody>${slocShips.filter(sh => NAVY.has(sh.cls) || sh.cls === 'pir' || sh.cls === 'shd').map(sh => `<tr data-sloc="${sh.id}" class="${slocSel === sh.id ? 'on' : ''}"><td><i class="ssh ${sh.cls}" style="background:currentColor"></i>${sh.id}</td><td>${esc(sh.name)}<small>${SCLS[sh.cls]} · ${slocWhere(sh.pos)}</small></td><td>${sh.rep.t < -1 ? '<small>미탐지</small>' : `${clock(sh.rep.t).hm}<small>${esc(sh.rep.src.replace(/ \(.*/, ''))}</small>`}</td></tr>`).join('')}</tbody></table></div>
+    <div class="ahd"><h3>위성 커버리지</h3>관심해역 상공 관측·정찰 위성 <b>${inA.length}</b>기${inA.length ? ` <small>(${inA.slice(0, 4).map(o => o.name).join(', ')}${inA.length > 4 ? ' 등' : ''})</small>` : ''}</div>
+    <div class="ahd"><h3>정보 협력·보고 체계</h3><span class="empty" style="font-size:11.5px">CMF(바레인, CTF-150 해양안보·151 대해적·153 홍해), EU 아탈란타·아스피데스, IMSC(센티넬), UKMTO·MSCHOA 선박 보고, IFC-IOR(인도)·IFC·ReCAAP ISC(싱가포르), 해수부 해적위험해역 운항 관리, LRIT 선박 위치</span></div>
+    <div class="ahd" style="border:0"><h3>범례</h3><div class="kgrid">${Object.entries(SCLS).map(([k, n]) => `<span><i class="ssh ${k}" style="background:currentColor"></i>${n}</span>`).join('')}</div></div>`);
+}
+
 function setView(v) {
-  arcView = v === 'arc';
-  $('map').toggleAttribute('hidden', arcView); $('arc').toggleAttribute('hidden', !arcView);
-  document.querySelector('.zoom').hidden = arcView; document.querySelector('.bounds').hidden = arcView;
-  $('srcpanel').hidden = arcView; $('arcpanel').hidden = !arcView;
+  arcView = v === 'arc'; slocView = v === 'sloc'; const kr = v === 'kr';
+  $('map').toggleAttribute('hidden', !kr); $('arc').toggleAttribute('hidden', !arcView); $('sloc').toggleAttribute('hidden', !slocView);
+  document.querySelector('.zoom').hidden = !kr; document.querySelector('.bounds').hidden = !kr; $('spre').hidden = !slocView;
+  $('srcpanel').hidden = !kr; $('arcpanel').hidden = !arcView; $('slocpanel').hidden = !slocView;
   document.querySelectorAll('[data-view]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.view === v)));
-  if (arcView) { drawArc(); renderArcPanel(); } else { fitView(); }
+  if (arcView) { drawArc(); renderArcPanel(); } else if (slocView) { drawSlocStatic(); drawSloc(); renderSlocPanel(); } else { fitView(); }
 }
 document.querySelectorAll('[data-view]').forEach(b => b.onclick = () => setView(b.dataset.view));
 $('arc').addEventListener('click', e => {
@@ -2349,6 +2640,18 @@ $('arc').addEventListener('click', e => {
   let best = null, bd = 16;
   for (const sh of arcShips) { const v = AP(sh.rep.pos[0], sh.rep.pos[1]), d = Math.hypot(v[0] - q.x, v[1] - q.y); if (d < bd) { bd = d; best = sh.id; } }
   arcSel = best; drawArc(); renderArcPanel();
+});
+$('sloc').addEventListener('click', e => {
+  const q = new DOMPoint(e.clientX, e.clientY).matrixTransform($('sloc').getScreenCTM().inverse());
+  let best = null, bd = 16 * slocZ;
+  for (const sh of slocShips) { if (sh.rep.t < -1) continue; const v = SP(sh.rep.pos[0], sh.rep.pos[1]), d = Math.hypot(v[0] - q.x, v[1] - q.y); if (d < bd) { bd = d; best = sh.id; } }
+  slocSel = best; drawSloc(); renderSlocPanel();
+});
+$('slocpanel').addEventListener('click', e => { const r = e.target.closest('[data-sloc]'); if (r) { slocSel = r.dataset.sloc; drawSloc(); renderSlocPanel(); } });
+$('spre').addEventListener('click', e => {
+  const b = e.target.closest('[data-sp]'); if (!b) return;
+  slocPre = b.dataset.sp; document.querySelectorAll('[data-sp]').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
+  drawSlocStatic(); drawSloc();
 });
 $('arcpanel').addEventListener('click', e => { const r = e.target.closest('[data-arc]'); if (r) { arcSel = r.dataset.arc; drawArc(); renderArcPanel(); } });
 $('bBoxes').onclick = () => {
@@ -2401,7 +2704,7 @@ function fitView() {
   vb = { x: X(127.4) - w / 2 + w * 0.12, y: Y(36.6) - h / 2, w, h };
   clampVB(); setVB(); drawDyn();
 }
-new ResizeObserver(fitView).observe(document.querySelector('.mapview'));
+new ResizeObserver(() => { fitView(); if (slocView) { drawSlocStatic(); drawSloc(); } }).observe(document.querySelector('.mapview'));
 const svgPt = e => new DOMPoint(e.clientX, e.clientY).matrixTransform(svg.getScreenCTM().inverse());
 svg.addEventListener('wheel', e => { e.preventDefault(); const p = svgPt(e); zoomAt(Math.exp(e.deltaY * 0.0015), p.x, p.y); }, { passive: false });
 let drag = null;
@@ -2437,16 +2740,16 @@ function frame(now) {
   if (running) {
     let sim = dtReal * speed / 60;
     while (sim > 0) { const d = Math.min(0.5, sim); step(d); sim -= d; }
-    if (now - drawAt > 100) { drawAt = now; if (arcView) drawArc(); else drawDyn(); }
+    if (now - drawAt > 100) { drawAt = now; if (arcView) drawArc(); else if (slocView) drawSloc(); else drawDyn(); }
   }
   if (now - panelAt > 250) {
-    panelAt = now; renderPanel(); if (arcView) renderArcPanel();
+    panelAt = now; renderPanel(); if (arcView) renderArcPanel(); if (slocView) renderSlocPanel();
     if (rq.at < 0 || T - rq.at >= 10) { rq.rows = rqCatalog(rqArea()); rq.at = T; } renderRq();
   }
   requestAnimationFrame(frame);
 }
 
-init(); drawStatic(); drawArcStatic(); setPlay(); fitView(); renderPanel();
+init(); drawStatic(); drawArcStatic(); drawSlocStatic(); setPlay(); fitView(); renderPanel();
 requestAnimationFrame(frame);
 })();
 </script>
