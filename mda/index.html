@@ -147,6 +147,10 @@ button { font: inherit; color: inherit; }
 .sz.pir, .sz.hou, .sz.irg { fill: color-mix(in srgb, var(--ho) 8%, transparent); stroke: var(--ho); }
 .sz.rec { fill: color-mix(in srgb, var(--un) 10%, transparent); stroke: var(--un); }
 .sz.sts { fill: color-mix(in srgb, var(--k-shadow) 10%, transparent); stroke: var(--k-shadow); }
+.sz.scs { fill: color-mix(in srgb, #9a3412 6%, transparent); stroke: #9a3412; } .sz.twn { fill: color-mix(in srgb, var(--ho) 5%, transparent); stroke: var(--ho); }
+.atx.isl { fill: #9a3412; } .atx.zscs { fill: #9a3412; font-weight: 600; }
+.sroute.TW { stroke: #5f3dc4; } .atx.rt.TW { fill: #5f3dc4; }
+.ssh.ccg { fill: var(--k-ccg); color: var(--k-ccg); } .ssh.mil { fill: #e8590c; color: #e8590c; } .ssh.tw { fill: #1098ad; color: #1098ad; } .ssh.ph { fill: #2f9e44; color: #2f9e44; }
 .sroute { fill: none; stroke-linejoin: round; }
 .sroute.ME { stroke: #c2410c; } .sroute.LNG { stroke: #2b8a3e; } .sroute.EU { stroke: #0b7285; } .sroute.CAPE { stroke: #868e96; stroke-dasharray: 8 6; } .sroute.LOMBOK { stroke: #b08900; stroke-dasharray: 3 4; }
 .atx.rt.ME { fill: #c2410c; } .atx.rt.LNG { fill: #2b8a3e; } .atx.rt.EU { fill: #0b7285; } .atx.rt.CAPE { fill: #868e96; } .atx.rt.LOMBOK { fill: #b08900; }
@@ -473,7 +477,7 @@ textarea.report { width: 100%; min-height: 150px; font: 12px/1.5 var(--font-data
       <button class="btn" type="button" data-view="sloc" aria-pressed="false">원해 SLOC</button>
     </div>
     <div class="spre seg" id="spre" hidden role="group" aria-label="관심해역 확대">
-      <button class="btn" type="button" data-sp="all" aria-pressed="true">전체</button><button class="btn" type="button" data-sp="hormuz" aria-pressed="false">호르무즈</button><button class="btn" type="button" data-sp="aden" aria-pressed="false">아덴만·홍해</button><button class="btn" type="button" data-sp="malacca" aria-pressed="false">말라카</button>
+      <button class="btn" type="button" data-sp="all" aria-pressed="true">전체</button><button class="btn" type="button" data-sp="hormuz" aria-pressed="false">호르무즈</button><button class="btn" type="button" data-sp="aden" aria-pressed="false">아덴만·홍해</button><button class="btn" type="button" data-sp="malacca" aria-pressed="false">말라카</button><button class="btn" type="button" data-sp="scs" aria-pressed="false">남중국해·대만</button>
     </div>
     <svg id="sloc" viewBox="0 0 1414 810" preserveAspectRatio="xMinYMid meet" hidden role="img" aria-label="원해 해상교통로 관심해역 상황도 (호르무즈·아덴만·홍해·말라카)">
       <g id="sStatic"></g><g id="sDyn"></g>
@@ -1300,6 +1304,8 @@ const CAT = {
   hormuz: ['해상교통로 위협 (나포)', '국외 공유 가능', ['해수부', '해외 IFC']],
   redsea: ['해상교통로 위협 (무력 공격)', '국외 공유 가능', ['해수부', '해외 IFC']],
   piracy: ['해적 (원해)', '국외 공유 가능', ['해수부', '해경', '해외 IFC']],
+  taiwan: ['해상교통로 위협 (군사훈련)', '국외 공유 가능', ['해수부', '해외 IFC']],
+  scs: ['해양 분쟁 (회색지대)', '국외 공유 가능', ['해수부', '해외 IFC']],
   arcais: ['북극항로 위치 보고 공백', '국외 공유 가능', ['해수부', '해경']],
   arcmil: ['북극 군사활동 (항로 인접)', '국내 한정', ['해수부']],
   survey: ['무단 해양과학조사 의심', '국내 한정', ['해경', '해수부', '외교부']]
@@ -2377,10 +2383,10 @@ const SL = SC.sloc, SLAND = window.MDA_SLOC_LAND || [];
 const SK = 13.5, SCOS = Math.cos(14 * D2R), SVW = (152 - 26) * SK * SCOS, SVH = 60 * SK;
 const SP = (lon, lat) => [(lon - 26) * SK * SCOS, (44 - lat) * SK];
 const spath = (pts, close) => 'M' + pts.map(p => SP(p[0], p[1]).map(f1).join(',')).join('L') + (close ? 'Z' : '');
-const SCLS = { kr: '우리 상선', chd: '청해부대', co: '연합 해군 (EU·일·인)', us: '미 해군', cn: '중국 해군', ir: '이란 (IRGCN·해군)', pir: '해적 의심', shd: '그림자선단 의심', mer: '외국 상선' };
-const NAVY = new Set(['chd', 'co', 'us', 'cn', 'ir']);
+const SCLS = { kr: '우리 상선', chd: '청해부대', co: '연합 해군 (EU·일·인)', us: '미 해군', cn: '중국 해군', ccg: '중국 해경', mil: '해상민병', tw: '대만 해군', ph: '필리핀 해경', ir: '이란 (IRGCN·해군)', pir: '해적 의심', shd: '그림자선단 의심', mer: '외국 상선' };
+const NAVY = new Set(['chd', 'co', 'us', 'cn', 'ccg', 'tw', 'ph', 'ir']);
 // 해도 범위 프리셋: [서경, 북위, 동경, 남위]
-const SPRE = { all: ['전체', 26, 44, 152, -16], hormuz: ['호르무즈', 49.5, 30.5, 61.5, 21.5], aden: ['아덴만·홍해', 31, 31.5, 62, 6], malacca: ['말라카', 93, 10, 111, -3] };
+const SPRE = { all: ['전체', 26, 44, 152, -16], hormuz: ['호르무즈', 49.5, 30.5, 61.5, 21.5], aden: ['아덴만·홍해', 31, 31.5, 62, 6], malacca: ['말라카', 93, 10, 111, -3], scs: ['남중국해·대만', 104, 28.5, 128, 2] };
 let SR = {}, slocShips = [], slocView = false, slocSel = null, slocPre = 'all', slocFx = [];
 const routeLen = k => SR[k].cum[SR[k].cum.length - 1];
 function routeAt(k, s) {
@@ -2412,7 +2418,7 @@ function buildSloc() {
     sh.spd = sh.kn; slocPlace(sh); slocShips.push(sh);
   }
   for (const sh of slocShips) { sh.rep = { t: 0, pos: sh.pos.slice(), src: sh.ais ? 'S-AIS' : sh.cls === 'chd' ? '전술데이터링크' : '연합해군 공유 (CMF)' }; sh.ph = rnd() * 20; }
-  slocShips.filter(sh => ['cn', 'ir', 'pir', 'shd'].includes(sh.cls)).forEach(sh => { sh.rep.t = -999; sh.rep.src = '미탐지'; });
+  slocShips.filter(sh => ['cn', 'ir', 'pir', 'shd', 'mil', 'tw'].includes(sh.cls)).forEach(sh => { sh.rep.t = -999; sh.rep.src = '미탐지'; });
   slocFx = []; slocSel = null;
 }
 const sById = id => slocShips.find(x => x.id === id);
@@ -2518,16 +2524,45 @@ function slocScenario(dt) {
     }
   }
   if (sk && sk.gone) slocShips.splice(slocShips.indexOf(sk), 1);
+  // 원해 4: 대만 주변 중국군 합동훈련 구역 선포 (가상)
+  const TW = SL.taiwan, k10 = sById(TW.tgt);
+  if (T >= TW.at && !flags.twStart) {
+    flags.twStart = T; flags.twEnd = T + TW.dur;
+    const cv = sById('CN2'); cv.mode = 'goto'; cv.goKn = 18; cv.goal = () => [122.9, 24.0]; cv.onArrive = () => { cv.mode = 'station'; cv.center = cv.pos.slice(); };
+    addLog('중국, 대만 주변 해역 5곳에 합동훈련 구역 선포 (가상). 실사격·봉쇄 훈련 예고.'); feed('surface', '[원해] 대만 주변 중국군 합동훈련 구역 선포 (가상)');
+    raise({ id: 'taiwan', sev: 'warn', title: '[원해] 대만 주변 중국군 합동훈련 구역 선포 (가상)', tgt: `${k10.id}·CN2·CN3`,
+      rec: `${k10.id} 대만해협 진입 전 대기·통항 시각 조정 권고, 항행경보·우방 정보 공유`, approve: () => {
+        flags.twAct = T; k10.hold = true;
+        addReq(`${k10.id} 대만해협 통항 대기 권고 (선사·해수부)`, '수행'); addReq('항행경보 공유 · 대만 주변 훈련구역', '완료');
+      } });
+  }
+  if (flags.twStart && !flags.twDone && T >= flags.twEnd) {
+    flags.twDone = true; const waited = k10.hold ? Math.round(T - flags.twAct) : 0; k10.hold = false;
+    closeAlert('taiwan', flags.twAct != null ? `훈련 종료, ${k10.id} 대만해협 통항 재개 (대기 ${waited}분)` : `훈련 종료. ${k10.id}는 훈련 중 해협을 통항해 위험에 노출됨`);
+  }
+  // 원해 5: 세컨드 토마스 암초, 중국 해경의 필리핀 보급 차단·물대포 (가상)
+  const SS = SL.scs, cg = sById(SS.ccg), ph = sById(SS.ph);
+  if (T >= SS.at && !flags.scStart) { flags.scStart = T; cg.mode = 'goto'; cg.goKn = 14; cg.goal = () => advance(ph.pos, 0, 0.6); }
+  if (flags.scStart && !flags.scHit && gdist(cg.pos, ph.pos) < 1.5) {
+    flags.scHit = T; slocFx.push({ a: cg.pos.slice(), b: ph.pos.slice(), t: T, kind: 'wc' });
+    addLog('중국 해경, 세컨드 토마스 암초 인근에서 필리핀 해경 보급 선단에 물대포 발사 (가상).'); feed('surface', '[원해] 세컨드 토마스 암초 물대포·차단 (가상)');
+    raise({ id: 'scs', sev: 'warn', title: '[원해] 세컨드 토마스 암초 중국 해경 차단·물대포 (가상)', tgt: `${cg.id}·${ph.id}`,
+      rec: '인근 통항 우리 선박 주의 공유, 미·일·필리핀 등 우방과 정보 공유 (IFC·ReCAAP)', approve: () => { flags.scAct = T; addReq('남중국해 회색지대 위협 정보 공유 · 우리 선박 주의', '완료'); } });
+  }
+  if (flags.scAct != null && !flags.scDone && T - flags.scAct > 30) { flags.scDone = true; cg.mode = 'station'; cg.center = cg.pos.slice(); closeAlert('scs', '우방 정보 공유, 우리 선박 분쟁 암초 인근 우회 통항 권고'); }
 }
 function slocStatus(sh) {
   if (sh.hit) return ['피격', 3];
-  if (sh.hold) return [sh.cls === 'kr' ? (sh.id === SL.piracy.tgt ? '해적 접근 (시타델)' : '정선 강요') : '정지', 3];
+  if (sh.hold) return sh.id === SL.taiwan.tgt ? ['통항 대기 (훈련구역)', 2] : [sh.cls === 'kr' ? (sh.id === SL.piracy.tgt ? '해적 접근 (시타델)' : '정선 강요') : '정지', 3];
   if (slocShips.some(x => x.cls === 'chd' && x.mode === 'escort' && x.goTo === sh.id)) return ['청해부대 호위', 1];
   if (sh.reroute) return ['희망봉 우회', 2];
   if (sh.cls === 'kr' || sh.cls === 'mer') {
     for (const k of ['houthi', 'irgcn', 'piracy']) if (inZone(sh, k)) return [{ houthi: '후티 위협권', irgcn: '나포 위험 해역', piracy: '해적 위험 해역' }[k], 2];
     if (inZone(sh, 'hra')) return ['고위험해역 통항', 1];
     if (inZone(sh, 'recaap')) return ['해상강도 주의', 1];
+    if (flags.twStart && !flags.twDone && SL.pla.some(bx => inPoly(sh.pos, bx))) return ['훈련구역 내 통항', 3];
+    if (inZone(sh, 'taiwan')) return ['대만해협 긴장 해역', 1];
+    if (inZone(sh, 'scs')) return ['분쟁 해역 통항', 1];
   }
   return ['정상', 0];
 }
@@ -2545,13 +2580,17 @@ function drawSlocStatic() {
   for (let lon = 30; lon <= 150; lon += 10) h += `<line class="agl" x1="${f1(SP(lon, 0)[0])}" y1="0" x2="${f1(SP(lon, 0)[0])}" y2="${f1(SVH)}" stroke-width="${fs(1)}"/>`;
   for (let lat = -10; lat <= 40; lat += 10) h += `<line class="agl" x1="0" y1="${f1(SP(26, lat)[1])}" x2="${f1(SVW)}" y2="${f1(SP(26, lat)[1])}" stroke-width="${fs(1)}"/>`;
   const zp = (k, cls) => { const zz = SL.zones[k]; if (zz.poly) return `<path class="${cls}" d="${spath(zz.poly, true)}" stroke-width="${fs(1.4)}"/>`; const c = SP(...zz.c); return `<circle class="${cls}" cx="${f1(c[0])}" cy="${f1(c[1])}" r="${f1(zz.r / 111.2 * SK)}" stroke-width="${fs(1.4)}"/>`; };
-  h += zp('hra', 'sz hra') + zp('cheonghae', 'sz chd') + zp('piracy', 'sz pir') + zp('houthi', 'sz hou') + zp('irgcn', 'sz irg') + zp('recaap', 'sz rec') + zp('sts', 'sz sts');
+  h += zp('hra', 'sz hra') + zp('cheonghae', 'sz chd') + zp('piracy', 'sz pir') + zp('houthi', 'sz hou') + zp('irgcn', 'sz irg') + zp('recaap', 'sz rec') + zp('sts', 'sz sts') + zp('scs', 'sz scs') + zp('taiwan', 'sz twn');
   for (const ring of SLAND) h += `<path class="aland" d="${spath(ring, true)}" stroke="var(--land-edge)" stroke-width="${fs(0.6)}"/>`;
+  h += `<path d="${spath(SL.nineDash)}" fill="none" stroke="#9a3412" stroke-width="${fs(2.2)}" stroke-dasharray="${fs(14)} ${fs(9)}"/>`;
+  h += `<path d="${spath(SL.median)}" fill="none" stroke="#5c6b77" stroke-width="${fs(1.4)}" stroke-dasharray="${fs(3)} ${fs(4)}"/>`;
+  for (const [n, x, y] of SL.islets) { const v = SP(x, y); h += `<circle cx="${f1(v[0])}" cy="${f1(v[1])}" r="${fs(2.6)}" fill="#9a3412" stroke="var(--halo)" stroke-width="${fs(0.8)}"/><text class="atx isl" x="${f1(v[0] + 4 * zz)}" y="${f1(v[1] + 3.5 * zz)}" font-size="${fs(9.5)}">${n}</text>`; }
   for (const ln of SL.irtc) h += `<path d="${spath(ln)}" stroke="#0b7285" stroke-width="${fs(1.2)}" fill="none" stroke-dasharray="${fs(4)} ${fs(3)}"/>`;
   for (const [k, r] of Object.entries(SL.routes)) h += `<path class="sroute ${k}" d="${spath(r.pts)}" stroke-width="${fs(k === 'LNG' ? 2 : 2.8)}"/>`;
   const zl = (k, p, cls, anchor = 'middle') => { const v = SP(...p); return `<text class="atx ${cls}" x="${f1(v[0])}" y="${f1(v[1])}" font-size="${fs(11)}" text-anchor="${anchor}">${SL.zones[k].nm}</text>`; };
-  h += zl('cheonghae', [57.5, 21.0], 'zchd') + zl('hra', [55.5, 2.0], 'zhra') + zl('houthi', [38.8, 12.0], 'zhou') + zl('piracy', [53.5, 4.0], 'zpir') + zl('irgcn', [53.0, 28.6], 'zirg') + zl('recaap', [104.5, -0.6], 'zrec') + zl('sts', [107.5, 3.6], 'zsts', 'start');
-  const lbl = { ME: [86, 7.5], EU: [70, 12.6], CAPE: [64, -5.0], LOMBOK: [102, -9.4], LNG: [52.0, 25.3] };
+  h += zl('cheonghae', [57.5, 21.0], 'zchd') + zl('hra', [55.5, 2.0], 'zhra') + zl('houthi', [38.8, 12.0], 'zhou') + zl('piracy', [53.5, 4.0], 'zpir') + zl('irgcn', [53.0, 28.6], 'zirg') + zl('recaap', [104.5, -0.6], 'zrec') + zl('sts', [107.5, 3.6], 'zsts', 'start') + zl('scs', [115.2, 17.4], 'zscs') + zl('taiwan', [123.6, 26.8], 'zirg');
+  { const v = SP(108.9, 6.0); h += `<text class="atx isl" x="${f1(v[0])}" y="${f1(v[1])}" font-size="${fs(10)}">중국 주장 '9단선' (개략)</text>`; const m = SP(118.3, 23.0); h += `<text class="atx port" x="${f1(m[0])}" y="${f1(m[1])}" font-size="${fs(9.5)}" text-anchor="end">대만해협 중간선 (개략)</text>`; }
+  const lbl = { ME: [86, 7.5], EU: [70, 12.6], CAPE: [64, -5.0], LOMBOK: [102, -9.4], LNG: [52.0, 25.3], TW: [125.6, 30.6] };
   for (const [k, r] of Object.entries(SL.routes)) { const v = SP(...lbl[k]); h += `<text class="atx rt ${k}" x="${f1(v[0])}" y="${f1(v[1])}" font-size="${fs(12)}" text-anchor="middle">${r.nm}</text>`; }
   { const v = SP(49.0, 15.0); h += `<text class="atx st" x="${f1(v[0])}" y="${f1(v[1])}" font-size="${fs(10)}" text-anchor="middle">IRTC 권고 통항 회랑</text>`; }
   for (const [n, x, y, s] of SL.seas) { const v = SP(x, y); h += `<text class="atx sea" x="${f1(v[0])}" y="${f1(v[1])}" font-size="${fs(s)}" text-anchor="middle">${n}</text>`; }
@@ -2569,9 +2608,13 @@ function drawSloc() {
     const q = satPos(o, T); if (q[0] < 26 || q[0] > 152 || q[1] < -16 || q[1] > 44) continue; const v = SP(q[0], q[1]);
     h += `<g class="sat ${o.op}"><rect x="${f1(v[0] - 3 * z)}" y="${f1(v[1] - 3 * z)}" width="${f1(6 * z)}" height="${f1(6 * z)}"/></g><text class="atx ${o.op === 'foreign' ? 'base' : 'geo'}" x="${f1(v[0] + 5 * z)}" y="${f1(v[1] + 3 * z)}" font-size="${f1(9 * z)}">${o.name}</text>`;
   }
+  if (flags.twStart && !flags.twDone) {
+    for (const bx of SL.pla) h += `<path d="${spath(bx, true)}" fill="color-mix(in srgb, var(--ho) 14%, transparent)" stroke="var(--ho)" stroke-width="${f1(1.4 * z)}" stroke-dasharray="${f1(5 * z)} ${f1(3 * z)}"/>`;
+    const v = SP(123.6, 27.6); h += `<text class="atx base" x="${f1(v[0])}" y="${f1(v[1])}" font-size="${f1(10.5 * z)}" text-anchor="middle">중국군 합동훈련 구역 (가상)</text>`;
+  }
   for (const fx of slocFx) {
-    if (T < fx.t || T - fx.t > 50) continue; const a = SP(...fx.a), b = SP(...fx.b);
-    h += `<line x1="${f1(a[0])}" y1="${f1(a[1])}" x2="${f1(b[0])}" y2="${f1(b[1])}" stroke="var(--ho)" stroke-width="${f1(1.8 * z)}" stroke-dasharray="${f1(6 * z)} ${f1(3 * z)}"/><text class="atx base" x="${f1((a[0] + b[0]) / 2 + 4 * z)}" y="${f1((a[1] + b[1]) / 2)}" font-size="${f1(9.5 * z)}">${fx.kind === 'msl' ? '대함미사일' : '자폭 무인기'}</text>`;
+    if (T < fx.t || T - fx.t > 50) continue; const a = SP(...fx.a), b = SP(...fx.b), wc = fx.kind === 'wc';
+    h += `<line x1="${f1(a[0])}" y1="${f1(a[1])}" x2="${f1(b[0])}" y2="${f1(b[1])}" stroke="${wc ? '#1c7ed6' : 'var(--ho)'}" stroke-width="${f1((wc ? 3 : 1.8) * z)}" stroke-dasharray="${f1(6 * z)} ${f1(3 * z)}"/><text class="atx ${wc ? 'geo' : 'base'}" x="${f1((a[0] + b[0]) / 2 + 4 * z)}" y="${f1((a[1] + b[1]) / 2 - 4 * z)}" font-size="${f1(9.5 * z)}">${{ msl: '대함미사일', uav: '자폭 무인기', wc: '물대포' }[fx.kind]}</text>`;
   }
   const hl = flags.pyHeli; if (hl && !hl.done) { const v = SP(...hl.pos); h += `<circle cx="${f1(v[0])}" cy="${f1(v[1])}" r="${f1(4 * z)}" fill="var(--fr)"/><text class="atx id" x="${f1(v[0] + 6 * z)}" y="${f1(v[1] - 4 * z)}" font-size="${f1(10 * z)}" fill="var(--fr)">헬기</text>`; }
   for (const sh of slocShips) {
@@ -2580,7 +2623,7 @@ function drawSloc() {
     const r = (sh.cls === 'mer' ? 2.6 : sh.cls === 'kr' ? 5 : 5.5) * z;
     if (sh.cls === 'chd' && sh.mode === 'escort') { const w = SP(...sById(sh.goTo).pos); h += `<line x1="${f1(v[0])}" y1="${f1(v[1])}" x2="${f1(w[0])}" y2="${f1(w[1])}" stroke="var(--fr)" stroke-width="${f1(1.5 * z)}"/>`; }
     h += NAVY.has(sh.cls) ? `<path class="ssh ${sh.cls}"${op} d="M${f1(v[0])},${f1(v[1] - r * 1.3)}l${f1(r * 1.3)},${f1(r * 1.3)}l${f1(-r * 1.3)},${f1(r * 1.3)}l${f1(-r * 1.3)},${f1(-r * 1.3)}Z"/>`
-      : sh.cls === 'pir' ? `<path class="ssh pir"${op} d="M${f1(v[0])},${f1(v[1] - r * 1.3)}l${f1(r * 1.2)},${f1(r * 2)}h${f1(-r * 2.4)}Z"/>`
+      : sh.cls === 'pir' || sh.cls === 'mil' ? `<path class="ssh ${sh.cls}"${op} d="M${f1(v[0])},${f1(v[1] - r * 1.3)}l${f1(r * 1.2)},${f1(r * 2)}h${f1(-r * 2.4)}Z"/>`
       : sh.cls === 'shd' ? `<rect class="ssh shd"${op} x="${f1(v[0] - r)}" y="${f1(v[1] - r)}" width="${f1(2 * r)}" height="${f1(2 * r)}"/>`
       : `<circle class="ssh ${sh.cls}"${op} cx="${f1(v[0])}" cy="${f1(v[1])}" r="${f1(r)}"/>`;
     if (st[1] >= 2 && sh.cls !== 'mer' || sh.hit) h += `<circle cx="${f1(v[0])}" cy="${f1(v[1])}" r="${f1(r + 4 * z)}" fill="none" stroke="${st[1] === 3 ? 'var(--ho)' : 'var(--su)'}" stroke-width="${f1(1.6 * z)}"/>`;
@@ -2596,8 +2639,8 @@ function renderSlocPanel() {
   const chdTask = chd.mode === 'escort' ? `${chd.goTo} 근접 호위` : chd.mode === 'goto' ? '호위 대상으로 이동' : '초계';
   const ck = SL.chokes.map(([n, x, y, info]) => {
     const near = kr.filter(sh => gdist(sh.pos, [x, y]) < 400).length;
-    const al = { '호르무즈 해협': 'hormuz', '바브엘만데브 해협': 'redsea', '수에즈 운하': 'redsea' }[n], a = al && alerts.find(q => q.id === al);
-    const lvN = a && a.status !== 'done' ? 3 : n === '바브엘만데브 해협' ? 2 : n === '말라카·싱가포르 해협' || n === '호르무즈 해협' ? 1 : 0;
+    const al = { '호르무즈 해협': 'hormuz', '바브엘만데브 해협': 'redsea', '수에즈 운하': 'redsea', '대만 해협': 'taiwan', '바시 해협': 'taiwan' }[n], a = al && alerts.find(q => q.id === al);
+    const lvN = a && a.status !== 'done' ? 3 : n === '바브엘만데브 해협' ? 2 : ['말라카·싱가포르 해협', '호르무즈 해협', '대만 해협'].includes(n) ? 1 : 0;
     return `<tr><td>${n}<small>${esc(info)}</small></td><td>${near}</td><td><span class="chip ${lv[lvN]}">${['정상', '주의', '경계', '심각'][lvN]}</span></td></tr>`;
   }).join('');
   let selH = '';
@@ -2610,7 +2653,8 @@ function renderSlocPanel() {
   }
   const inA = SATS.filter(o => { const q = satPos(o, T); return o.use && q[0] >= 26 && q[0] <= 134 && q[1] >= -16 && q[1] <= 44; });
   const thr = [['후티 (홍해 남부·바브엘만데브)', 'houthi', alerts.some(a => a.id === 'redsea' && a.status !== 'done') ? 3 : 2], ['IRGCN (호르무즈)', 'irgcn', alerts.some(a => a.id === 'hormuz' && a.status !== 'done') ? 3 : 1],
-    ['소말리아 해적', 'piracy', alerts.some(a => a.id === 'piracy' && a.status !== 'done') ? 3 : 1], ['해상강도 (싱가포르 해협)', 'recaap', 1], ['그림자선단 STS (말레이시아 동방)', 'sts', 1]];
+    ['소말리아 해적', 'piracy', alerts.some(a => a.id === 'piracy' && a.status !== 'done') ? 3 : 1], ['해상강도 (싱가포르 해협)', 'recaap', 1], ['그림자선단 STS (말레이시아 동방)', 'sts', 1],
+    ['중국군 압박 (대만해협)', 'taiwan', flags.twStart && !flags.twDone ? 3 : 2], ['남중국해 회색지대 (해경·민병)', 'scs', alerts.some(a => a.id === 'scs' && a.status !== 'done') ? 3 : 2]];
   setHTML($('slocInfo'), 'sloc', `<div class="ahd"><h3>우리 선박·청해부대</h3>
       <div class="csum"><span>우리 선박 <b>${kr.length}</b></span><span>위험 상태 <b>${risk}</b></span><span>고위험해역 통항 <b>${kr.filter(sh => inZone(sh, 'hra')).length}</b></span><span>희망봉 우회 <b>${kr.filter(sh => sh.route === 'CAPE' || sh.reroute).length}</b></span></div>
       <div class="empty" style="font-size:11.5px;margin-top:4px">청해부대 CH1 · ${slocWhere(chd.pos)} · ${chdTask} · ${f1(chd.spd)}kn</div></div>
@@ -2620,6 +2664,8 @@ function renderSlocPanel() {
     + rows.map(([sh, st]) => `<tr data-sloc="${sh.id}" class="${slocSel === sh.id ? 'on' : ''}"><td><i class="ssh kr" style="background:currentColor"></i>${sh.id}</td><td>${esc(sh.name)}<small>${sh.type} · ${slocWhere(sh.pos)}</small></td><td><span class="chip ${lv[st[1]]}">${st[0]}</span><small>${f1(sh.spd)}kn</small></td><td>${clock(sh.rep.t).hm}<small>${esc(sh.rep.src.replace(/ \(.*/, ''))}</small></td></tr>`).join('')
     + `</tbody></table></div>
     <div class="ahd"><h3>위협 현황</h3><table class="atab"><tbody>${thr.map(([n, k, l]) => `<tr><td>${n}<small>${SL.zones[k].nm}</small></td><td><span class="chip ${lv[l]}">${['정상', '주의', '경계', '심각'][l]}</span></td><td>${kr.filter(sh => inZone(sh, k)).length}척</td></tr>`).join('')}</tbody></table></div>
+    <div class="ahd"><h3>남중국해·대만해협</h3><div class="csum"><span>중국 해군 <b>${slocShips.filter(sh => sh.cls === 'cn' && sh.pos[0] > 104).length}</b></span><span>중국 해경 <b>${slocShips.filter(sh => sh.cls === 'ccg').length}</b></span><span>해상민병 <b>${slocShips.filter(sh => sh.cls === 'mil').length}</b></span><span>대만해협 통항 우리 선박 <b>${kr.filter(sh => inZone(sh, 'taiwan')).length}</b></span><span>훈련구역 <b>${flags.twStart && !flags.twDone ? '선포 중' : '없음'}</b></span></div>
+      <span class="empty" style="font-size:11.5px">분쟁 도서: 서사·남사군도, 스카버러·세컨드 토마스 암초. 중국 인공섬(미스치프·피어리크로스·수비) 군사화. 대만 유사시 바시 해협·필리핀해 우회로 검토.</span></div>
     <div class="ahd"><h3>관심 함정 (연합·주변국·위협)</h3><table class="atab stab"><tbody>${slocShips.filter(sh => NAVY.has(sh.cls) || sh.cls === 'pir' || sh.cls === 'shd').map(sh => `<tr data-sloc="${sh.id}" class="${slocSel === sh.id ? 'on' : ''}"><td><i class="ssh ${sh.cls}" style="background:currentColor"></i>${sh.id}</td><td>${esc(sh.name)}<small>${SCLS[sh.cls]} · ${slocWhere(sh.pos)}</small></td><td>${sh.rep.t < -1 ? '<small>미탐지</small>' : `${clock(sh.rep.t).hm}<small>${esc(sh.rep.src.replace(/ \(.*/, ''))}</small>`}</td></tr>`).join('')}</tbody></table></div>
     <div class="ahd"><h3>위성 커버리지</h3>관심해역 상공 관측·정찰 위성 <b>${inA.length}</b>기${inA.length ? ` <small>(${inA.slice(0, 4).map(o => o.name).join(', ')}${inA.length > 4 ? ' 등' : ''})</small>` : ''}</div>
     <div class="ahd"><h3>정보 협력·보고 체계</h3><span class="empty" style="font-size:11.5px">CMF(바레인, CTF-150 해양안보·151 대해적·153 홍해), EU 아탈란타·아스피데스, IMSC(센티넬), UKMTO·MSCHOA 선박 보고, IFC-IOR(인도)·IFC·ReCAAP ISC(싱가포르), 해수부 해적위험해역 운항 관리, LRIT 선박 위치</span></div>
