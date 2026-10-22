@@ -135,7 +135,7 @@ button { font: inherit; color: inherit; }
 [hidden] { display: none !important; }
 .viewsw { position: absolute; top: 8px; left: 50%; transform: translateX(-50%); z-index: 3; }
 .viewsw .btn { padding: 4px 10px; }
-@media (max-width: 860px) { .viewsw { left: 8px; transform: none; } #spre { left: 8px; transform: none; top: auto; bottom: 8px; } #spre .btn { padding: 3px 6px; font-size: 10.5px; } }
+@media (max-width: 860px) { .viewsw { left: 8px; transform: none; } #spre, #apre { left: 8px; transform: none; top: auto; bottom: 8px; } #spre .btn, #apre .btn { padding: 3px 6px; font-size: 10.5px; } }
 #arc, #sloc { width: 100%; height: 100%; display: block; background: var(--bg); }
 .spre { position: absolute; top: 44px; left: 50%; transform: translateX(-50%); z-index: 3; }
 .spre .btn { padding: 3px 9px; font-size: 11.5px; white-space: nowrap; }
@@ -171,7 +171,10 @@ button { font: inherit; color: inherit; }
 .agl { stroke: var(--grid); fill: none; stroke-width: 1; }
 .acirc { stroke: #6f8fa3; fill: none; stroke-width: 1.2; stroke-dasharray: 6 4; }
 .ageo { stroke: var(--l-space); fill: none; stroke-width: 1.4; stroke-dasharray: 3 4; }
-.aroute { fill: none; stroke-width: 2.4; stroke-linejoin: round; }
+.aroute { fill: none; stroke-width: 2.4; stroke-linejoin: round; vector-effect: non-scaling-stroke; } .aroute.dim { opacity: .3; }
+.agl, .acirc, .ageo, .aice, .ash { vector-effect: non-scaling-stroke; }
+#arc .atx { stroke-width: var(--hw, 3px); }
+#arcpanel .atab.rtab td, #arcpanel .atab.rdet td { white-space: normal; } #arcpanel .atab.rtab td:first-child { min-width: 8em; } #arcpanel .atab.rtab td:last-child, #arcpanel .atab.rtab th { white-space: nowrap; } #arcpanel .atab.rdet td:first-child { white-space: nowrap; color: var(--muted); width: 4.6em; }
 .aroute.NSR { stroke: #0b7285; } .aroute.NWP { stroke: #5c7cfa; } .aroute.TSR { stroke: #868e96; stroke-dasharray: 8 6; }
 .atx { font-family: var(--font-ui); paint-order: stroke; stroke: var(--halo); stroke-width: 3px; stroke-linejoin: round; }
 .atx.sea { fill: var(--sea-label); font-weight: 700; } .atx.port { fill: var(--muted); } .atx.base { fill: var(--ho); } .atx.st { fill: #0b7285; font-style: italic; }
@@ -490,6 +493,9 @@ textarea.report { width: 100%; min-height: 150px; font: 12px/1.5 var(--font-data
     <svg id="sloc" viewBox="0 0 1414 810" preserveAspectRatio="xMinYMid meet" hidden role="img" aria-label="원해 해상교통로 관심해역 상황도 (호르무즈·아덴만·홍해·말라카)">
       <g id="sStatic"></g><g id="sDyn"></g>
     </svg>
+    <div class="spre seg" id="apre" hidden role="group" aria-label="북극항로 보기">
+      <button class="btn" type="button" data-ap="all" aria-pressed="true">전체</button><button class="btn" type="button" data-ap="NSR" aria-pressed="false">북동항로</button><button class="btn" type="button" data-ap="NWP" aria-pressed="false">북서항로</button><button class="btn" type="button" data-ap="TSR" aria-pressed="false">북극횡단항로</button>
+    </div>
     <svg id="arc" viewBox="0 0 1000 1000" preserveAspectRatio="xMinYMid meet" hidden role="img" aria-label="북극 해역 상황도 (북극점 중심 투영)">
       <defs><clipPath id="aclip"><circle cx="500" cy="500" r="482"></circle></clipPath></defs>
       <g clip-path="url(#aclip)"><g id="aStatic"></g><g id="aDyn"></g></g>
@@ -1125,7 +1131,7 @@ function gdist(a, b) {
   const p1 = a[1] * D2R, p2 = b[1] * D2R, dl = (b[0] - a[0]) * D2R;
   return 6371 * Math.acos(Math.min(1, Math.sin(p1) * Math.sin(p2) + Math.cos(p1) * Math.cos(p2) * Math.cos(dl)));
 }
-let ARR = {}, arcShips = [], arcView = false, arcSel = null;
+let ARR = {}, arcShips = [], arcView = false, arcSel = null, arcPre = 'all', az = 1;
 function buildArctic() {
   const nsr = AR.routes.NSR.pts, i78 = nsr.findIndex(q => q[0] === 78 && q[1] === 74.2);
   ARR = { NSR: nsr, NWP: AR.routes.NWP.pts, LNG: AR.lngStart.concat(nsr.slice(0, i78).reverse()), cum: {} };
@@ -1909,48 +1915,72 @@ function drawDyn() {
 
 // ── 북극 해도 ───────────────────────────────────────
 function drawArcStatic() {
+  // 보기 범위: 전체 또는 항로별(북위 58° 이북 구간의 범위)
+  let vb = [0, 0, 1000, 1000];
+  if (arcPre !== 'all') {
+    const keys = arcPre === 'NSR' ? ['NSR', 'LNG'] : [arcPre], ps = keys.flatMap(k => ARR[k] || AR.routes[k].pts).filter(q => q[1] >= 58).map(q => AP(q[0], q[1]));
+    const xs = ps.map(q => q[0]), ys = ps.map(q => q[1]), pad = 45;
+    vb = [Math.min(...xs) - pad, Math.min(...ys) - pad, Math.max(...xs) - Math.min(...xs) + 2 * pad, Math.max(...ys) - Math.min(...ys) + 2 * pad];
+  }
+  $('arc').setAttribute('viewBox', vb.map(f1).join(' '));
+  const rc = $('arc').getBoundingClientRect();
+  az = rc.width ? Math.max(vb[2] / rc.width, vb[3] / rc.height) : vb[2] / 900;
+  $('arc').style.setProperty('--hw', f1(3 * az) + 'px');
   let h = '<circle class="asea" cx="500" cy="500" r="482"/>';
   const ice = [], ice2 = []; for (let lon = 0; lon <= 360; lon += 4) { ice.push([lon, iceLat(lon)]); ice2.push([lon, iceLat(lon) - 1.2]); }
   h += `<path class="aice2" d="${apath(ice2, true)}"/><path class="aice" d="${apath(ice, true)}"/>`;
   for (const ring of ALAND) h += `<path class="aland" d="${apath(ring, true)}"/>`;
-  for (const lat of [40, 50, 60, 70, 80]) h += `<circle class="agl" cx="500" cy="500" r="${f1((90 - lat) * AK)}"/>` + `<text class="atx port" x="${f1(AP(130, lat)[0] + 4)}" y="${f1(AP(130, lat)[1] - 3)}" font-size="10">${lat}°N</text>`;
+  for (const lat of [40, 50, 60, 70, 80]) h += `<circle class="agl" cx="500" cy="500" r="${f1((90 - lat) * AK)}"/>` + `<text class="atx port" x="${f1(AP(130, lat)[0] + 4 * az)}" y="${f1(AP(130, lat)[1] - 3 * az)}" font-size="${f1(10 * az)}">${lat}°N</text>`;
   for (let lon = 0; lon < 360; lon += 30) { const a = AP(lon, 88), b = AP(lon, 27); h += `<line class="agl" x1="${f1(a[0])}" y1="${f1(a[1])}" x2="${f1(b[0])}" y2="${f1(b[1])}"/>`; }
-  h += `<circle class="acirc" cx="500" cy="500" r="${f1((90 - 66.56) * AK)}"/>` + `<text class="atx port" x="${f1(AP(160, 66.56)[0])}" y="${f1(AP(160, 66.56)[1] + 12)}" font-size="10">북극권 66.5°N</text>`;
-  h += `<circle class="ageo" cx="500" cy="500" r="${f1((90 - AR.geoLimit) * AK)}"/>` + `<text class="atx geo" x="${f1(AP(95, AR.geoLimit)[0])}" y="${f1(AP(95, AR.geoLimit)[1] + 13)}" font-size="10">정지궤도 위성통신 한계 (~${AR.geoLimit}°N)</text>`;
+  h += `<circle class="acirc" cx="500" cy="500" r="${f1((90 - 66.56) * AK)}"/>` + `<text class="atx port" x="${f1(AP(160, 66.56)[0])}" y="${f1(AP(160, 66.56)[1] + 12 * az)}" font-size="${f1(10 * az)}">북극권 66.5°N</text>`;
+  h += `<circle class="ageo" cx="500" cy="500" r="${f1((90 - AR.geoLimit) * AK)}"/>` + `<text class="atx geo" x="${f1(AP(95, AR.geoLimit)[0])}" y="${f1(AP(95, AR.geoLimit)[1] + 13 * az)}" font-size="${f1(10 * az)}">정지궤도 위성통신 한계 (~${AR.geoLimit}°N)</text>`;
   for (const [k, r] of Object.entries(AR.routes)) {
-    h += `<path class="aroute ${k}" d="${apath(r.pts)}"/>`;
+    h += `<path class="aroute ${k}${arcPre !== 'all' && arcPre !== k ? ' dim' : ''}" d="${apath(r.pts)}"/>`;
     const m = r.pts[Math.floor(r.pts.length * (k === 'TSR' ? 0.3 : k === 'NWP' ? 0.45 : 0.55))], v = AP(m[0], m[1]);
-    h += `<text class="atx rt ${k}" x="${f1(v[0] + 6)}" y="${f1(v[1] - 6)}" font-size="12">${r.nm}</text>`;
+    h += `<text class="atx rt ${k}" x="${f1(v[0] + 6 * az)}" y="${f1(v[1] - 6 * az)}" font-size="${f1(12 * az)}">${r.nm}</text>`;
   }
-  for (const [n, x, y] of AR.seas) { const v = AP(x, y); h += `<text class="atx sea" x="${f1(v[0])}" y="${f1(v[1])}" font-size="13" text-anchor="middle">${n}</text>`; }
-  for (const [n, x, y] of AR.ports) { const v = AP(x, y); h += `<circle cx="${f1(v[0])}" cy="${f1(v[1])}" r="2.6" fill="var(--muted)"/>` + `<text class="atx port" x="${f1(v[0] + 5)}" y="${f1(v[1] + 4)}" font-size="10">${n}</text>`; }
-  for (const [n, x, y] of AR.straits) { const v = AP(x, y); h += `<path d="M${f1(v[0])},${f1(v[1] - 4)}l4,4l-4,4l-4,-4Z" fill="#0b7285"/>` + `<text class="atx st" x="${f1(v[0] + 6)}" y="${f1(v[1] + 4)}" font-size="10">${n}</text>`; }
-  for (const [n, x, y] of AR.bases) { const v = AP(x, y); h += `<rect x="${f1(v[0] - 3)}" y="${f1(v[1] - 3)}" width="6" height="6" fill="var(--ho)"/>` + `<text class="atx base" x="${f1(v[0] + 6)}" y="${f1(v[1] + 4)}" font-size="10">${n}</text>`; }
+  for (const [n, x, y] of AR.seas) { const v = AP(x, y); h += `<text class="atx sea" x="${f1(v[0])}" y="${f1(v[1])}" font-size="${f1(13 * az)}" text-anchor="middle">${n}</text>`; }
+  for (const [n, x, y] of AR.ports) { const v = AP(x, y); h += `<circle cx="${f1(v[0])}" cy="${f1(v[1])}" r="${f1(2.6 * az)}" fill="var(--muted)"/>` + `<text class="atx port" x="${f1(v[0] + 5 * az)}" y="${f1(v[1] + 4 * az)}" font-size="${f1(10 * az)}">${n}</text>`; }
+  for (const [n, x, y] of AR.straits) { const v = AP(x, y); h += `<path d="M${f1(v[0])},${f1(v[1] - 4 * az)}l${f1(4 * az)},${f1(4 * az)}l${f1(-4 * az)},${f1(4 * az)}l${f1(-4 * az)},${f1(-4 * az)}Z" fill="#0b7285"/>` + `<text class="atx st" x="${f1(v[0] + 6 * az)}" y="${f1(v[1] + 4 * az)}" font-size="${f1(10 * az)}">${n}</text>`; }
+  for (const [n, x, y] of AR.bases) { const v = AP(x, y); h += `<rect x="${f1(v[0] - 3 * az)}" y="${f1(v[1] - 3 * az)}" width="${f1(6 * az)}" height="${f1(6 * az)}" fill="var(--ho)"/>` + `<text class="atx base" x="${f1(v[0] + 6 * az)}" y="${f1(v[1] + 4 * az)}" font-size="${f1(10 * az)}">${n}</text>`; }
   $('aStatic').innerHTML = h;
 }
 function drawArc() {
   let h = '';
   // 극궤도 위성은 북극 상공에서 자주 지난다: 북위 50° 이북 관측·정찰 위성과 극궤도 통신위성
-  for (const c of COMMS) { if (c.name === 'Starlink') continue; const q = satPos(c, T); if (q[1] < 55) continue; const v = AP(q[0], q[1]); h += `<circle class="f-comm" cx="${f1(v[0])}" cy="${f1(v[1])}" r="2"/>`; }
+  for (const c of COMMS) { if (c.name === 'Starlink') continue; const q = satPos(c, T); if (q[1] < 55) continue; const v = AP(q[0], q[1]); h += `<circle class="f-comm" cx="${f1(v[0])}" cy="${f1(v[1])}" r="${f1(2 * az)}"/>`; }
   for (const o of SATS) {
     const q = satPos(o, T); if (q[1] < 50) continue; const v = AP(q[0], q[1]);
-    h += `<g class="sat ${o.op}"><rect x="${f1(v[0] - 3)}" y="${f1(v[1] - 3)}" width="6" height="6"/></g>` + `<text class="atx ${o.op === 'foreign' ? 'base' : 'geo'}" x="${f1(v[0] + 5)}" y="${f1(v[1] + 3)}" font-size="9">${o.name}</text>`;
+    h += `<g class="sat ${o.op}"><rect x="${f1(v[0] - 3 * az)}" y="${f1(v[1] - 3 * az)}" width="${f1(6 * az)}" height="${f1(6 * az)}"/></g>` + `<text class="atx ${o.op === 'foreign' ? 'base' : 'geo'}" x="${f1(v[0] + 5 * az)}" y="${f1(v[1] + 3 * az)}" font-size="${f1(9 * az)}">${o.name}</text>`;
   }
   if (alerts.some(al => al.id === 'arcmil')) {
     const v = AP(...AR.exercise.center), r = AR.exercise.r / 111.2 * AK;
-    h += `<circle cx="${f1(v[0])}" cy="${f1(v[1])}" r="${f1(r)}" fill="color-mix(in srgb, var(--ho) 8%, transparent)" stroke="var(--ho)" stroke-dasharray="5 4"/>` + `<text class="atx base" x="${f1(v[0])}" y="${f1(v[1] - r - 4)}" font-size="10.5" text-anchor="middle">북방함대 훈련구역 (가상)</text>`;
+    h += `<circle cx="${f1(v[0])}" cy="${f1(v[1])}" r="${f1(r)}" fill="color-mix(in srgb, var(--ho) 8%, transparent)" stroke="var(--ho)" stroke-dasharray="5 4"/>` + `<text class="atx base" x="${f1(v[0])}" y="${f1(v[1] - r - 4 * az)}" font-size="${f1(10.5 * az)}" text-anchor="middle">북방함대 훈련구역 (가상)</text>`;
   }
   for (const sh of arcShips) {
     const q = sh.rep.pos, v = AP(q[0], q[1]), age = T - sh.rep.t, st = arcStatus(sh);
-    if (sh.escort) { const e = arcShips.find(x => x.id === sh.escort), w = AP(e.pos[0], e.pos[1]); h += `<line x1="${f1(v[0])}" y1="${f1(v[1])}" x2="${f1(w[0])}" y2="${f1(w[1])}" stroke="#0b7285" stroke-width="1.5"/>`; }
-    const op = age > 60 ? ' opacity=".45"' : '', r = sh.kr ? 6.5 : 5;
+    if (sh.escort) { const e = arcShips.find(x => x.id === sh.escort), w = AP(e.pos[0], e.pos[1]); h += `<line x1="${f1(v[0])}" y1="${f1(v[1])}" x2="${f1(w[0])}" y2="${f1(w[1])}" stroke="#0b7285" stroke-width="${f1(1.5 * az)}"/>`; }
+    const op = age > 60 ? ' opacity=".45"' : '', r = (sh.kr ? 6.5 : 5) * az;
     h += sh.cls === 'run' ? `<path class="ash run"${op} d="M${f1(v[0])},${f1(v[1] - r * 1.3)}l${f1(r * 1.3)},${f1(r * 1.3)}l${f1(-r * 1.3)},${f1(r * 1.3)}l${f1(-r * 1.3)},${f1(-r * 1.3)}Z"/>`
-      : `<circle class="ash ${sh.cls}"${op} cx="${f1(v[0])}" cy="${f1(v[1])}" r="${r}"/>`;
-    if (st[1] >= 2) h += `<circle cx="${f1(v[0])}" cy="${f1(v[1])}" r="${r + 4}" fill="none" stroke="${st[1] === 3 ? 'var(--ho)' : 'var(--su)'}" stroke-width="1.6"/>`;
-    if (arcSel === sh.id) h += `<circle class="selring" cx="${f1(v[0])}" cy="${f1(v[1])}" r="${r + 8}"/>`;
-    h += `<text class="atx id" x="${f1(v[0] + 8)}" y="${f1(v[1] - 6)}" font-size="10.5" fill="var(--fg)"${op}>${sh.id}</text>`;
+      : `<circle class="ash ${sh.cls}"${op} cx="${f1(v[0])}" cy="${f1(v[1])}" r="${f1(r)}"/>`;
+    if (st[1] >= 2) h += `<circle cx="${f1(v[0])}" cy="${f1(v[1])}" r="${f1(r + 4 * az)}" fill="none" stroke="${st[1] === 3 ? 'var(--ho)' : 'var(--su)'}" stroke-width="${f1(1.6 * az)}"/>`;
+    if (arcSel === sh.id) h += `<circle class="selring" cx="${f1(v[0])}" cy="${f1(v[1])}" r="${f1(r + 8 * az)}"/>`;
+    h += `<text class="atx id" x="${f1(v[0] + 8 * az)}" y="${f1(v[1] - 6 * az)}" font-size="${f1(10.5 * az)}" fill="var(--fg)"${op}>${sh.id}</text>`;
   }
   $('aDyn').innerHTML = h;
+}
+const ARN = { NSR: '북동항로', NWP: '북서항로', TSR: '북극횡단항로' };
+const onRoute = (sh, k) => sh.route === k || (k === 'NSR' && sh.route === 'LNG');
+function arcRouteH() {
+  const len = k => { const p = AR.routes[k].pts; let d = 0; for (let i = 1; i < p.length; i++) d += gdist(p[i - 1], p[i]); return d; };
+  if (arcPre === 'all') return `<div class="ahd"><h3>북극항로 구분</h3><table class="atab rtab"><thead><tr><th>항로</th><th>통항 시기</th><th>선박</th></tr></thead><tbody>`
+    + Object.keys(ARN).map(k => `<tr data-route="${k}"><td><b class="atx rt ${k}" style="stroke:none">${ARN[k]}</b><small>${esc(AR.routes[k].nm)} · 약 ${Math.round(len(k) / 100) * 100}km</small></td><td><small>${esc(AR.routeInfo[k].season)}</small></td><td>${arcShips.filter(sh => onRoute(sh, k)).length}척</td></tr>`).join('') + '</tbody></table></div>';
+  const k = arcPre, ri = AR.routeInfo[k], ships = arcShips.filter(sh => onRoute(sh, k));
+  const near = arcShips.filter(sh => !onRoute(sh, k) && AR.routes[k].pts.some(q => q[1] >= 58 && gdist(q, sh.pos) < 300));
+  return `<div class="ahd"><h3>${ARN[k]} 상세</h3><b>${esc(AR.routes[k].nm)}</b> <small class="empty">약 ${Math.round(len(k) / 100) * 100}km (표시 구간)</small>
+    <table class="atab rdet" style="margin-top:4px"><tbody><tr><td>구간</td><td>${esc(ri.sec)}</td></tr><tr><td>관문 해협</td><td>${esc(ri.gates)}</td></tr>
+    <tr><td>통항 시기</td><td>${esc(ri.season)}</td></tr><tr><td>관할·규제</td><td>${esc(ri.gov)}</td></tr><tr><td>단축 효과</td><td>${esc(ri.gain)}</td></tr><tr><td>위험 요소</td><td>${esc(ri.risk)}</td></tr>
+    <tr><td>운항 선박</td><td>${ships.length ? ships.map(sh => `${sh.id} ${esc(sh.name)}`).join(', ') : '현재 정기 운항 선박 없음'}</td></tr><tr><td>항로 인근</td><td>${near.length ? near.map(sh => `${sh.id} ${esc(sh.type)}`).join(', ') : '–'}</td></tr></tbody></table></div>`;
 }
 function renderArcPanel() {
   const rows = arcShips.map(sh => [sh, arcStatus(sh)]);
@@ -1970,9 +2000,10 @@ function renderArcPanel() {
   setHTML($('arcInfo'), 'arc', `<div class="ahd"><h3>항로·선박 현황</h3>
       <div class="csum"><span>NSR <b>${onR('NSR')}</b></span><span>NWP <b>${onR('NWP')}</b></span><span>해역 체류 <b>${arcShips.filter(sh => !sh.route).length}</b></span><span>한국 관련 <b>${arcShips.filter(sh => sh.kr).length}</b></span>
       <span>호송 <b>${nSt('호송 중')}</b></span><span>결빙 정체 <b>${nSt('결빙 정체')}</b></span><span>AIS 공백 <b>${nSt('AIS 공백')}</b></span><span>러시아 군함 <b>${arcShips.filter(sh => sh.cls === 'run').length}</b></span></div></div>
+    ${arcRouteH()}
     ${selH}
     <div class="ahd"><table class="atab"><thead><tr><th>선박</th><th>선종·빙급·해역</th><th>상태·속력</th><th>보고</th></tr></thead><tbody>`
-    + rows.map(([sh, st]) => `<tr data-arc="${sh.id}" class="${arcSel === sh.id ? 'on' : ''}"><td><i class="ash ${sh.cls}" style="background:currentColor"></i>${sh.id}<small>${esc(sh.name)} · ${sh.flag}</small></td><td>${sh.type}<small>${sh.ice} · ${arcSea(sh.pos)}</small></td><td><span class="chip ${lv[st[1]]}">${st[0]}</span><small>${f1(sh.spd)}kn</small></td><td>${clock(sh.rep.t).hm}<small>${esc(sh.rep.src.replace(/ \(.*/, ''))}</small></td></tr>`).join('')
+    + rows.filter(([sh]) => arcPre === 'all' || onRoute(sh, arcPre) || AR.routes[arcPre].pts.some(q => q[1] >= 58 && gdist(q, sh.pos) < 300)).map(([sh, st]) => `<tr data-arc="${sh.id}" class="${arcSel === sh.id ? 'on' : ''}"><td><i class="ash ${sh.cls}" style="background:currentColor"></i>${sh.id}<small>${esc(sh.name)} · ${sh.flag}</small></td><td>${sh.type}<small>${sh.ice} · ${arcSea(sh.pos)}</small></td><td><span class="chip ${lv[st[1]]}">${st[0]}</span><small>${f1(sh.spd)}kn</small></td><td>${clock(sh.rep.t).hm}<small>${esc(sh.rep.src.replace(/ \(.*/, ''))}</small></td></tr>`).join('')
     + `</tbody></table></div>
     <div class="ahd"><h3>해빙·환경 (10월 결빙 시작기, 개략)</h3>해빙 가장자리 카라해 ${f1(iceLat(70))}°N · 랍테프해 ${f1(iceLat(125))}°N · 동시베리아해 ${f1(iceLat(160))}°N · 보퍼트해 ${f1(iceLat(220))}°N<br><span class="empty" style="font-size:11.5px">NSR 통항 가능 기간 대략 7~11월. Arc4 이하 선박은 결빙 해역에서 쇄빙선 호송이 필요합니다.</span></div>
     <div class="ahd"><h3>북극 위성 커버리지</h3>극궤도 관측·정찰 위성 북극권 상공 <b>${polar.length}</b>기${polar.length ? ` <small>(${polar.slice(0, 4).map(o => o.name).join(', ')}${polar.length > 4 ? ' 등' : ''})</small>` : ''}<br>
@@ -2875,15 +2906,15 @@ function renderSlocPanel() {
 function setView(v) {
   arcView = v === 'arc'; slocView = v === 'sloc'; const kr = v === 'kr';
   $('map').toggleAttribute('hidden', !kr); $('arc').toggleAttribute('hidden', !arcView); $('sloc').toggleAttribute('hidden', !slocView);
-  document.querySelector('.zoom').hidden = !kr; document.querySelector('.bounds').hidden = !kr; $('spre').hidden = !slocView;
+  document.querySelector('.zoom').hidden = !kr; document.querySelector('.bounds').hidden = !kr; $('spre').hidden = !slocView; $('apre').hidden = !arcView;
   $('srcpanel').hidden = !kr; $('arcpanel').hidden = !arcView; $('slocpanel').hidden = !slocView;
   document.querySelectorAll('[data-view]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.view === v)));
-  if (arcView) { drawArc(); renderArcPanel(); } else if (slocView) { drawSlocStatic(); drawSloc(); renderSlocPanel(); } else { fitView(); }
+  if (arcView) { drawArcStatic(); drawArc(); renderArcPanel(); } else if (slocView) { drawSlocStatic(); drawSloc(); renderSlocPanel(); } else { fitView(); }
 }
 document.querySelectorAll('[data-view]').forEach(b => b.onclick = () => setView(b.dataset.view));
 $('arc').addEventListener('click', e => {
   const q = new DOMPoint(e.clientX, e.clientY).matrixTransform($('arc').getScreenCTM().inverse());
-  let best = null, bd = 16;
+  let best = null, bd = 16 * az;
   for (const sh of arcShips) { const v = AP(sh.rep.pos[0], sh.rep.pos[1]), d = Math.hypot(v[0] - q.x, v[1] - q.y); if (d < bd) { bd = d; best = sh.id; } }
   arcSel = best; drawArc(); renderArcPanel();
 });
@@ -2899,7 +2930,12 @@ $('spre').addEventListener('click', e => {
   slocPre = b.dataset.sp; document.querySelectorAll('[data-sp]').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
   drawSlocStatic(); drawSloc();
 });
-$('arcpanel').addEventListener('click', e => { const r = e.target.closest('[data-arc]'); if (r) { arcSel = r.dataset.arc; drawArc(); renderArcPanel(); } });
+$('apre').addEventListener('click', e => {
+  const b = e.target.closest('[data-ap]'); if (!b) return;
+  arcPre = b.dataset.ap; document.querySelectorAll('[data-ap]').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
+  drawArcStatic(); drawArc(); renderArcPanel();
+});
+$('arcpanel').addEventListener('click', e => { const rt = e.target.closest('[data-route]'); if (rt) { document.querySelector(`[data-ap="${rt.dataset.route}"]`).click(); return; } const r = e.target.closest('[data-arc]'); if (r) { arcSel = r.dataset.arc; drawArc(); renderArcPanel(); } });
 $('bBoxes').onclick = () => {
   const hide = $('mapwrap').classList.toggle('nobox');
   $('bBoxes').textContent = hide ? '정보칸 보이기' : '정보칸 숨기기'; $('bBoxes').setAttribute('aria-pressed', String(!hide));
@@ -2950,7 +2986,7 @@ function fitView() {
   vb = { x: X(127.4) - w / 2 + w * 0.12, y: Y(36.6) - h / 2, w, h };
   clampVB(); setVB(); drawDyn();
 }
-new ResizeObserver(() => { fitView(); if (slocView) { drawSlocStatic(); drawSloc(); } }).observe(document.querySelector('.mapview'));
+new ResizeObserver(() => { fitView(); if (slocView) { drawSlocStatic(); drawSloc(); } if (arcView) { drawArcStatic(); drawArc(); } }).observe(document.querySelector('.mapview'));
 const svgPt = e => new DOMPoint(e.clientX, e.clientY).matrixTransform(svg.getScreenCTM().inverse());
 svg.addEventListener('wheel', e => { e.preventDefault(); const p = svgPt(e); zoomAt(Math.exp(e.deltaY * 0.0015), p.x, p.y); }, { passive: false });
 let drag = null;
