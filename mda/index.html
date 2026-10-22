@@ -367,6 +367,8 @@ textarea.report { width: 100%; min-height: 150px; font: 12px/1.5 var(--font-data
 .city { fill: var(--muted); }
 .lbl { fill: var(--muted); paint-order: stroke; stroke: var(--halo); stroke-width: 3px; stroke-linejoin: round; }
 .sealbl { fill: var(--sea-label); font-weight: 700; letter-spacing: .12em; }
+.sealbl.big { fill: color-mix(in srgb, var(--sea-label) 70%, var(--fr)); font-weight: 800; letter-spacing: .3em; opacity: .5; pointer-events: none; paint-order: stroke; stroke: var(--halo); stroke-width: 4px; stroke-linejoin: round; }
+.sealbl.big.on { opacity: .4; }
 .nll { stroke: var(--nll); fill: none; stroke-width: 2; vector-effect: non-scaling-stroke; }
 .kadiz { stroke: var(--kadiz); fill: none; stroke-width: 1.6; vector-effect: non-scaling-stroke; }
 .eez { stroke: var(--eez); fill: none; stroke-width: 1.8; vector-effect: non-scaling-stroke; }
@@ -1942,7 +1944,10 @@ function drawDyn() {
     if (big) labels += `<g${tr.lost ? ' class="lost"' : ''}>` + txt('tid ' + tr.affil + (FOREIGN_NAVY.has(k) || k === 'kcg' || k === 'usn' ? ' k-' + k : ''), x + 8 * z, y - 6 * z, 11 * z, t.id) + '</g>';
     if (sel === t.id) h += `<circle class="selring" cx="${f1(x)}" cy="${f1(y)}" r="${f1(12 * z)}"/>`;
   }
-  gDyn.innerHTML = h + labels;
+  // 해역명: 화면 기준 크기로 크게, 표적·센서 위에 반투명으로 얹고 표적 번호는 그 위에 둔다. 확대 중인 해역은 더 크게
+  let seaL = '';
+  for (const [n, x, y, k] of SC.bigSeas) seaL += txt('sealbl big' + (krPre === k ? ' on' : ''), X(x), Y(y), (krPre === k ? 84 : 56) * z, n, 'middle');
+  gDyn.innerHTML = h + seaL + labels;
 
   let ax = '';
   const lonMin = LON0 + (vb.x - ML) / KX, lonMax = LON0 + (vb.x + vb.w - ML) / KX;
