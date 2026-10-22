@@ -553,6 +553,15 @@ textarea.report { width: 100%; min-height: 150px; font: 12px/1.5 var(--font-data
         <div id="cdseOut"></div>
       </div>
     </section>
+    <section id="slocSec" hidden>
+      <h2>원해 해양정보 통합체계</h2>
+      <svg class="share" id="slocSvg" viewBox="0 0 340 300" role="img" aria-label="해양수산부, 외교부, 합동참모본부, 한국해양수산개발원, 선사와 UKMTO, CMF, IFC, 코페르니쿠스 CDSE 등에서 원해 해양정보 통합체계로 흐르는 정보"></svg>
+      <div id="slocDom"></div>
+      <div class="cdse">
+        <div class="row"><b>코페르니쿠스 CDSE 연동</b><select id="scdseMis" aria-label="Sentinel 임무"><option value="SENTINEL-1">Sentinel-1 (SAR)</option><option value="SENTINEL-2">Sentinel-2 (광학)</option><option value="SENTINEL-3">Sentinel-3 (해색·해빙)</option></select><button class="btn go" type="button" id="scdseGo">최신 영상 조회</button></div>
+        <div id="scdseOut"></div>
+      </div>
+    </section>
     <section>
       <h2>MDA 순환</h2>
       <div class="cycle" id="cycle"></div>
@@ -2928,46 +2937,58 @@ function renderSlocPanel() {
 // 코페르니쿠스 CDSE 카탈로그(OData, 공개 검색 API)에서 최신 Sentinel 영상 목록을 받아온다. 접속이 막히면 모의 목록으로 대체한다.
 const CDSE_API = 'https://catalogue.dataspace.copernicus.eu/odata/v1/Products';
 const CDSE_AREA = { all: [30, 66, 180, 82], NSR: [30, 66, 180, 82], NWP: [-170, 66, -60, 80], TSR: [-15, 77, 25, 84] };
-const cdse = { st: 'idle', items: [], at: null, err: '', mis: 'SENTINEL-1', area: 'all' };
-function cdseSim() {
+const CDSE_NM = { all: '북극 (북동항로 해역)', NSR: '북동항로 해역', NWP: '북서항로 해역', TSR: '북극횡단항로 (프람 해협)' };
+// 화면별 조회 상태: 북극항로(cdseA)와 원해 SLOC(cdseS)
+const cdseA = { st: 'idle', items: [], at: null, err: '', mis: 'SENTINEL-1', box: CDSE_AREA.all, nm: CDSE_NM.all, sel: 'cdseMis', out: 'cdseOut', key: 'cdseOut' };
+const cdseS = { st: 'idle', items: [], at: null, err: '', mis: 'SENTINEL-1', box: null, nm: '', sel: 'scdseMis', out: 'scdseOut', key: 'scdseOut' };
+function cdseSim(c) {
   // 모의 목록: 시뮬레이션 위성 궤도에서 최근 24시간 동안 대상 해역 위를 지난 Sentinel 통과를 영상으로 본다
-  const [w, s0, e, n] = CDSE_AREA[cdse.area], key = { 'SENTINEL-1': 'Sentinel-1', 'SENTINEL-2': 'Sentinel-2', 'SENTINEL-3': 'Sentinel-3' }[cdse.mis];
+  const [w, s0, e, n] = c.box, key = { 'SENTINEL-1': 'Sentinel-1', 'SENTINEL-2': 'Sentinel-2', 'SENTINEL-3': 'Sentinel-3' }[c.mis];
   const out = [];
   for (const o of SATS.filter(x => x.name.startsWith(key))) {
     let last = 1e9;
     for (let tt = T; tt > T - 1440 && out.length < 8; tt -= 2) {
       const q = satPos(o, tt); if (q[1] < s0 || q[1] > n || q[0] < w || q[0] > e || last - tt < 30) continue;
-      last = tt; const c = clock(tt);
-      out.push({ name: `${o.name.replace('Sentinel-', 'S')}_${key === 'Sentinel-1' ? 'IW_GRDH' : 'MSIL1C'}_${c.date.replace(/-/g, '')}T${c.hm.replace(':', '')}00 (모의)`, t: `${c.date} ${c.hm} KST`, pos: q });
+      last = tt; const ck = clock(tt);
+      out.push({ name: `${o.name.replace('Sentinel-', 'S')}_${key === 'Sentinel-1' ? 'IW_GRDH' : 'MSIL1C'}_${ck.date.replace(/-/g, '')}T${ck.hm.replace(':', '')}00 (모의)`, t: `${ck.date} ${ck.hm} KST` });
     }
   }
   return out.sort((a, b) => (a.t < b.t ? 1 : -1)).slice(0, 8);
 }
-async function cdseQuery() {
-  cdse.mis = $('cdseMis').value; cdse.area = arcPre; cdse.st = 'loading'; renderPolar();
-  const [w, s0, e, n] = CDSE_AREA[cdse.area], poly = `POLYGON((${w} ${s0},${e} ${s0},${e} ${n},${w} ${n},${w} ${s0}))`;
+async function cdseQuery(c, box, nm, rerender) {
+  c.mis = $(c.sel).value; c.box = box; c.nm = nm; c.st = 'loading'; rerender();
+  const [w, s0, e, n] = box, poly = `POLYGON((${w} ${s0},${e} ${s0},${e} ${n},${w} ${n},${w} ${s0}))`;
   const since = new Date(Date.now() - 3 * 864e5).toISOString();
-  const f = `Collection/Name eq '${cdse.mis}' and OData.CSC.Intersects(area=geography'SRID=4326;${poly}') and ContentDate/Start gt ${since}`;
+  const f = `Collection/Name eq '${c.mis}' and OData.CSC.Intersects(area=geography'SRID=4326;${poly}') and ContentDate/Start gt ${since}`;
   const url = `${CDSE_API}?$filter=${encodeURIComponent(f)}&$orderby=${encodeURIComponent('ContentDate/Start desc')}&$top=8&$expand=Attributes`;
   try {
     const ctl = new AbortController(), tm = setTimeout(() => ctl.abort(), 12000);
     const r = await fetch(url, { signal: ctl.signal }); clearTimeout(tm);
     if (!r.ok) throw new Error('HTTP ' + r.status);
     const j = await r.json();
-    cdse.items = (j.value || []).map(v => ({ name: v.Name, id: v.Id, t: (v.ContentDate && v.ContentDate.Start || '').replace('T', ' ').slice(0, 16) + ' UTC',
+    c.items = (j.value || []).map(v => ({ name: v.Name, id: v.Id, t: (v.ContentDate && v.ContentDate.Start || '').replace('T', ' ').slice(0, 16) + ' UTC',
       cloud: ((v.Attributes || []).find(a => a.Name === 'cloudCover') || {}).Value }));
-    cdse.st = 'live';
+    c.st = 'live';
   } catch (err) {
-    cdse.st = 'sim'; cdse.err = err.name === 'AbortError' ? '응답 시간 초과' : (err.message || String(err)); cdse.items = cdseSim();
+    c.st = 'sim'; c.err = err.name === 'AbortError' ? '응답 시간 초과' : (err.message || String(err)); c.items = cdseSim(c);
   }
-  cdse.at = new Date(); renderPolar();
+  c.at = new Date(); rerender();
+}
+const cdseCount = c => (c.st === 'live' || c.st === 'sim' ? c.items.length : '–');
+function cdseRender(c) {
+  const st = c.st === 'idle' ? '<p class="st">조회 단추를 누르면 CDSE 카탈로그에서 선택한 해역의 최근 3일 Sentinel 영상을 찾습니다.</p>'
+    : c.st === 'loading' ? '<p class="st">CDSE 카탈로그 조회 중…</p>'
+    : c.st === 'live' ? `<p class="st live">● 실시간 연동 · ${esc(c.nm)} · ${c.items.length}건 (${c.at.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })} 조회)</p>`
+    : `<p class="st sim">● 연동 실패 (${esc(c.err)}): 이 환경에서 외부 접속이 막혔습니다. 시뮬레이션 궤도 기반 모의 목록을 표시합니다 (${esc(c.nm)}).</p>`;
+  setHTML($(c.out), c.key, st + (c.items.length ? `<ul>${c.items.map(it => `<li>${esc(it.name)}<small>${esc(it.t)}${it.cloud != null ? ` · 구름 ${Math.round(it.cloud)}%` : ''}${it.id ? ` · <a href="${CDSE_API}(${encodeURIComponent(it.id)})" target="_blank" rel="noopener">메타데이터</a>` : ''}</small></li>`).join('')}</ul>
+    <p class="st"><a href="https://browser.dataspace.copernicus.eu/" target="_blank" rel="noopener">Copernicus Browser에서 영상 보기 ↗</a> <small class="empty">(영상 내려받기는 CDSE 무료 회원 로그인 필요)</small></p>` : c.st === 'live' ? '<p class="st">해당 기간·해역에 영상이 없습니다.</p>' : c.st === 'sim' ? '<p class="st">최근 24시간 모의 궤도에서 해당 해역을 지난 영상이 없습니다.</p>' : ''));
 }
 function renderPolar() {
   const kr = arcShips.filter(sh => sh.kr).length, rows = arcShips.map(sh => arcStatus(sh)[0]);
   const nSt = n => rows.filter(x => x === n).length, aisH = arcShips.filter(sh => T - sh.rep.t <= 60 && sh.rep.src === 'S-AIS').length;
   const polar = SATS.filter(o => satPos(o, T)[1] > 66.5).length, pComm = COMMS.filter(c => c.name !== 'Starlink' && satPos(c, T)[1] > 66.5).length;
   const north = arcShips.filter(sh => sh.pos[1] > AR.geoLimit).length, sst = (-1.2 + 0.3 * Math.sin(T / 90)).toFixed(1), vis = Math.round(6 + 4 * Math.sin(T / 70));
-  const nSent = cdse.st === 'live' || cdse.st === 'sim' ? cdse.items.length : '–';
+  const nSent = cdseCount(cdseA);
   // 흐름도: 왼쪽 국내 기관, 오른쪽 위성·국제 정보, 가운데 통합 체계, 아래 활용
   const node = (x, y, w, t1, t2, cls = '', hh = 36) => `<rect class="nd ${cls}" x="${x}" y="${y}" width="${w}" height="${hh}" rx="5"/><text class="nt" x="${x + w / 2}" y="${y + hh / 2 - 2}" text-anchor="middle">${t1}</text><text class="ns" x="${x + w / 2}" y="${y + hh / 2 + 11}" text-anchor="middle">${t2}</text>`;
   const edge = d => `<path class="eg hot" d="${d}"/>`, lab = (x, y, t, a = 'middle') => `<text class="el" x="${x}" y="${y}" text-anchor="${a}">${t}</text>`;
@@ -2988,23 +3009,47 @@ function renderPolar() {
     <div class="un"><h4>수중</h4><p>아라온 CTD 축치해 표층 <b>${sst}℃</b> · 염분 <b>31.8psu</b> <small>(모의)</small></p><p>해저지형 <b>국립해양조사원</b> 북극 해저지형 자료</p><p>잠수함 활동 추정 <b>바렌츠·카라해</b> <small>(공개 정보)</small></p><p>해빙 하부: 소음 낮아 원거리 탐지 유리</p></div>
     <div class="ai"><h4>항공</h4><p>북극 항공기상 시정 <b>${vis}km</b> · 착빙 <b>${vis < 5 ? '주의' : '보통'}</b> <small>(기상청)</small></p><p>러시아 장거리 초계기 <b>바렌츠해</b> <small>(가상)</small></p><p>수색구조: 북극 SAR 협정 구역</p></div>
     <div class="sp"><h4>우주</h4><p>극궤도 관측·정찰 위성 북극권 <b>${polar}기</b></p><p>극궤도 통신 (Iridium·OneWeb) <b>${pComm}기</b></p><p>정지궤도 한계 ${AR.geoLimit}°N 이북 운항 <b>${north}척</b></p><p>Sentinel 영상 (CDSE) <b>${nSent}건</b></p></div></div>`);
-  const areaNm = { all: '북극 (북동항로 해역)', NSR: '북동항로 해역', NWP: '북서항로 해역', TSR: '북극횡단항로 (프람 해협)' }[cdse.area];
-  const st = cdse.st === 'idle' ? '<p class="st">조회 단추를 누르면 CDSE 카탈로그에서 선택한 항로 해역의 최근 3일 Sentinel 영상을 찾습니다.</p>'
-    : cdse.st === 'loading' ? '<p class="st">CDSE 카탈로그 조회 중…</p>'
-    : cdse.st === 'live' ? `<p class="st live">● 실시간 연동 · ${esc(areaNm)} · ${cdse.items.length}건 (${cdse.at.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })} 조회)</p>`
-    : `<p class="st sim">● 연동 실패 (${esc(cdse.err)}): 이 환경에서 외부 접속이 막혔습니다. 시뮬레이션 궤도 기반 모의 목록을 표시합니다.</p>`;
-  setHTML($('cdseOut'), 'cdseOut', st + (cdse.items.length ? `<ul>${cdse.items.map(it => `<li>${esc(it.name)}<small>${esc(it.t)}${it.cloud != null ? ` · 구름 ${Math.round(it.cloud)}%` : ''}${it.id ? ` · <a href="${CDSE_API}(${encodeURIComponent(it.id)})" target="_blank" rel="noopener">메타데이터</a>` : ''}</small></li>`).join('')}</ul>
-    <p class="st"><a href="https://browser.dataspace.copernicus.eu/" target="_blank" rel="noopener">Copernicus Browser에서 영상 보기 ↗</a> <small class="empty">(영상 내려받기는 CDSE 무료 회원 로그인 필요)</small></p>` : cdse.st === 'live' ? '<p class="st">해당 기간·해역에 영상이 없습니다.</p>' : cdse.st === 'sim' ? '<p class="st">최근 24시간 모의 궤도에서 해당 해역을 지난 영상이 없습니다.</p>' : ''));
+  cdseRender(cdseA);
 }
-$('cdseGo').onclick = cdseQuery;
+// 원해 SLOC 통합체계: 국내 기관·선사와 국제 해양안보 보고·정보융합센터, 위성 정보가 모여 청해부대·선박으로 전파된다
+const SBOX = { all: [40, 0, 110, 30], hormuz: [49.5, 21.5, 61.5, 30.5], aden: [31, 6, 62, 31.5], malacca: [93, -3, 111, 10], scs: [104, 2, 128, 28.5], ecs: [118, 23, 132, 35.6] };
+function renderSlocInfo() {
+  const kr = slocShips.filter(sh => sh.cls === 'kr'), risk = kr.filter(sh => slocStatus(sh)[1] >= 2).length;
+  const lrit = kr.filter(sh => T - sh.rep.t <= 60).length, chd = sById('CH1');
+  const [w, s0, e, n] = SBOX[slocPre], inA = SATS.filter(o => { const q = satPos(o, T); return o.use && q[0] >= w && q[0] <= e && q[1] >= s0 && q[1] <= n; }).length;
+  const navyN = slocShips.filter(sh => NAVY.has(sh.cls) && sh.rep.t > -1).length, thr = slocShips.filter(sh => ['ir', 'pir', 'cn', 'ccg', 'mil'].includes(sh.cls) && sh.rep.t > -1 && T - sh.rep.t <= 60).length;
+  const node = (x, y, w2, t1, t2, cls = '', hh = 36) => `<rect class="nd ${cls}" x="${x}" y="${y}" width="${w2}" height="${hh}" rx="5"/><text class="nt" x="${x + w2 / 2}" y="${y + hh / 2 - 2}" text-anchor="middle">${t1}</text><text class="ns" x="${x + w2 / 2}" y="${y + hh / 2 + 11}" text-anchor="middle">${t2}</text>`;
+  const edge = d => `<path class="eg hot" d="${d}"/>`, lab = (x, y, t, a = 'middle') => `<text class="el" x="${x}" y="${y}" text-anchor="${a}">${t}</text>`;
+  const L = [['해양수산부', 'LRIT·해적위험해역 관리'], ['외교부', '재외국민·현지 정세'], ['합참·해군작전사', '청해부대 작전 지휘'], ['한국해양수산개발원', '해운 물류·위험 분석'], ['선사·해운협회', '선박 보고·운항 계획']];
+  const R = [['UKMTO·MSCHOA', '선박 보고·경보', 'ext'], ['CMF·IMSC (바레인)', '연합해군 정보 공유', 'ext'], ['IFC-IOR·싱가포르 IFC', 'ReCAAP 해적 정보', 'ext'], ['코페르니쿠스 CDSE', 'Sentinel 영상 (EU)', 'ext']];
+  let g = '';
+  L.forEach((_, i) => { const y = 6 + i * 44; g += edge(`M114,${y + 18} C122,${y + 18} 122,128 128,128`); });
+  R.forEach((_, i) => { const y = 6 + i * 44; g += edge(`M226,${y + 18} C218,${y + 18} 218,128 212,128`); });
+  g += edge('M152,158 L82,238') + edge('M188,158 L258,238');
+  L.forEach(([a, b], i) => { g += node(0, 6 + i * 44, 114, a, b, 'ext2'); });
+  R.forEach(([a, b, c], i) => { g += node(226, 6 + i * 44, 114, a, b, c); });
+  g += node(128, 98, 84, '원해 해양정보', '통합체계', 'hub', 60);
+  g += node(12, 238, 140, '청해부대·해군 MDA', '원해 SLOC 상황도') + node(188, 238, 140, '우리 선박 (선사)', '위협 경보·항로 권고');
+  g += lab(170, 182, `우리 선박 ${kr.length}척 · 위성 ${inA}기`);
+  setHTML($('slocSvg'), 'slocSvg', g);
+  setHTML($('slocDom'), 'slocDom', `<div class="pdom">
+    <div class="sf"><h4>해상</h4><p>우리 선박 <b>${kr.length}척</b> · 위험 상태 <b>${risk}</b></p><p>LRIT·S-AIS 최근 1시간 <b>${lrit}척</b></p><p>연합·주변국 함정 탐지 <b>${navyN}척</b></p><p>위협 표적 (최근 1시간) <b>${thr}척</b></p></div>
+    <div class="un"><h4>수중</h4><p>호르무즈 <b>기뢰 위협</b> 감시 <small>(IRGCN)</small></p><p>홍해 <b>해저케이블</b> 손상 위험 <small>(2024년 사례)</small></p><p>청해부대 <b>선체 소나</b> 대잠 경계</p><p>인도양 수온약층 깊음 → <b>원거리 탐지 유리</b></p></div>
+    <div class="ai"><h4>항공</h4><p>청해부대 헬기 <b>링스</b> · ${chd.mode === 'escort' ? '호위 지원' : '초계 대기'}</p><p>연합 초계기 <b>P-8·해상초계기</b> <small>(CMF)</small></p><p>후티 <b>자폭 무인기·대함미사일</b> 위협</p><p>해적 대응 <b>헬기 출동</b> ${flags.pyHeli ? (flags.pyHeli.done ? '완료' : '진행 중') : '대기'}</p></div>
+    <div class="sp"><h4>우주</h4><p>관심해역 상공 관측 위성 <b>${inA}기</b></p><p>Sentinel 영상 (CDSE) <b>${cdseCount(cdseS)}건</b></p><p>위성통신: <b>아나시스 2호·Inmarsat</b></p><p>GNSS 교란 다발: <b>호르무즈·홍해</b></p></div></div>`);
+  cdseRender(cdseS);
+}
+const SNM = () => ({ all: '인도양 SLOC (전체)', hormuz: '호르무즈 해협', aden: '아덴만·홍해', malacca: '말라카 해협', scs: '남중국해·대만', ecs: '동중국해·센카쿠' })[slocPre];
+$('scdseGo').onclick = () => cdseQuery(cdseS, SBOX[slocPre], SNM(), renderSlocInfo);
+$('cdseGo').onclick = () => cdseQuery(cdseA, CDSE_AREA[arcPre], CDSE_NM[arcPre], renderPolar);
 
 function setView(v) {
   arcView = v === 'arc'; slocView = v === 'sloc'; const kr = v === 'kr';
   $('map').toggleAttribute('hidden', !kr); $('arc').toggleAttribute('hidden', !arcView); $('sloc').toggleAttribute('hidden', !slocView);
   document.querySelector('.zoom').hidden = !kr; document.querySelector('.bounds').hidden = !kr; $('spre').hidden = !slocView; $('apre').hidden = !arcView;
-  $('srcpanel').hidden = !kr; $('arcpanel').hidden = !arcView; $('slocpanel').hidden = !slocView; $('polarSec').hidden = !arcView;
+  $('srcpanel').hidden = !kr; $('arcpanel').hidden = !arcView; $('slocpanel').hidden = !slocView; $('polarSec').hidden = !arcView; $('slocSec').hidden = !slocView;
   document.querySelectorAll('[data-view]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.view === v)));
-  if (arcView) { drawArcStatic(); drawArc(); renderArcPanel(); renderPolar(); if (cdse.st === 'idle') cdseQuery(); } else if (slocView) { drawSlocStatic(); drawSloc(); renderSlocPanel(); } else { fitView(); }
+  if (arcView) { drawArcStatic(); drawArc(); renderArcPanel(); renderPolar(); if (cdseA.st === 'idle') cdseQuery(cdseA, CDSE_AREA[arcPre], CDSE_NM[arcPre], renderPolar); } else if (slocView) { drawSlocStatic(); drawSloc(); renderSlocPanel(); renderSlocInfo(); if (cdseS.st === 'idle') cdseQuery(cdseS, SBOX[slocPre], SNM(), renderSlocInfo); } else { fitView(); }
 }
 document.querySelectorAll('[data-view]').forEach(b => b.onclick = () => setView(b.dataset.view));
 $('arc').addEventListener('click', e => {
@@ -3120,7 +3165,7 @@ function frame(now) {
     if (now - drawAt > 100) { drawAt = now; if (arcView) drawArc(); else if (slocView) drawSloc(); else drawDyn(); }
   }
   if (now - panelAt > 250) {
-    panelAt = now; renderPanel(); if (arcView) { renderArcPanel(); renderPolar(); } if (slocView) renderSlocPanel();
+    panelAt = now; renderPanel(); if (arcView) { renderArcPanel(); renderPolar(); } if (slocView) { renderSlocPanel(); renderSlocInfo(); }
     if (rq.at < 0 || T - rq.at >= 10) { rq.rows = rqCatalog(rqArea()); rq.at = T; } renderRq();
   }
   requestAnimationFrame(frame);
