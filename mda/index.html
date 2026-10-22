@@ -989,7 +989,7 @@ function moveTarget(t, dt) {
       if (t.st === 'loiter') { t.spd = 2; t.hdg = (t.hdg + dt * 8) % 360; if (T >= 5 && !flags.h201Retreated) t.st = 'south'; }
       else if (t.st === 'south') { t.spd = 10; t.hdg = 172; if (t.pos[1] < nll - 0.07) t.st = 'hold'; }
       else if (t.st === 'hold') { t.spd = 2; t.hdg = (t.hdg + dt * 10) % 360; if (t.pos[1] < nll - 0.1) t.hdg = 0; }
-      else if (t.st === 'retreat') { t.spd = 14; t.hdg = 345; if (t.pos[1] > 37.95) t.st = 'loiter'; }
+      else if (t.st === 'retreat') { t.spd = 14; t.hdg = 345; if (t.pos[1] > nll + 0.1) t.st = 'loiter'; }
       t.pos = advance(t.pos, t.hdg, KMMIN(t.spd) * dt); break;
     }
     case 'd301': {
@@ -1946,7 +1946,7 @@ function drawDyn() {
   }
   // 해역명: 화면 기준 크기로 크게, 표적·센서 위에 반투명으로 얹고 표적 번호는 그 위에 둔다. 확대 중인 해역은 더 크게
   let seaL = '';
-  for (const [n, x, y, k] of SC.bigSeas) seaL += txt('sealbl big' + (krPre === k ? ' on' : ''), X(x), Y(y), (krPre === k ? 84 : 56) * z, n, 'middle');
+  for (const [n, x, y, k] of SC.bigSeas) seaL += txt('sealbl big' + (krPre === k ? ' on' : ''), X(x), Y(y), (krPre === k ? 60 : 40) * z, n, 'middle');
   gDyn.innerHTML = h + seaL + labels;
 
   let ax = '';
