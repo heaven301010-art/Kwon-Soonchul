@@ -135,7 +135,7 @@ button { font: inherit; color: inherit; }
 [hidden] { display: none !important; }
 .viewsw { position: absolute; top: 8px; left: 50%; transform: translateX(-50%); z-index: 3; }
 .viewsw .btn { padding: 4px 10px; }
-@media (max-width: 860px) { .viewsw { left: 8px; transform: none; } #spre, #apre { left: 8px; transform: none; top: auto; bottom: 8px; } #spre .btn, #apre .btn { padding: 3px 6px; font-size: 10.5px; } }
+@media (max-width: 860px) { .viewsw { left: 8px; transform: none; } #spre, #apre { left: 8px; transform: none; top: auto; bottom: 8px; } #kpre { left: 8px; transform: none; } .mapview .zoom { top: 82px; } #spre .btn, #apre .btn, #kpre .btn { padding: 3px 6px; font-size: 10.5px; } }
 #arc, #sloc { width: 100%; height: 100%; display: block; background: var(--bg); }
 .spre { position: absolute; top: 44px; left: 50%; transform: translateX(-50%); z-index: 3; }
 .spre .btn { padding: 3px 9px; font-size: 11.5px; white-space: nowrap; }
@@ -248,6 +248,9 @@ button { font: inherit; color: inherit; }
 .share .ns { font: 10px var(--font-ui); fill: var(--muted); }
 .share .eg { stroke: var(--faint); stroke-width: 1.3; fill: none; }
 .share .eg.hot { stroke: var(--fr); stroke-width: 2; stroke-dasharray: 6 4; animation: flow 1.2s linear infinite; }
+.rgsum { background: color-mix(in srgb, var(--fr) 4%, var(--panel)); }
+.rgsum .rgt { display: inline-flex; gap: 4px; margin: 3px 4px 0 0; padding: 2px 6px; font: inherit; font-size: 11px; border: 1px solid var(--line); border-radius: 4px; background: var(--panel); cursor: pointer; color: var(--muted); }
+.rgsum .rgt b.H { color: var(--ho); } .rgsum .rgt b.U { color: var(--un); } .rgsum .rgt b.S { color: var(--su); }
 .pdom { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin: 4px 0 8px; }
 .pdom > div { border: 1px solid var(--line); border-top: 3px solid var(--pc); border-radius: 5px; padding: 5px 7px; font-size: 11px; background: var(--panel); min-width: 0; }
 .pdom h4 { margin: 0 0 3px; font-size: 11.5px; color: var(--pc); }
@@ -413,6 +416,7 @@ textarea.report { width: 100%; min-height: 150px; font: 12px/1.5 var(--font-data
 .ld { stroke-width: 1.3; vector-effect: non-scaling-stroke; }
 .ld.F { stroke: var(--fr); } .ld.H { stroke: var(--ho); } .ld.S { stroke: var(--su); } .ld.U { stroke: var(--un); } .ld.N { stroke: var(--ne); }
 .tid { font-family: var(--font-data); font-weight: 500; paint-order: stroke; stroke: var(--halo); stroke-width: 3px; stroke-linejoin: round; }
+.tid.N { fill: var(--faint); font-weight: 400; }
 .tid.F { fill: var(--fr); } .tid.H { fill: var(--ho); } .tid.S { fill: var(--su); } .tid.U { fill: var(--un); } .tid.A { fill: var(--l-air); }
 .sy.k-kn { fill: var(--k-kn); } .sy.k-kcg { fill: var(--k-kcg); } .sy.k-nkn { fill: var(--k-nkn); } .sy.k-cnn { fill: var(--k-cnn); }
 .sy.k-ccg { fill: var(--k-ccg); } .sy.k-jpn { fill: var(--k-jpn); } .sy.k-run { fill: var(--k-run); } .sy.k-merchant { fill: var(--k-merchant); }
@@ -499,6 +503,9 @@ textarea.report { width: 100%; min-height: 150px; font: 12px/1.5 var(--font-data
       <button class="btn" type="button" data-view="arc" aria-pressed="false">북극항로</button>
       <button class="btn" type="button" data-view="sloc" aria-pressed="false">원해 SLOC</button>
     </div>
+    <div class="spre seg" id="kpre" role="group" aria-label="한반도 해역 확대">
+      <button class="btn" type="button" data-kp="all" aria-pressed="true">전체</button><button class="btn" type="button" data-kp="east" aria-pressed="false">동해</button><button class="btn" type="button" data-kp="west" aria-pressed="false">서해</button><button class="btn" type="button" data-kp="south" aria-pressed="false">남해</button>
+    </div>
     <div class="spre seg" id="spre" hidden role="group" aria-label="관심해역 확대">
       <button class="btn" type="button" data-sp="all" aria-pressed="true">전체</button><button class="btn" type="button" data-sp="hormuz" aria-pressed="false">호르무즈</button><button class="btn" type="button" data-sp="aden" aria-pressed="false">아덴만·홍해</button><button class="btn" type="button" data-sp="malacca" aria-pressed="false">말라카</button><button class="btn" type="button" data-sp="scs" aria-pressed="false">남중국해·대만</button><button class="btn" type="button" data-sp="ecs" aria-pressed="false">동중국해·센카쿠</button>
     </div>
@@ -532,6 +539,7 @@ textarea.report { width: 100%; min-height: 150px; font: 12px/1.5 var(--font-data
     </aside>
     <aside class="srcpanel" id="srcpanel" aria-label="해양영역인식 종합 정보 현황">
       <h2>해양영역인식 종합 정보 현황</h2>
+      <div class="clsum rgsum" id="rgsum" hidden></div>
       <div class="clsum" id="clsum"></div>
       <div class="clsum prio" id="prio"></div>
       <div class="clsum prio asw" id="asw"></div>
@@ -1770,6 +1778,7 @@ function drawDyn() {
   let h = '';
   for (const [n, x, y, s] of SC.seas) h += txt('sealbl', X(x), Y(y), s * Math.max(z, .55), n, 'middle');
   for (let lon = 120; lon <= 133; lon++) h += `<line class="gl" x1="${f1(X(lon))}" y1="${MT}" x2="${f1(X(lon))}" y2="${f1(MT + MH)}"/>`;
+  if (z < 0.45) { for (let lon = 120.5; lon < 133; lon++) h += `<line class="gl" opacity=".5" x1="${f1(X(lon))}" y1="${MT}" x2="${f1(X(lon))}" y2="${f1(MT + MH)}"/>`; for (let lat = 32.5; lat < 42; lat++) h += `<line class="gl" opacity=".5" x1="${ML}" y1="${f1(Y(lat))}" x2="${ML + MW}" y2="${f1(Y(lat))}"/>`; }
   for (let lat = 32; lat <= 42; lat++) h += `<line class="gl" x1="${ML}" y1="${f1(Y(lat))}" x2="${ML + MW}" y2="${f1(Y(lat))}"/>`;
   for (const [n, x, y] of SC.cities) h += `<circle class="city" cx="${f1(X(x))}" cy="${f1(Y(y))}" r="${f1(2.4 * z)}"/>` + txt('lbl', X(x) + 5 * z, Y(y) + 3.5 * z, 10.5 * z, n);
 
@@ -1929,6 +1938,7 @@ function drawDyn() {
     if (layerOn.space && tr.rf && tr.affil !== 'F' && T - tr.rf.t <= 15) h += `<ellipse class="rfe" cx="${f1(x)}" cy="${f1(y)}" rx="${f1(tr.rf.err * PXKM)}" ry="${f1(tr.rf.err * .55 * PXKM)}" transform="rotate(103 ${f1(x)} ${f1(y)})"${dash(z, 2, 2)}/>`;
     if (t.mode === 'intercept' && t.goal) { const g = t.goal(); if (g) h += `<line class="ic"${dash(z, 5, 4)} x1="${f1(x)}" y1="${f1(y)}" x2="${f1(X(g[0]))}" y2="${f1(Y(g[1]))}"/>`; }
     h += `<g${tr.lost ? ' class="lost"' : ''}>${sym(tr.affil, t.kind, x, y, big ? z : z * .72, k)}</g>`;
+    if (!big && z < 0.42 && !tr.lost) labels += txt('tid N', x + 6 * z, y - 4 * z, 9 * z, t.id);
     if (big) labels += `<g${tr.lost ? ' class="lost"' : ''}>` + txt('tid ' + tr.affil + (FOREIGN_NAVY.has(k) || k === 'kcg' || k === 'usn' ? ' k-' + k : ''), x + 8 * z, y - 6 * z, 11 * z, t.id) + '</g>';
     if (sel === t.id) h += `<circle class="selring" cx="${f1(x)}" cy="${f1(y)}" r="${f1(12 * z)}"/>`;
   }
@@ -2197,7 +2207,7 @@ function renderBoxes(det) {
   const all = {};
   for (const tr of tracks.values()) { if (tr.lost) continue; const k = clsOf(byId.get(tr.id), tr); if (k) all[k] = (all[k] || 0) + 1; }
   setHTML($('clsum'), 'clsum', `<h3>해양표적 식별 및 추적현황</h3>${kgrid(all, false)}`);
-  renderPrio(); renderAsw();
+  renderPrio(); renderAsw(); renderRegion();
   for (const [dom, d] of Object.entries(DOMS)) {
     const box = document.querySelector(`.box[data-dom="${dom}"]`);
     box.classList.toggle('off', !layerOn[dom]);
@@ -3046,10 +3056,10 @@ $('cdseGo').onclick = () => cdseQuery(cdseA, CDSE_AREA[arcPre], CDSE_NM[arcPre],
 function setView(v) {
   arcView = v === 'arc'; slocView = v === 'sloc'; const kr = v === 'kr';
   $('map').toggleAttribute('hidden', !kr); $('arc').toggleAttribute('hidden', !arcView); $('sloc').toggleAttribute('hidden', !slocView);
-  document.querySelector('.zoom').hidden = !kr; document.querySelector('.bounds').hidden = !kr; $('spre').hidden = !slocView; $('apre').hidden = !arcView;
+  document.querySelector('.zoom').hidden = !kr; document.querySelector('.bounds').hidden = !kr; $('spre').hidden = !slocView; $('apre').hidden = !arcView; $('kpre').hidden = !kr;
   $('srcpanel').hidden = !kr; $('arcpanel').hidden = !arcView; $('slocpanel').hidden = !slocView; $('polarSec').hidden = !arcView; $('slocSec').hidden = !slocView;
   document.querySelectorAll('[data-view]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.view === v)));
-  if (arcView) { drawArcStatic(); drawArc(); renderArcPanel(); renderPolar(); if (cdseA.st === 'idle') cdseQuery(cdseA, CDSE_AREA[arcPre], CDSE_NM[arcPre], renderPolar); } else if (slocView) { drawSlocStatic(); drawSloc(); renderSlocPanel(); renderSlocInfo(); if (cdseS.st === 'idle') cdseQuery(cdseS, SBOX[slocPre], SNM(), renderSlocInfo); } else { fitView(); }
+  if (arcView) { drawArcStatic(); drawArc(); renderArcPanel(); renderPolar(); if (cdseA.st === 'idle') cdseQuery(cdseA, CDSE_AREA[arcPre], CDSE_NM[arcPre], renderPolar); } else if (slocView) { drawSlocStatic(); drawSloc(); renderSlocPanel(); renderSlocInfo(); if (cdseS.st === 'idle') cdseQuery(cdseS, SBOX[slocPre], SNM(), renderSlocInfo); } else { regionView(krPre); }
 }
 document.querySelectorAll('[data-view]').forEach(b => b.onclick = () => setView(b.dataset.view));
 $('arc').addEventListener('click', e => {
@@ -3119,6 +3129,42 @@ function zoomAt(f, cx, cy) {
   clampVB(); setVB(); drawDyn();
 }
 // 기본 화면: 해도 칸의 가로세로비에 맞춰 한반도 주변을 꽉 채운다
+// 해역별 확대: 동해(포항 이북), 서해(태안 이북), 남해(제주 포함 그 외 남해) — [이름, 서경, 북위, 동경, 남위, 설명]
+const KPRE = { east: ['동해', 127.9, 39.3, 132.4, 35.85, '포항 이북 동해'], west: ['서해', 123.7, 38.35, 127.1, 36.45, '태안 이북 서해'], south: ['남해', 124.6, 35.7, 130.4, 32.0, '제주도 포함 남해 전 해역'] };
+let krPre = 'all';
+function regionView(k) {
+  krPre = k; document.querySelectorAll('[data-kp]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.kp === k)));
+  if (k === 'all') { fitView(); renderPanel(); return; }
+  const [, w, n, e, s0] = KPRE[k], r = svg.getBoundingClientRect(), ar = r.width && r.height ? r.width / r.height : VW / VH;
+  // 오른쪽 정보칸에 가리는 폭만큼 보기 범위를 넓혀 해역 전체가 칸 왼쪽에 보이게 한다
+  const pan = $('srcpanel'), pw = !pan.hidden && !$('mapwrap').classList.contains('nobox') && r.width > 860 ? pan.getBoundingClientRect().width + 16 : 0;
+  const frac = r.width ? Math.min(0.45, pw / r.width) : 0, bw = X(e) - X(w), bh = Y(s0) - Y(n);
+  let vw = bw / (1 - frac), vh = vw / ar;
+  if (vh < bh) { vh = bh; vw = vh * ar; }
+  vb = { x: X(w) - (vw * (1 - frac) - bw) / 2, y: Y(n) - (vh - bh) / 2, w: vw, h: vh };
+  clampVB(); setVB(); drawDyn(); renderPanel();
+}
+const inRegion = (p, k) => { const b = KPRE[k]; return p[0] >= b[1] && p[0] <= b[3] && p[1] <= b[2] && p[1] >= b[4]; };
+function renderRegion() {
+  const el = $('rgsum');
+  if (krPre === 'all') { el.hidden = true; return; }
+  el.hidden = false;
+  const k = krPre, nm = KPRE[k][0], cnt = {};
+  const trs = [...tracks.values()].filter(tr => !tr.lost && inRegion(tr.pos, k));
+  for (const tr of trs) { const c = clsOf(byId.get(tr.id), tr); if (c) cnt[c] = (cnt[c] || 0) + 1; }
+  const hot = trs.filter(tr => tr.affil === 'H'), unk = trs.filter(tr => tr.affil === 'U' || tr.affil === 'S');
+  const fr = targets.filter(t => t.truth === 'F' && active(t) && inRegion(t.pos, k)).map(t => t.id);
+  const rs = NRADARS.filter(x => inRegion(x.pos, k)).map(x => x.name.replace(' R/S', '')), gs = RADARS.filter(x => inRegion(x.pos, k)).map(x => x.name.replace(' 감시대', ''));
+  const als = alerts.filter(a => a.status !== 'done' && String(a.tgt).split('·').some(id => { const tr = tracks.get(id); return tr && inRegion(tr.pos, k); }));
+  const resp = trs.filter(tr => tr.resp === 'A').length;
+  setHTML(el, 'rgsum', `<h3>${nm} 해역 현황 <small style="font-weight:400">· ${KPRE[k][5]}</small></h3>
+    <div class="csum"><span>추적 <b>${trs.length}</b></span><span>적성 <b style="color:var(--ho)">${hot.length}</b></span><span>미식별·의심 <b style="color:var(--un)">${unk.length}</b></span><span>육군 책임 <b>${resp}</b> · 해군 책임 <b>${trs.length - resp}</b></span></div>
+    ${kgrid(cnt, true)}
+    <p class="empty" style="font-size:11px;margin:4px 0 1px">아군 함정 <b style="color:var(--fg)">${fr.length ? fr.join(' · ') : '없음'}</b></p>
+    <p class="empty" style="font-size:11px;margin:1px 0">해군 R/S <b style="color:var(--fg)">${rs.join(' · ') || '–'}</b> · 육군 감시대 <b style="color:var(--fg)">${gs.join(' · ') || '–'}</b></p>
+    <p class="empty" style="font-size:11px;margin:1px 0">진행 중 이상징후 <b style="color:var(--fg)">${als.length ? als.map(a => esc(a.title)).join(', ') : '없음'}</b></p>
+    ${hot.concat(unk).slice(0, 6).map(tr => `<button type="button" class="rgt" data-sel="${tr.id}"><b class="${tr.affil}">${tr.id}</b> ${esc(tr.note || AFF[tr.affil])}</button>`).join('')}`);
+}
 function fitView() {
   const r = svg.getBoundingClientRect(), ar = r.width && r.height ? r.width / r.height : VW / VH;
   let h = VH * 0.86, w = h * ar;
@@ -3126,7 +3172,7 @@ function fitView() {
   vb = { x: X(127.4) - w / 2 + w * 0.12, y: Y(36.6) - h / 2, w, h };
   clampVB(); setVB(); drawDyn();
 }
-new ResizeObserver(() => { fitView(); if (slocView) { drawSlocStatic(); drawSloc(); } if (arcView) { drawArcStatic(); drawArc(); } }).observe(document.querySelector('.mapview'));
+new ResizeObserver(() => { if (krPre === 'all') fitView(); else regionView(krPre); if (slocView) { drawSlocStatic(); drawSloc(); } if (arcView) { drawArcStatic(); drawArc(); } }).observe(document.querySelector('.mapview'));
 const svgPt = e => new DOMPoint(e.clientX, e.clientY).matrixTransform(svg.getScreenCTM().inverse());
 svg.addEventListener('wheel', e => { e.preventDefault(); const p = svgPt(e); zoomAt(Math.exp(e.deltaY * 0.0015), p.x, p.y); }, { passive: false });
 let drag = null;
@@ -3153,7 +3199,8 @@ svg.addEventListener('pointerup', e => {
 const center = () => [vb.x + vb.w / 2, vb.y + vb.h / 2];
 $('bZin').onclick = () => zoomAt(0.7, ...center());
 $('bZout').onclick = () => zoomAt(1 / 0.7, ...center());
-$('bZfit').onclick = fitView;
+$('bZfit').onclick = () => regionView('all');
+document.getElementById('kpre').addEventListener('click', e => { const b = e.target.closest('[data-kp]'); if (b) regionView(b.dataset.kp); });
 
 // 표적이 천 개 가까이 되므로 해도는 초당 10번까지만 다시 그린다
 let panelAt = 0, drawAt = 0;
