@@ -383,6 +383,7 @@ textarea.report { width: 100%; min-height: 150px; font: 12px/1.5 var(--font-data
 .rg { stroke-width: 1; vector-effect: non-scaling-stroke; }
 .rg.ground { stroke: color-mix(in srgb, var(--l-ground) 60%, transparent); fill: color-mix(in srgb, var(--l-ground) 5%, transparent); }
 .rg.ground.wide { fill: none; }
+.mpap { fill: none; stroke: var(--l-air); stroke-width: 1.3; opacity: .7; vector-effect: non-scaling-stroke; }
 .nm12 { fill: color-mix(in srgb, #d9b26f 30%, var(--sea)); stroke: color-mix(in srgb, #d9b26f 30%, var(--sea)); stroke-linejoin: round; }
 .nm12e { fill: none; stroke: color-mix(in srgb, var(--l-ground) 75%, var(--sea)); stroke-linejoin: round; }
 .heli { fill: var(--l-air); stroke: var(--halo); stroke-width: 1; vector-effect: non-scaling-stroke; } .rotor { stroke: var(--l-air); stroke-width: 1.6; vector-effect: non-scaling-stroke; }
@@ -846,6 +847,7 @@ function init() {
     ais: true, emitter: EMIT.navS, mode: 'r701', st: 'transit', startAt: SC.r701.at });
   byId = new Map(targets.map(t => [t.id, t]));
   mpa = { id: 'MPA', name: '해상초계기', pos: advance(SC.mpa.center, 0, SC.mpa.r), center: SC.mpa.center.slice(), r: SC.mpa.r, spd: 300, ph: 0, mode: 'orbit', hdg: 90, task: '동해 정찰 궤도' };
+  mpa.wps = null; mpa.pk = -1; mpa.ci = 0; mpa.np = 0; mpa.datum = false; mpaPattern(MPA_BOX.east, '동해', 'ew');
   helis = SC.helis.map(([ship, type, sched]) => ({ ship, type, sched, k: 0, st: 'deck', pos: [0, 0], wps: [], flights: 0 })); handovers = [];
   uav = { id: 'UAV', name: '무인기', pos: advance(SC.uav.center, 0, SC.uav.r), center: SC.uav.center.slice(), r: SC.uav.r, spd: 80, ph: 0, mode: 'orbit', hdg: 90, task: '서해 정찰 궤도' };
   passes = []; tasks = []; comm = {}; commAt = -1;
@@ -1027,7 +1029,66 @@ function moveTarget(t, dt) {
       t.pos = advance(t.pos, t.hdg, KMMIN(t.spd) * dt); break;
   }
 }
+// ── 해상초계기: 바다 위로만 이동하고 동서·남북·지그재그·확장 사각 패턴으로 대잠 탐색 비행 ──
+// 초계 구역: [이름, 서경, 남위, 동경, 북위]. 평시에는 동해→남해→서해→남해 순으로 구역마다 두 가지 패턴씩 비행한다
+const MPA_BOX = { east: ['동해', 129.75, 36.3, 131.4, 38.35], south: ['남해', 127.15, 32.9, 129.0, 34.1], west: ['서해', 124.2, 35.6, 125.8, 37.35] };
+const MPA_CYCLE = ['east', 'south', 'west', 'south'];
+const PATS = ['ew', 'ns', 'zz', 'sq'], PATNM = { ew: '동서 방향 평행 탐색', ns: '남북 방향 평행 탐색', zz: '지그재그 탐색', sq: '확장 사각 탐색' };
+// 반도 남쪽을 돌아가는 해상 경유점 (서해→남해→동해 순)
+const SEA_GATES = [[125.3, 34.25], [126.6, 33.75], [127.6, 33.8], [129.0, 34.55], [129.7, 35.3]];
+const segLand = (a, b) => { const n = Math.max(2, Math.ceil(dist(a, b) / 4)); for (let i = 1; i < n; i++) { const f = i / n; if (isLand(a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) * f)) return true; } return false; };
+function seaRoute(a, b) {
+  if (!segLand(a, b)) return [b];
+  let best = null, bl = 1e9;
+  for (let i = 0; i < SEA_GATES.length; i++) for (let j = i; j < SEA_GATES.length; j++) for (const rev of [false, true]) {
+    const seq = SEA_GATES.slice(i, j + 1); if (rev) seq.reverse();
+    const path = [a, ...seq, b]; let ok = true, L = 0;
+    for (let k = 0; k < path.length - 1 && ok; k++) { L += dist(path[k], path[k + 1]); if (L >= bl || segLand(path[k], path[k + 1])) ok = false; }
+    if (ok) { bl = L; best = [...seq, b]; }
+  }
+  return best || [b];
+}
+function patternPts(b, t) {
+  const [, w, s0, e, n] = b, pts = [];
+  if (t === 'ew') { let k = 0; for (let lat = n - 0.08; lat >= s0 + 0.04; lat -= 0.25, k++) pts.push(...(k % 2 ? [[e, lat], [w, lat]] : [[w, lat], [e, lat]])); }
+  else if (t === 'ns') { let k = 0; for (let lon = w + 0.08; lon <= e - 0.04; lon += 0.32, k++) pts.push(...(k % 2 ? [[lon, s0], [lon, n]] : [[lon, n], [lon, s0]])); }
+  else if (t === 'zz') { let k = 0; for (let lon = w; lon <= e + 1e-6; lon += 0.28, k++) pts.push([lon, k % 2 ? s0 : n]); }
+  else { let q = [(w + e) / 2, (s0 + n) / 2]; pts.push(q); for (let k = 1; k <= 9; k++) { q = advance(q, [0, 90, 180, 270][(k - 1) % 4], Math.ceil(k / 2) * 12); pts.push(q); } }
+  return pts;
+}
+// NLL 이북(동해 NLL 연장선 131.7°E까지, 서해 NLL)은 초계하지 않는다
+const northOfNll = q => (q[0] > 128.3 && q[0] < 131.7 && q[1] > 38.55) || (q[0] < 126.2 && q[1] > nllLat(SC.nllWest, q[0]) - 0.04);
+// 육지 위 꼭짓점, 육지를 가로지르는 구간, NLL 이북 지점은 건너뛴다
+function cleanPath(pts) { const out = []; for (const q of pts) { if (isLand(q[0], q[1]) || northOfNll(q) || (out.length && segLand(out[out.length - 1], q))) continue; out.push(q); } return out; }
+function mpaPattern(b, nm, type) {
+  mpa.pk = type ? PATS.indexOf(type) : ((mpa.pk ?? -1) + 1) % PATS.length;
+  const t = PATS[mpa.pk], pts = cleanPath(patternPts(b, t));
+  if (!pts.length) pts.push([(b[1] + b[3]) / 2, (b[2] + b[4]) / 2]);
+  mpa.wps = [...seaRoute(mpa.pos, pts[0]), ...pts.slice(1)]; mpa.mode = 'pattern'; mpa.box = b; mpa.boxNm = nm; mpa.patNm = PATNM[t];
+  mpa.task = mpa.datum ? `${nm} · ${PATNM[t]}` : `${nm} 대잠 초계 · ${PATNM[t]}`;
+}
+// 평시 초계: 구역마다 패턴 두 개, 다음 구역으로
+function mpaNext() {
+  mpa.np = (mpa.np || 0) + 1;
+  if (mpa.datum) { mpaPattern(mpa.box, mpa.boxNm); return; }
+  if (mpa.np % 2 === 0) mpa.ci = ((mpa.ci || 0) + 1) % MPA_CYCLE.length;
+  const b = MPA_BOX[MPA_CYCLE[mpa.ci || 0]]; mpaPattern(b, b[0]);
+}
+function mpaHome() { mpa.datum = false; mpa.ci = 0; mpa.np = 0; mpaPattern(MPA_BOX.east, '동해'); }
+function mpaMove(dt) {
+  if (!mpa.wps || !mpa.wps.length) mpaNext();
+  if (moveToward(mpa, mpa.wps[0], mpa.spd, dt)) {
+    mpa.wps.shift();
+    if (!mpa.wps.length && mpa.mode === 'transit') {
+      // 임무 해역 도착: 기준점 둘레에서 확장 사각 탐색부터 시작
+      const d = mpa.dest, f = mpa.onArrive; mpa.onArrive = null; mpa.datum = true;
+      mpaPattern(['', d[0] - 0.5, d[1] - 0.38, d[0] + 0.5, d[1] + 0.38], mpa.arriveTask, 'sq');
+      if (f) f();
+    }
+  }
+}
 function moveAir(a, dt) {
+  if (a === mpa) { mpaMove(dt); return; }
   if (a.mode === 'orbit') orbit(a, dt);
   else if (moveToward(a, advance(a.dest, a.ph, a.destR), a.spd, dt)) {
     a.mode = 'orbit'; a.center = a.dest; a.r = a.destR; a.task = a.arriveTask;
@@ -1035,6 +1096,7 @@ function moveAir(a, dt) {
   }
 }
 function sendAir(a, dest, r, task, onArrive) {
+  if (a === mpa) { dest = dest.slice(); if (dest[0] > 128.3 && dest[0] < 131.7) dest[1] = Math.min(dest[1], 38.5); a.dest = dest; a.mode = 'transit'; a.wps = seaRoute(a.pos, dest); a.onArrive = onArrive; a.task = '이동 중 · ' + task; a.arriveTask = task; return; }
   a.dest = dest.slice(); a.destR = r; a.ph = bearing(dest, a.pos); a.mode = 'transit'; a.onArrive = onArrive;
   a.task = '이동 중 · ' + task; a.arriveTask = task;
 }
@@ -1613,7 +1675,7 @@ function scenario(dt = 0) {
     } });
   if (flags.jxAct != null && !flags.jxDone && T - flags.jxAct > SC.jointEx.leaveAfter) {
     flags.jxDone = true; jx.st = 'leave';
-    if (!flags.mpaHome) sendAir(mpa, SC.mpa.center, SC.mpa.r, '동해 정찰 궤도');
+    if (!flags.mpaHome) mpaHome();
     closeAlert('jointex', '중·러 연합해상훈련 확인, 훈련 종료 후 북상 이탈');
   }
   // AI 이상항적 탐지 1: 해저케이블 4km 안에서 2kn 미만으로 20분 넘게 머무는 선박
@@ -1696,7 +1758,7 @@ function scenario(dt = 0) {
   // 대잠
   const utr = tracks.get('U402');
   if (flags.subAct != null && !flags.subDone && utr) {
-    if (T - flags.lastDrop > 40 && mpa.mode === 'orbit') {
+    if (T - flags.lastDrop > 40 && mpa.mode !== 'transit') {
       flags.lastDrop = T;
       const p = predicted(byId.get('U402'), 20);
       sendAir(mpa, p, 18, 'U402 대잠 탐색', () => dropBuoys(p, 'U402 추가'));
@@ -1708,7 +1770,7 @@ function scenario(dt = 0) {
       closeAlert('sub', '음향 식별로 잠수함 확인, 대잠 추적 유지');
     }
   }
-  if (flags.subDone && !flags.mpaHome && T - flags.lastDrop > 60) { flags.mpaHome = true; sendAir(mpa, SC.mpa.center, SC.mpa.r, '동해 정찰 궤도'); }
+  if (flags.subDone && !flags.mpaHome && T - flags.lastDrop > 60) { flags.mpaHome = true; mpaHome(); }
   for (const r of reqs) { if (r.tick) r.tick(); if (r.status === '수행' && T - (r.at ?? r.t) > (r.dur ?? 30)) { r.status = '완료'; if (r.done) r.done(); } }
 }
 
@@ -1924,9 +1986,10 @@ function drawDyn() {
     h += txt('tid A', x + 9 * z, y - 5 * z, 10 * z, `${hh.type.replace(/ \(.*|와일드캣/g, '').trim()} (${hh.ship})${hh.st === 'dip' ? ' · 디핑' : ''}`);
   }
   // 항공 자산
+  if (layerOn.air && mpa.wps && mpa.wps.length) h += `<path class="mpap"${dash(z, 4, 4)} d="${pathD([mpa.pos, ...mpa.wps.slice(0, 14)])}"/>`;
   if (layerOn.air) for (const a of [mpa, uav]) {
     const x = X(a.pos[0]), y = Y(a.pos[1]);
-    h += circ('air', a.pos, a === mpa ? MPA_R : UAV_R, z) + sym('A', 'air', x, y, z) + txt('tid A', x + 8 * z, y - 4 * z, 10.5 * z, a.name);
+    h += circ('air', a.pos, a === mpa ? MPA_R : UAV_R, z) + sym('A', 'air', x, y, z) + txt('tid A', x + 8 * z, y - 4 * z, 10.5 * z, a === mpa && a.mode !== 'transit' ? `${a.name} · ${a.patNm}` : a.name);
   }
 
   // 표적
@@ -2568,7 +2631,7 @@ function rqSubmit(rows) {
         r.status = '수행'; r.at = T; feed('air', `${as.name} ${rid} 해역 도착 · 수집 개시`);
         if (row.buoy) dropBuoys(area.pos, rid);
       });
-      r.done = () => { if (as.task === tag) sendAir(as, as === mpa ? SC.mpa.center : SC.uav.center, as === mpa ? SC.mpa.r : SC.uav.r, as === mpa ? '동해 정찰 궤도' : '서해 정찰 궤도'); };
+      r.done = () => { if (as.task === tag || (as === mpa && mpa.arriveTask === tag && mpa.datum)) { if (as === mpa) mpaHome(); else sendAir(uav, SC.uav.center, SC.uav.r, '서해 정찰 궤도'); } };
       feed('air', `${as.name} ${rid} 해역으로 이동`);
     } else if (row.f) {
       const f = row.f, g = () => area.pos;
