@@ -363,6 +363,8 @@ textarea.report { width: 100%; min-height: 150px; font: 12px/1.5 var(--font-data
 .rg { stroke-width: 1; vector-effect: non-scaling-stroke; }
 .rg.ground { stroke: color-mix(in srgb, var(--l-ground) 60%, transparent); fill: color-mix(in srgb, var(--l-ground) 5%, transparent); }
 .rg.ground.wide { fill: none; }
+.rg.nrs { stroke: color-mix(in srgb, var(--fr) 55%, transparent); fill: color-mix(in srgb, var(--fr) 3%, transparent); stroke-width: 1.2; vector-effect: non-scaling-stroke; }
+.f-nrs { fill: var(--fr); stroke: var(--halo); stroke-width: 1; vector-effect: non-scaling-stroke; } .t-nrs { fill: var(--fr); font-weight: 600; }
 .rg.surf.vts { fill: none; }
 .rg.surf { stroke: color-mix(in srgb, var(--l-surf) 65%, transparent); fill: color-mix(in srgb, var(--l-surf) 7%, transparent); }
 .rg.under { stroke: color-mix(in srgb, var(--l-under) 65%, transparent); fill: color-mix(in srgb, var(--l-under) 7%, transparent); }
@@ -660,19 +662,21 @@ const inKadiz = p => inRing(p[0], p[1], SC.kadiz);
 function mulberry32(a) { return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
 
 // ── 센서·표적 정의 ──────────────────────────────────────
-const RADARS = SC.radars.map(([n, x, y]) => ({ name: n + ' 감시대', pos: [x, y], r: 70 }));
+const NM = 1.852;
+const RADARS = SC.radars.map(([n, x, y]) => ({ name: n + ' 감시대', pos: [x, y], r: 12 * NM }));      // 육군 해안 감시대 12해리
+const NRADARS = SC.navyRadars.map(([n, x, y]) => ({ name: n + ' R/S', pos: [x, y], r: 40 * NM }));  // 해군 R/S 40해리
 const ADRADARS = SC.adRadars.map(([n, x, y]) => ({ name: n, pos: [x, y], r: 300 }));
 const VTS = SC.vts.map(([n, x, y]) => ({ name: n, pos: [x, y], r: 35 }));
 const COOP = new Set(['ais', 'vpass', 'lrit']);
 const PORTS = SC.ports.map(([n, x, y]) => ({ name: n, pos: [x, y], r: 12 }));
 const ARRAYS = SC.arrays.map(([n, x, y]) => ({ name: n, pos: [x, y], r: 30 }));
 const SHIP_R = 40, SHIP_AIR_R = 150, SONAR_R = 12, MPA_R = 120, UAV_R = 50, BUOY_R = 22, LOST_AFTER = 12;
-const SN = { ais: 'AIS', vpass: 'V-PASS', lrit: 'LRIT', vts: '해경 VTS', sar: 'SAR 위성', eo: 'EO/IR 위성', msi: '다분광 위성', hsi: '초분광 위성', rf: 'RF 위성 군집', radar: '레이더 감시대', adradar: '방공 레이더', cctv: '해안 CCTV',
+const SN = { ais: 'AIS', vpass: 'V-PASS', lrit: 'LRIT', vts: '해경 VTS', sar: 'SAR 위성', eo: 'EO/IR 위성', msi: '다분광 위성', hsi: '초분광 위성', rf: 'RF 위성 군집', radar: '육군 감시대 레이더', nradar: '해군 R/S 레이더', adradar: '방공 레이더', cctv: '해안 CCTV',
   shipradar: '함정 레이더', fixed: '고정형 수중감시', buoy: '소노부이', sonar: '함정 소나', mpa: '해상초계기', uav: '무인기', link: '전술데이터링크' };
 const DOMS = {
   space: { nm: '우주정보', sub: '위성 영상·신호', types: [['sar', 'SAR'], ['eo', 'EO/IR'], ['msi', '다분광'], ['hsi', '초분광'], ['rf', 'RF']] },
   air: { nm: '항공정보', sub: '초계기·무인기', types: [['mpa', '해상초계기'], ['uav', '무인기']] },
-  ground: { nm: '지상정보', sub: '해안·방공 레이더', types: [['radar', '감시대'], ['adradar', '방공']] },
+  ground: { nm: '지상정보', sub: '해안·방공 레이더', types: [['nradar', '해군 R/S'], ['radar', '육군 감시대'], ['adradar', '방공']] },
   surface: { nm: '수상정보', sub: 'GICOMS·해경 연계', types: [['ais', 'AIS'], ['vpass', 'V-PASS'], ['lrit', 'LRIT'], ['vts', 'VTS'], ['shipradar', '함정'], ['cctv', 'CCTV']] },
   under: { nm: '수중정보', sub: '음향 탐지', types: [['fixed', '고정형'], ['buoy', '소노부이'], ['sonar', '함정 소나']] }
 };
@@ -1118,6 +1122,7 @@ function sense(t, friends, act, t0, taskHit) {
       if (t.lrit && Math.floor((t0 + t.lritPh) / 60) !== Math.floor((T + t.lritPh) / 60)) s.push('lrit');
       if (near(VTS)) s.push('vts');
     }
+    if (layerOn.ground && near(NRADARS)) s.push('nradar');
     if (layerOn.ground && near(RADARS)) s.push('radar');
     if (layerOn.surface) {
       if (near(PORTS)) s.push('cctv');
@@ -1233,7 +1238,7 @@ function step(dt) {
 
 function onNew(t, tr, s) {
   if (t.id === 'D301' && alerts.some(a => a.id === 'ais')) onReacq(t, tr, s);   // 소실 2시간이 지나 지워진 뒤 다시 잡힌 경우
-  if (t.id === 'H201') { addLog('백령 감시대 레이더, AIS 미송출 접촉 H201 획득.'); tr.affil = 'U'; tr.classAt = T + 8; }
+  if (t.id === 'H201') { addLog(`${s.filter(x => x !== 'link').map(x => SN[x]).join('·')}, AIS 미송출 접촉 H201 획득.`); tr.affil = 'U'; tr.classAt = T + 8; }
   if (t.id === 'U402') {
     addLog('수중감시 1 음향 접촉. 미식별 수중 표적 U402 생성.');
     raise({ id: 'sub', sev: 'crit', title: '수중 미식별 접촉', tgt: 'U402', rec: '해상초계기 소노부이 투하, F101·F107 대잠 전개', approve: approveSub });
@@ -1726,6 +1731,11 @@ function drawDyn() {
       h += circ('ground', r.pos, r.r, z, true) + `<path class="f-ground" d="M${f1(x)},${f1(y - 5 * z)} L${f1(x + 4.5 * z)},${f1(y + 3.5 * z)} L${f1(x - 4.5 * z)},${f1(y + 3.5 * z)}Z"/>`;
       h += txt('lbl t-ground', x + 6 * z, y - 4 * z, 10 * z, r.name);
     }
+    for (const r of NRADARS) {
+      const x = X(r.pos[0]), y = Y(r.pos[1]);
+      h += `<circle class="rg nrs" cx="${f1(x)}" cy="${f1(y)}" r="${f1(r.r * PXKM)}"${dash(z, 6, 3)}/>` + `<path class="f-nrs" d="M${f1(x)},${f1(y - 5.5 * z)} L${f1(x + 5 * z)},${f1(y)} L${f1(x)},${f1(y + 5.5 * z)} L${f1(x - 5 * z)},${f1(y)}Z"/>`;
+      h += txt('lbl t-nrs', x + 7 * z, y + 4 * z, 10 * z, r.name);
+    }
     for (const r of ADRADARS) {
       const x = X(r.pos[0]), y = Y(r.pos[1]);
       h += `<circle class="rg ground wide" cx="${f1(x)}" cy="${f1(y)}" r="${f1(r.r * PXKM)}"${dash(z, 1, 5)}/>`;
@@ -1894,7 +1904,7 @@ function assets(dom) {
     case 'air': return [['해상초계기', mpa.task], ['무인기', uav.task]];
     case 'ground': {
       const air = [...tracks.values()].filter(tr => !tr.lost && byId.get(tr.id).kind === 'air').length;
-      return [['레이더 감시대', `${RADARS.length}개소 가동`], ['방공 레이더', `${ADRADARS.length}개소 가동`], ['접촉 중 항공 표적', `${air}`]];
+      return [['해군 R/S', `${NRADARS.length}개소 가동 · 탐지 40해리`], ['육군 해안 감시대', `${RADARS.length}개소 가동 · 탐지 12해리`], ['방공 레이더', `${ADRADARS.length}개소 가동`], ['접촉 중 항공 표적', `${air}`]];
     }
     case 'surface': {
       const held = t => tracks.get(t.id) && !tracks.get(t.id).lost;
@@ -2288,12 +2298,13 @@ function rqCatalog(a) {
   // 지상·수중: 고정 센서는 탐지 범위 안에 들 때만 상시 감시
   const fixed = (grp, list, kind) => list.forEach(x => {
     const d = dist(x.pos, a.pos), inR = d <= x.r;
-    const r = { grp, name: x.name, sub: `${kind} · 탐지 반경 ${x.r}km`, res: null, w: 2 * x.r, t: inR ? T : null, now: inR, x };
+    const r = { grp, name: x.name, sub: `${kind} · 탐지 거리 ${Math.round(x.r / NM)}해리 (${Math.round(x.r)}km)`, res: null, w: 2 * x.r, t: inR ? T : null, now: inR, x };
     r.fit = !inR ? 'no' : d + a.w / 2 <= x.r ? 'ok' : 'part';
     r.why = !inR ? `탐지 범위 밖 (${Math.round(d - x.r)}km)` : r.fit === 'part' ? '해역 일부만 탐지 범위' : '상시 감시 중 (탐지·추적)';
     rows.push(r);
   });
-  fixed('ground', RADARS, '해안 레이더');
+  fixed('ground', NRADARS, '해군 R/S');
+  fixed('ground', RADARS, '육군 해안 감시대');
   fixed('ground', VTS.filter(x => dist(x.pos, a.pos) <= x.r + 60), '해경 VTS 레이더');
   fixed('ground', PORTS.filter(x => dist(x.pos, a.pos) <= x.r + 30), '항만 CCTV');
   fixed('under', ARRAYS, '고정형 수중감시');
