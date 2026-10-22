@@ -533,7 +533,7 @@ textarea.report { width: 100%; min-height: 150px; font: 12px/1.5 var(--font-data
     </section>
     <section id="selSec"></section>
     <section>
-      <h2>기관 간 정보 공유</h2>
+      <h2>해양정보 공유상황도</h2>
       <svg class="share" id="shareSvg" viewBox="0 0 320 262" role="img" aria-label="해수부, 해경, 기상청, KIOST·국립해양조사원, 해군, 국가 MDA 플랫폼, 해외 IFC 사이의 정보 흐름"></svg>
       <ul class="log" id="shareLog"></ul>
     </section>
@@ -546,7 +546,7 @@ textarea.report { width: 100%; min-height: 150px; font: 12px/1.5 var(--font-data
       <div id="commInfo"></div>
     </section>
     <section>
-      <h2>이상징후와 조치 권고</h2>
+      <h2>지휘결심 지원체계</h2>
       <div class="alerts" id="alerts"></div>
     </section>
     <section>
@@ -2170,7 +2170,7 @@ function renderPanel() {
     const tt = byId.get(tr.id);
     if (tt.nk || (tt.truth !== 'F' && 'HSU'.includes(tr.affil))) classified++;
   }
-  // 기관 간 정보 공유 그림
+  // 해양정보 공유상황도 그림
   {
     const sum = ks => ks.reduce((a, k) => a + det[k], 0);
     const recent = to => shares.some(x => T - x.t <= 15 && x.to.includes(to));
