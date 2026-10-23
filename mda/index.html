@@ -883,7 +883,7 @@ function init() {
     ais: true, emitter: EMIT.navS, mode: 'r701', st: 'transit', startAt: SC.r701.at });
   byId = new Map(targets.map(t => [t.id, t]));
   mpa = { id: 'MPA', name: '해상초계기', pos: advance(SC.mpa.center, 0, SC.mpa.r), center: SC.mpa.center.slice(), r: SC.mpa.r, spd: 300, ph: 0, mode: 'orbit', hdg: 90, task: '동해 정찰 궤도' };
-  mpa.wps = null; mpa.pk = -1; mpa.ci = 0; mpa.np = 0; mpa.datum = false; mpaPattern(MPA_BOX.east, '동해', 'ew');
+  mpa.wps = null; mpa.pk = -1; mpa.ci = 0; mpa.np = 0; mpa.datum = false; mpaPattern(MPA_BOX.east, '동해 NLL', 'ew');
   helis = SC.helis.map(([ship, type, sched]) => ({ ship, type, sched, k: 0, st: 'deck', pos: [0, 0], wps: [], flights: 0 })); handovers = [];
   uav = { id: 'UAV-1', name: 'UAV-1', pos: advance(SC.uav.center, 0, SC.uav.r), center: SC.uav.center.slice(), r: SC.uav.r, spd: 80, ph: 0, mode: 'orbit', hdg: 90, task: '서해 정찰 궤도' };
   uav2 = { id: 'UAV-2', name: 'UAV-2', pos: [128.0, 34.05], spd: 90, hdg: 90, wps: [], pk: -1, task: '' };
@@ -1095,8 +1095,8 @@ function moveTarget(t, dt) {
   }
 }
 // ── 해상초계기: 바다 위로만 이동하고 동서·남북·지그재그·확장 사각 패턴으로 대잠 탐색 비행 ──
-// 초계 구역: [이름, 서경, 남위, 동경, 북위]. 평시에는 동해→남해→서해→남해 순으로 구역마다 두 가지 패턴씩 비행한다
-const MPA_BOX = { east: ['동해', 129.75, 36.3, 131.4, 38.35], south: ['남해', 127.15, 32.9, 129.0, 33.95], west: ['서해', 124.2, 35.6, 125.8, 37.35] };
+// 초계 구역: [이름, 서경, 남위, 동경, 북위]. 동해는 NLL 바로 남쪽을 따라 비행. 평시에는 동해→남해→서해→남해 순으로 구역마다 두 가지 패턴씩 비행한다
+const MPA_BOX = { east: ['동해 NLL', 128.75, 37.75, 131.6, 38.5], south: ['남해', 127.15, 32.9, 129.0, 33.95], west: ['서해', 124.2, 35.6, 125.8, 37.35] };
 const MPA_CYCLE = ['east', 'south', 'west', 'south'];
 const PATS = ['ew', 'ns', 'zz', 'sq'], PATNM = { ew: '동서 방향 평행 탐색', ns: '남북 방향 평행 탐색', zz: '지그재그 탐색', sq: '확장 사각 탐색' };
 // 반도 남쪽을 돌아가는 해상 경유점 (서해→남해→동해 순)
@@ -1139,7 +1139,7 @@ function mpaNext() {
   if (mpa.np % 2 === 0) mpa.ci = ((mpa.ci || 0) + 1) % MPA_CYCLE.length;
   const b = MPA_BOX[MPA_CYCLE[mpa.ci || 0]]; mpaPattern(b, b[0]);
 }
-function mpaHome() { mpa.datum = false; mpa.ci = 0; mpa.np = 0; mpaPattern(MPA_BOX.east, '동해'); }
+function mpaHome() { mpa.datum = false; mpa.ci = 0; mpa.np = 0; mpaPattern(MPA_BOX.east, '동해 NLL'); }
 function mpaMove(dt) {
   if (!mpa.wps || !mpa.wps.length) mpaNext();
   if (moveToward(mpa, mpa.wps[0], mpa.spd, dt)) {
