@@ -394,8 +394,8 @@ textarea.report { width: 100%; min-height: 150px; font: 12px/1.5 var(--font-data
 .pmz { fill: color-mix(in srgb, var(--un) 6%, transparent); stroke: var(--un); stroke-width: 1.2; vector-effect: non-scaling-stroke; } .btx.pmz { fill: #8a6d00; }
 .tfl { stroke-width: 1; vector-effect: non-scaling-stroke; } .tfl.kr { stroke: var(--fr); } .tfl.cn { stroke: var(--k-cnn); }
 .btx.tf.kr { fill: var(--fr); font-weight: 700; } .btx.tf.cn { fill: var(--k-cnn); font-weight: 700; }
-.nvh { fill: color-mix(in srgb, #0b3d91 10%, var(--halo)); stroke: #0b3d91; stroke-width: 1.8; vector-effect: non-scaling-stroke; opacity: .95; }
-.nvh.un { stroke-dasharray: 3 2; fill: color-mix(in srgb, #0b3d91 6%, var(--halo)); } .nvh.cv { stroke-width: 2.4; }
+.nvh { fill: color-mix(in srgb, #0b3d91 10%, var(--halo)); stroke: #0b3d91; stroke-width: 1.4; vector-effect: non-scaling-stroke; opacity: .95; }
+.nvh.un { stroke-dasharray: 3 2; fill: color-mix(in srgb, #0b3d91 6%, var(--halo)); } .nvh.cv { stroke-width: 1.9; }
 .nvs { fill: #0b3d91; stroke: var(--halo); stroke-width: 1; vector-effect: non-scaling-stroke; } .nvd { stroke: var(--halo); stroke-width: 1.6; vector-effect: non-scaling-stroke; }
 .nvu { fill: #0b3d91; stroke: var(--halo); stroke-width: 1; vector-effect: non-scaling-stroke; }
 .tid.navyl { fill: #0b3d91; font-weight: 800; }
@@ -1945,13 +1945,13 @@ function leader(cls, t, x, y) {
 // 해군 전력 기호: 다른 표적보다 크게, 남색 테두리 원 안에 넣어 구분한다
 const isNavy = t => t.truth === 'F' && t.cls === 'kn';
 const NAVY_C = '#0b3d91';
-function navyUav(x, y, z, cls = '') { const r = 6.5 * z; return `<circle class="nvh un${cls}" cx="${f1(x)}" cy="${f1(y)}" r="${f1(r * 1.75)}"/><path class="nvu" d="M${f1(x)},${f1(y - r)}L${f1(x + r * 1.3)},${f1(y + r * .55)}L${f1(x)},${f1(y + r * .1)}L${f1(x - r * 1.3)},${f1(y + r * .55)}Z"/>`; }
-function navyUsv(x, y, z) { const r = 6.5 * z; return `<circle class="nvh un" cx="${f1(x)}" cy="${f1(y)}" r="${f1(r * 1.75)}"/><path class="nvu" d="M${f1(x - r * 1.1)},${f1(y - r * .55)}H${f1(x + r * 1.1)}L${f1(x + r * .7)},${f1(y + r * .6)}H${f1(x - r * .7)}Z"/>`; }
+function navyUav(x, y, z, cls = '') { const r = 4.8 * z; return `<circle class="nvh un${cls}" cx="${f1(x)}" cy="${f1(y)}" r="${f1(r * 1.6)}"/><path class="nvu" d="M${f1(x)},${f1(y - r)}L${f1(x + r * 1.3)},${f1(y + r * .55)}L${f1(x)},${f1(y + r * .1)}L${f1(x - r * 1.3)},${f1(y + r * .55)}Z"/>`; }
+function navyUsv(x, y, z) { const r = 4.8 * z; return `<circle class="nvh un" cx="${f1(x)}" cy="${f1(y)}" r="${f1(r * 1.6)}"/><path class="nvu" d="M${f1(x - r * 1.1)},${f1(y - r * .55)}H${f1(x + r * 1.1)}L${f1(x + r * .7)},${f1(y + r * .6)}H${f1(x - r * .7)}Z"/>`; }
 function navyShip(t, x, y, z) {
-  if (t.id === 'CVX') { const w = 15 * z, hh = 5 * z; return `<circle class="nvh cv" cx="${f1(x)}" cy="${f1(y)}" r="${f1(w * 1.25)}"/><rect class="nvs" x="${f1(x - w)}" y="${f1(y - hh)}" width="${f1(2 * w)}" height="${f1(2 * hh)}" rx="${f1(hh)}"/><path class="nvd" d="M${f1(x - w * .7)},${f1(y + hh * .35)}L${f1(x + w * .8)},${f1(y - hh * .45)}"/>`; }
+  if (t.id === 'CVX') { const w = 10.5 * z, hh = 3.6 * z; return `<circle class="nvh cv" cx="${f1(x)}" cy="${f1(y)}" r="${f1(w * 1.25)}"/><rect class="nvs" x="${f1(x - w)}" y="${f1(y - hh)}" width="${f1(2 * w)}" height="${f1(2 * hh)}" rx="${f1(hh)}"/><path class="nvd" d="M${f1(x - w * .7)},${f1(y + hh * .35)}L${f1(x + w * .8)},${f1(y - hh * .45)}"/>`; }
   if (t.un === 'uav') return navyUav(x, y, z);
   if (t.un === 'usv') return navyUsv(x, y, z);
-  return `<circle class="nvh" cx="${f1(x)}" cy="${f1(y)}" r="${f1(11 * z)}"/>` + sym('F', t.kind, x, y, z * 1.45, 'kn');
+  return `<circle class="nvh" cx="${f1(x)}" cy="${f1(y)}" r="${f1(8 * z)}"/>` + sym('F', t.kind, x, y, z * 1.05, 'kn');
 }
 function drawDyn() {
   const z = vb.w / VW;
@@ -2093,12 +2093,12 @@ function drawDyn() {
   // 해상작전헬기 (비행 중)
   if (layerOn.air) for (const hh of helis) {
     if (hh.st === 'deck') continue;
-    const x = X(hh.pos[0]), y = Y(hh.pos[1]), r = 5.5 * z;
+    const x = X(hh.pos[0]), y = Y(hh.pos[1]), r = 4.2 * z;
     h += circ('air', hh.pos, HELI_R, z, true);
     const rest = hh.st === 'rtb' ? [] : hh.wps.slice(hh.wi).map(w => w.p);
     h += `<path class="orbit"${dash(z, 3, 3)} d="${pathD([hh.pos, ...rest, byId.get(hh.ship).pos])}"/>`;
     if (hh.st === 'dip') for (const k of [1, 2, 3]) h += `<circle class="dipr" cx="${f1(x)}" cy="${f1(y)}" r="${f1(k * DIP_R / 3 * PXKM)}"/>`;
-    h += `<circle class="nvh" cx="${f1(x)}" cy="${f1(y)}" r="${f1(r * 2.3)}"/><circle class="heli" cx="${f1(x)}" cy="${f1(y)}" r="${f1(r)}"/><path class="rotor" d="M${f1(x - 2.2 * r)},${f1(y - 2.2 * r)}L${f1(x + 2.2 * r)},${f1(y + 2.2 * r)}M${f1(x + 2.2 * r)},${f1(y - 2.2 * r)}L${f1(x - 2.2 * r)},${f1(y + 2.2 * r)}"/>`;
+    h += `<circle class="nvh" cx="${f1(x)}" cy="${f1(y)}" r="${f1(r * 2)}"/><circle class="heli" cx="${f1(x)}" cy="${f1(y)}" r="${f1(r)}"/><path class="rotor" d="M${f1(x - 2.2 * r)},${f1(y - 2.2 * r)}L${f1(x + 2.2 * r)},${f1(y + 2.2 * r)}M${f1(x + 2.2 * r)},${f1(y - 2.2 * r)}L${f1(x - 2.2 * r)},${f1(y + 2.2 * r)}"/>`;
     h += txt('tid A', x + 9 * z, y - 5 * z, 10 * z, `${hh.type.replace(/ \(.*|와일드캣/g, '').trim()} (${hh.ship})${hh.st === 'dip' ? ' · 디핑' : ''}`);
   }
   // 항공 자산
@@ -2116,11 +2116,11 @@ function drawDyn() {
   if (layerOn.surface) for (const u of usvs) {
     const x = X(u.pos[0]), y = Y(u.pos[1]), r = 5 * z;
     h += `<path class="usvl"${dash(z, 2, 5)} d="${pathD(u.line)}"/>` + circ('surf usvr', u.pos, USV_R, z, true);
-    h += navyUsv(x, y, z) + txt('tid navyl', x + 13 * z, y + 14 * z, 12 * z, `${u.name}${u.link !== '정상' ? ' ⚠' : ''}`);
+    h += navyUsv(x, y, z) + txt('tid navyl', x + 10 * z, y + 12 * z, 11 * z, `${u.name}${u.link !== '정상' ? ' ⚠' : ''}`);
   }
   if (layerOn.air) for (const a of [mpa, uav, uav2]) {
     const x = X(a.pos[0]), y = Y(a.pos[1]);
-    h += circ('air', a.pos, a === mpa ? MPA_R : UAV_R, z) + (a === mpa ? `<circle class="nvh" cx="${f1(x)}" cy="${f1(y)}" r="${f1(11 * z)}"/>` + sym('A', 'air', x, y, z * 1.5) : navyUav(x, y, z)) + txt('tid navyl', x + 13 * z, y - 8 * z, 12 * z, a === uav2 ? `UAV-2 · ${PATNM[PATS[uav2.pk]] || ''}` : a.name);
+    h += circ('air', a.pos, a === mpa ? MPA_R : UAV_R, z) + (a === mpa ? `<circle class="nvh" cx="${f1(x)}" cy="${f1(y)}" r="${f1(8 * z)}"/>` + sym('A', 'air', x, y, z * 1.1) : navyUav(x, y, z)) + txt('tid navyl', x + 10 * z, y - 6 * z, 11 * z, a.name);
   }
 
   // 표적
@@ -2135,9 +2135,9 @@ function drawDyn() {
     if (t.mode === 'intercept' && t.goal) { const g = t.goal(); if (g) h += `<line class="ic"${dash(z, 5, 4)} x1="${f1(x)}" y1="${f1(y)}" x2="${f1(X(g[0]))}" y2="${f1(Y(g[1]))}"/>`; }
     h += `<g${tr.lost ? ' class="lost"' : ''}>${isNavy(t) ? navyShip(t, x, y, z) : sym(tr.affil, t.kind, x, y, big ? z : z * .72, k)}</g>`;
     if (!big && z < 0.42 && !tr.lost) labels += txt('tid N', x + 6 * z, y - 4 * z, 9 * z, t.id);
-    if (isNavy(t)) labels += txt('tid navyl', x + (t.id === 'CVX' ? 20 : 13) * z, y - 9 * z, 12.5 * z, t.id);
+    if (isNavy(t)) labels += txt('tid navyl', x + (t.id === 'CVX' ? 15 : 10) * z, y - 7 * z, 11 * z, t.id);
     else if (big) labels += `<g${tr.lost ? ' class="lost"' : ''}>` + txt('tid ' + tr.affil + (FOREIGN_NAVY.has(k) || k === 'kcg' || k === 'usn' ? ' k-' + k : ''), x + 8 * z, y - 6 * z, 11 * z, t.id) + '</g>';
-    if (sel === t.id) h += `<circle class="selring" cx="${f1(x)}" cy="${f1(y)}" r="${f1((isNavy(t) ? (t.id === 'CVX' ? 23 : 16) : 12) * z)}"/>`;
+    if (sel === t.id) h += `<circle class="selring" cx="${f1(x)}" cy="${f1(y)}" r="${f1((isNavy(t) ? (t.id === 'CVX' ? 17 : 12) : 12) * z)}"/>`;
   }
   // 해역명: 화면 기준 크기로 크게, 표적·센서 위에 반투명으로 얹고 표적 번호는 그 위에 둔다. 확대 중인 해역은 더 크게
   let seaL = '';
