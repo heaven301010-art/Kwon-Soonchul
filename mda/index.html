@@ -396,6 +396,8 @@ textarea.report { width: 100%; min-height: 150px; font: 12px/1.5 var(--font-data
 .sealbl.big { fill: color-mix(in srgb, var(--sea-label) 70%, var(--fr)); font-weight: 800; letter-spacing: .3em; opacity: .5; pointer-events: none; paint-order: stroke; stroke: var(--halo); stroke-width: 4px; stroke-linejoin: round; }
 .sealbl.big.on { opacity: .4; }
 .nll { stroke: var(--nll); fill: none; stroke-width: 2; vector-effect: non-scaling-stroke; }
+.mdl { stroke: var(--nll); fill: none; stroke-width: 2.6; vector-effect: non-scaling-stroke; stroke-linejoin: round; }
+.btx.mdl { fill: var(--nll); font-weight: 700; }
 .kadiz { stroke: var(--kadiz); fill: none; stroke-width: 1.6; vector-effect: non-scaling-stroke; }
 .eez { stroke: var(--eez); fill: none; stroke-width: 1.8; vector-effect: non-scaling-stroke; }
 .eez.u { stroke-width: 1.5; }
@@ -574,7 +576,7 @@ textarea.report { width: 100%; min-height: 150px; font: 12px/1.5 var(--font-data
     </svg>
     <div class="bounds">
       <b>경계선</b>
-      <label><input type="checkbox" id="bdNLL" checked><svg width="22" height="6"><line x1="0" y1="3" x2="22" y2="3" class="nll" stroke-dasharray="6 3"/></svg>NLL</label>
+      <label><input type="checkbox" id="bdNLL" checked><svg width="22" height="6"><line x1="0" y1="3" x2="22" y2="3" class="nll" stroke-dasharray="6 3"/></svg>NLL·MDL</label>
       <label><input type="checkbox" id="bdKADIZ" checked><svg width="22" height="6"><line x1="0" y1="3" x2="22" y2="3" class="kadiz" stroke-dasharray="8 3 2 3"/></svg>KADIZ</label>
       <label><input type="checkbox" id="bdEEZ" checked><svg width="22" height="6"><line x1="0" y1="3" x2="22" y2="3" class="eez" stroke-dasharray="2 3"/></svg>EEZ</label>
       <label id="bdMCAwrap"><input type="checkbox" id="bdMCA" checked><svg width="22" height="6"><line x1="0" y1="3" x2="22" y2="3" class="mca" stroke-dasharray="12 4"/></svg>MCA(KTO)</label>
@@ -1944,8 +1946,10 @@ function drawStatic() {
   document.getElementById('gStatic').innerHTML = h;
 }
 
+// 지도 표적 심볼 배율 (1 = 이전 크기)
+const SYMK = .8;
 function sym(aff, dom, x, y, z, k) {
-  const r = 6 * z, c = `class="sy ${aff}${k ? ' k-' + k : ''}${aff === 'S' ? ' sus' : ''}"`;
+  const r = 6 * SYMK * z, c = `class="sy ${aff}${k ? ' k-' + k : ''}${aff === 'S' ? ' sus' : ''}"`;
   if (dom === 'air') {
     if (aff === 'H' || aff === 'S') return `<path ${c} d="M${f1(x - r * 1.25)},${f1(y)} L${f1(x)},${f1(y - r * 1.25)} L${f1(x + r * 1.25)},${f1(y)} Z"/>`;
     if (aff === 'U') return `<path ${c} d="M${f1(x - r)},${f1(y)} V${f1(y - r * .55)} Q${f1(x - r)},${f1(y - r)} ${f1(x - r * .55)},${f1(y - r)} H${f1(x + r * .55)} Q${f1(x + r)},${f1(y - r)} ${f1(x + r)},${f1(y - r * .55)} V${f1(y)} Z"/>`;
@@ -1976,13 +1980,13 @@ function leader(cls, t, x, y) {
 // 해군 전력 기호: 다른 표적보다 크게, 남색 테두리 원 안에 넣어 구분한다
 const isNavy = t => t.truth === 'F' && t.cls === 'kn';
 const NAVY_C = '#0b3d91';
-function navyUav(x, y, z, cls = '') { const r = 4.8 * z; return `<circle class="nvh un${cls}" cx="${f1(x)}" cy="${f1(y)}" r="${f1(r * 1.6)}"/><path class="nvu" d="M${f1(x)},${f1(y - r)}L${f1(x + r * 1.3)},${f1(y + r * .55)}L${f1(x)},${f1(y + r * .1)}L${f1(x - r * 1.3)},${f1(y + r * .55)}Z"/>`; }
-function navyUsv(x, y, z) { const r = 4.8 * z; return `<circle class="nvh un" cx="${f1(x)}" cy="${f1(y)}" r="${f1(r * 1.6)}"/><path class="nvu" d="M${f1(x - r * 1.1)},${f1(y - r * .55)}H${f1(x + r * 1.1)}L${f1(x + r * .7)},${f1(y + r * .6)}H${f1(x - r * .7)}Z"/>`; }
+function navyUav(x, y, z, cls = '') { const r = 4.8 * SYMK * z; return `<circle class="nvh un${cls}" cx="${f1(x)}" cy="${f1(y)}" r="${f1(r * 1.6)}"/><path class="nvu" d="M${f1(x)},${f1(y - r)}L${f1(x + r * 1.3)},${f1(y + r * .55)}L${f1(x)},${f1(y + r * .1)}L${f1(x - r * 1.3)},${f1(y + r * .55)}Z"/>`; }
+function navyUsv(x, y, z) { const r = 4.8 * SYMK * z; return `<circle class="nvh un" cx="${f1(x)}" cy="${f1(y)}" r="${f1(r * 1.6)}"/><path class="nvu" d="M${f1(x - r * 1.1)},${f1(y - r * .55)}H${f1(x + r * 1.1)}L${f1(x + r * .7)},${f1(y + r * .6)}H${f1(x - r * .7)}Z"/>`; }
 function navyShip(t, x, y, z) {
-  if (t.id === 'CVX') { const w = 10.5 * z, hh = 3.6 * z; return `<circle class="nvh cv" cx="${f1(x)}" cy="${f1(y)}" r="${f1(w * 1.25)}"/><rect class="nvs" x="${f1(x - w)}" y="${f1(y - hh)}" width="${f1(2 * w)}" height="${f1(2 * hh)}" rx="${f1(hh)}"/><path class="nvd" d="M${f1(x - w * .7)},${f1(y + hh * .35)}L${f1(x + w * .8)},${f1(y - hh * .45)}"/>`; }
+  if (t.id === 'CVX') { const w = 10.5 * SYMK * z, hh = 3.6 * SYMK * z; return `<circle class="nvh cv" cx="${f1(x)}" cy="${f1(y)}" r="${f1(w * 1.25)}"/><rect class="nvs" x="${f1(x - w)}" y="${f1(y - hh)}" width="${f1(2 * w)}" height="${f1(2 * hh)}" rx="${f1(hh)}"/><path class="nvd" d="M${f1(x - w * .7)},${f1(y + hh * .35)}L${f1(x + w * .8)},${f1(y - hh * .45)}"/>`; }
   if (t.un === 'uav') return navyUav(x, y, z);
   if (t.un === 'usv') return navyUsv(x, y, z);
-  return `<circle class="nvh" cx="${f1(x)}" cy="${f1(y)}" r="${f1(8 * z)}"/>` + sym('F', t.kind, x, y, z * 1.05, 'kn');
+  return `<circle class="nvh" cx="${f1(x)}" cy="${f1(y)}" r="${f1(8 * SYMK * z)}"/>` + sym('F', t.kind, x, y, z * 1.05, 'kn');
 }
 function drawDyn() {
   const z = vb.w / VW;
@@ -2033,6 +2037,10 @@ function drawDyn() {
     for (const line of [SC.nllWest, SC.nllEast]) h += `<path class="nll" d="${pathD(line)}"${dash(z, 7, 5)}/>`;
     h += txt('btx nll', X(SC.nllWest[0][0]) + 2 * z, Y(SC.nllWest[0][1]) - 7 * z, 11 * z, 'NLL');
     h += txt('btx nll', X(SC.nllEast[1][0]) - 2 * z, Y(SC.nllEast[1][1]) - 7 * z, 11 * z, 'NLL', 'end');
+  }
+  if (showB.nll && SC.mdl) {
+    h += `<path class="mdl" d="${pathD(SC.mdl)}"/>`;
+    h += txt('btx mdl', X(127.5), Y(38.31) - 8 * z, 11 * z, '군사분계선(MDL)', 'middle');
   }
 
   // 우주: 관측폭 흔적, 저궤도 통신위성, 관측·정찰 위성과 궤적, 정지궤도 위성
@@ -2125,7 +2133,7 @@ function drawDyn() {
   // 해상작전헬기 (비행 중)
   if (layerOn.air) for (const hh of helis) {
     if (hh.st === 'deck') continue;
-    const x = X(hh.pos[0]), y = Y(hh.pos[1]), r = 4.2 * z;
+    const x = X(hh.pos[0]), y = Y(hh.pos[1]), r = 4.2 * SYMK * z;
     h += circ('air', hh.pos, HELI_R, z, true);
     const rest = hh.st === 'rtb' ? [] : hh.wps.slice(hh.wi).map(w => w.p);
     h += `<path class="orbit"${dash(z, 3, 3)} d="${pathD([hh.pos, ...rest, byId.get(hh.ship).pos])}"/>`;
@@ -2152,7 +2160,7 @@ function drawDyn() {
   }
   if (layerOn.air) for (const a of [mpa, uav, uav2]) {
     const x = X(a.pos[0]), y = Y(a.pos[1]);
-    h += circ('air', a.pos, a === mpa ? MPA_R : UAV_R, z) + (a === mpa ? `<circle class="nvh" cx="${f1(x)}" cy="${f1(y)}" r="${f1(8 * z)}"/>` + sym('A', 'air', x, y, z * 1.1) : navyUav(x, y, z)) + txt('tid navyl', x + 10 * z, y - 6 * z, 11 * z, a.name);
+    h += circ('air', a.pos, a === mpa ? MPA_R : UAV_R, z) + (a === mpa ? `<circle class="nvh" cx="${f1(x)}" cy="${f1(y)}" r="${f1(8 * SYMK * z)}"/>` + sym('A', 'air', x, y, z * 1.1) : navyUav(x, y, z)) + txt('tid navyl', x + 10 * z, y - 6 * z, 11 * z, a.name);
   }
 
   // 표적
@@ -2241,7 +2249,7 @@ function drawArc() {
   for (const sh of arcShips) {
     const q = sh.rep.pos, v = AP(q[0], q[1]), age = T - sh.rep.t, st = arcStatus(sh);
     if (sh.escort) { const e = arcShips.find(x => x.id === sh.escort), w = AP(e.pos[0], e.pos[1]); h += `<line x1="${f1(v[0])}" y1="${f1(v[1])}" x2="${f1(w[0])}" y2="${f1(w[1])}" stroke="#0b7285" stroke-width="${f1(1.5 * az)}"/>`; }
-    const op = age > 60 ? ' opacity=".45"' : '', r = (sh.kr ? 6.5 : 5) * az;
+    const op = age > 60 ? ' opacity=".45"' : '', r = (sh.kr ? 6.5 : 5) * SYMK * az;
     h += sh.cls === 'run' ? `<path class="ash run"${op} d="M${f1(v[0])},${f1(v[1] - r * 1.3)}l${f1(r * 1.3)},${f1(r * 1.3)}l${f1(-r * 1.3)},${f1(r * 1.3)}l${f1(-r * 1.3)},${f1(-r * 1.3)}Z"/>`
       : `<circle class="ash ${sh.cls}"${op} cx="${f1(v[0])}" cy="${f1(v[1])}" r="${f1(r)}"/>`;
     if (st[1] >= 2) h += `<circle cx="${f1(v[0])}" cy="${f1(v[1])}" r="${f1(r + 4 * az)}" fill="none" stroke="${st[1] === 3 ? 'var(--ho)' : 'var(--su)'}" stroke-width="${f1(1.6 * az)}"/>`;
@@ -2899,8 +2907,8 @@ $('rqAuto').onclick = rqAuto;
 
 // ── 원해 해상교통로(SLOC) 관심해역: 호르무즈·아덴만·홍해·말라카 ─────────
 const SL = SC.sloc, SLAND = window.MDA_SLOC_LAND || [];
-const SK = 13.5, SCOS = Math.cos(14 * D2R), SVW = (152 - 26) * SK * SCOS, SVH = 60 * SK;
-const SP = (lon, lat) => [(lon - 26) * SK * SCOS, (44 - lat) * SK];
+const SK = 13.5, SCOS = Math.cos(14 * D2R), SVW = (152 - 26) * SYMK * SCOS, SVH = 60 * SK;
+const SP = (lon, lat) => [(lon - 26) * SYMK * SCOS, (44 - lat) * SK];
 const spath = (pts, close) => 'M' + pts.map(p => SP(p[0], p[1]).map(f1).join(',')).join('L') + (close ? 'Z' : '');
 const SCLS = { kr: '우리 상선', chd: '청해부대', rok: '우리 해군', co: '연합 해군 (EU·일·인)', us: '미 해군', cn: '중국 해군', ccg: '중국 해경', mil: '해상민병', tw: '대만 해군', ph: '필리핀 해경', jcg: '일본 해상보안청', ir: '이란 (IRGCN·해군)', pir: '해적 의심', shd: '그림자선단 의심', mer: '외국 상선' };
 const NAVY = new Set(['chd', 'rok', 'co', 'us', 'cn', 'ccg', 'tw', 'ph', 'jcg', 'ir']);
@@ -3267,7 +3275,7 @@ function drawSloc() {
   for (const sh of slocShips) {
     if (sh.rep.t < -1) continue;
     const q = sh.rep.pos, v = SP(q[0], q[1]), age = T - sh.rep.t, st = slocStatus(sh), op = age > 60 ? ' opacity=".45"' : '';
-    const r = (sh.cls === 'mer' ? 2.6 : sh.cls === 'kr' ? 5 : 5.5) * z;
+    const r = (sh.cls === 'mer' ? 2.6 : sh.cls === 'kr' ? 5 : 5.5) * SYMK * z;
     if (sh.cls === 'chd' && sh.mode === 'escort') { const w = SP(...sById(sh.goTo).pos); h += `<line x1="${f1(v[0])}" y1="${f1(v[1])}" x2="${f1(w[0])}" y2="${f1(w[1])}" stroke="var(--fr)" stroke-width="${f1(1.5 * z)}"/>`; }
     h += NAVY.has(sh.cls) ? `<path class="ssh ${sh.cls}"${op} d="M${f1(v[0])},${f1(v[1] - r * 1.3)}l${f1(r * 1.3)},${f1(r * 1.3)}l${f1(-r * 1.3)},${f1(r * 1.3)}l${f1(-r * 1.3)},${f1(-r * 1.3)}Z"/>`
       : sh.cls === 'pir' || sh.cls === 'mil' ? `<path class="ssh ${sh.cls}"${op} d="M${f1(v[0])},${f1(v[1] - r * 1.3)}l${f1(r * 1.2)},${f1(r * 2)}h${f1(-r * 2.4)}Z"/>`
@@ -3279,7 +3287,7 @@ function drawSloc() {
   }
   for (const u of slUx) {
     if (u.st === 'base') continue;
-    const v = SP(...u.pos), r = 4.5 * z;
+    const v = SP(...u.pos), r = 4.5 * SYMK * z;
     if (u.wps.length) h += `<path class="uxp ${u.kind}" fill="none" d="${spath([u.pos, ...u.wps.slice(0, 12)])}" stroke-width="${f1(1.2 * z)}" stroke-dasharray="${f1(4 * z)} ${f1(3 * z)}"/>`;
     h += `<circle class="uxr ${u.kind}" cx="${f1(v[0])}" cy="${f1(v[1])}" r="${f1(UXR[u.kind] / 111.2 * SK)}" stroke-width="${f1(z)}"/>`;
     h += u.kind === 'uav' ? `<path class="ux uav" d="M${f1(v[0])},${f1(v[1] - r * 1.3)}l${f1(r * 1.2)},${f1(r * 2)}h${f1(-r * 2.4)}Z"/>` : `<path class="ux usv" d="M${f1(v[0] - r)},${f1(v[1] - r * .7)}h${f1(2 * r)}l${f1(-r * .4)},${f1(r * 1.4)}h${f1(-r * 1.2)}Z"/>`;
