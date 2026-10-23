@@ -383,6 +383,9 @@ textarea.report { width: 100%; min-height: 150px; font: 12px/1.5 var(--font-data
 .rg { stroke-width: 1; vector-effect: non-scaling-stroke; }
 .rg.ground { stroke: color-mix(in srgb, var(--l-ground) 60%, transparent); fill: color-mix(in srgb, var(--l-ground) 5%, transparent); }
 .rg.ground.wide { fill: none; }
+.usv { fill: var(--fr); stroke: var(--halo); stroke-width: 1; vector-effect: non-scaling-stroke; } .usvl { fill: none; stroke: var(--fr); stroke-width: 1.4; opacity: .55; vector-effect: non-scaling-stroke; }
+.mumt td:first-child, .mumt td:nth-child(3) { white-space: nowrap; } #mumt td:nth-child(2), #mumt td:nth-child(4) { white-space: normal; } #mumt td:nth-child(2) { width: 50%; }
+.mumt td b.on { color: var(--ne); } .mumt td b.warn { color: var(--su); }
 .mpap { fill: none; stroke: var(--l-air); stroke-width: 1.3; opacity: .7; vector-effect: non-scaling-stroke; }
 .nm12 { fill: color-mix(in srgb, #d9b26f 30%, var(--sea)); stroke: color-mix(in srgb, #d9b26f 30%, var(--sea)); stroke-linejoin: round; }
 .nm12e { fill: none; stroke: color-mix(in srgb, var(--l-ground) 75%, var(--sea)); stroke-linejoin: round; }
@@ -546,6 +549,7 @@ textarea.report { width: 100%; min-height: 150px; font: 12px/1.5 var(--font-data
       <div class="clsum" id="clsum"></div>
       <div class="clsum prio" id="prio"></div>
       <div class="clsum prio asw" id="asw"></div>
+      <div class="clsum prio mumt" id="mumt"></div>
       <section class="box" data-dom="space"></section>
       <section class="box" data-dom="air"></section>
       <section class="box" data-dom="ground"></section>
@@ -723,14 +727,14 @@ const VTS = SC.vts.map(([n, x, y]) => ({ name: n, pos: [x, y], r: 35 }));
 const COOP = new Set(['ais', 'vpass', 'lrit']);
 const PORTS = SC.ports.map(([n, x, y]) => ({ name: n, pos: [x, y], r: 12 }));
 const ARRAYS = SC.arrays.map(([n, x, y]) => ({ name: n, pos: [x, y], r: 30 }));
-const HELI_R = 60, DIP_R = 9, SHIP_R = 40, SHIP_AIR_R = 150, SONAR_R = 12, MPA_R = 120, UAV_R = 50, BUOY_R = 22, LOST_AFTER = 12;
+const USV_R = 30, HELI_R = 60, DIP_R = 9, SHIP_R = 40, SHIP_AIR_R = 150, SONAR_R = 12, MPA_R = 120, UAV_R = 50, BUOY_R = 22, LOST_AFTER = 12;
 const SN = { ais: 'AIS', vpass: 'V-PASS', lrit: 'LRIT', vts: '해경 VTS', sar: 'SAR 위성', eo: 'EO/IR 위성', msi: '다분광 위성', hsi: '초분광 위성', rf: 'RF 위성 군집', radar: '육군 감시대 레이더', nradar: '해군 R/S 레이더', adradar: '방공 레이더', cctv: '해안 CCTV',
-  shipradar: '함정 레이더', fixed: '고정형 수중감시', buoy: '소노부이', sonar: '함정 소나', mpa: '해상초계기', uav: '무인기', heli: '해상작전헬기', dip: '디핑소나', link: '전술데이터링크' };
+  shipradar: '함정 레이더', fixed: '고정형 수중감시', buoy: '소노부이', sonar: '함정 소나', mpa: '해상초계기', uav: 'UAV', usv: 'USV', heli: '해상작전헬기', dip: '디핑소나', link: '전술데이터링크' };
 const DOMS = {
   space: { nm: '우주정보', sub: '위성 영상·신호', types: [['sar', 'SAR'], ['eo', 'EO/IR'], ['msi', '다분광'], ['hsi', '초분광'], ['rf', 'RF']] },
-  air: { nm: '항공정보', sub: '초계기·헬기·무인기', types: [['mpa', '해상초계기'], ['heli', '해상작전헬기'], ['uav', '무인기']] },
+  air: { nm: '항공정보', sub: '초계기·헬기·UAV', types: [['mpa', '해상초계기'], ['heli', '해상작전헬기'], ['uav', 'UAV']] },
   ground: { nm: '지상정보', sub: '해안·방공 레이더', types: [['nradar', '해군 R/S'], ['radar', '육군 감시대'], ['adradar', '방공']] },
-  surface: { nm: '수상정보', sub: 'GICOMS·해경 연계', types: [['ais', 'AIS'], ['vpass', 'V-PASS'], ['lrit', 'LRIT'], ['vts', 'VTS'], ['shipradar', '함정'], ['cctv', 'CCTV']] },
+  surface: { nm: '수상정보', sub: 'GICOMS·해경 연계', types: [['ais', 'AIS'], ['vpass', 'V-PASS'], ['lrit', 'LRIT'], ['vts', 'VTS'], ['shipradar', '함정'], ['usv', 'USV'], ['cctv', 'CCTV']] },
   under: { nm: '수중정보', sub: '음향 탐지', types: [['fixed', '고정형'], ['buoy', '소노부이'], ['dip', '디핑소나'], ['sonar', '함정 소나']] }
 };
 const DOMOF = {}; for (const [k, d] of Object.entries(DOMS)) for (const [t] of d.types) DOMOF[t] = k;
@@ -757,7 +761,7 @@ const EMIT = {
   vhf: { type: 'VHF 해상 무선', band: '156.8MHz (16채널)' },
   air: { type: '항공기 탑재 레이더', band: 'X밴드 10.1GHz', mil: true }
 };
-let rnd, T, targets, byId, tracks, alerts, reqs, logs, feeds, passes, buoys, mpa, uav, sel, stats, flags, nid, shares, jx, helis = [], handovers = [];
+let rnd, T, targets, byId, tracks, alerts, reqs, logs, feeds, passes, buoys, mpa, uav, uav2, usvs = [], sel, stats, flags, nid, shares, jx, helis = [], handovers = [];
 
 function routeShip(route, i, o = {}) {
   const w = route.slice(1);
@@ -849,7 +853,12 @@ function init() {
   mpa = { id: 'MPA', name: '해상초계기', pos: advance(SC.mpa.center, 0, SC.mpa.r), center: SC.mpa.center.slice(), r: SC.mpa.r, spd: 300, ph: 0, mode: 'orbit', hdg: 90, task: '동해 정찰 궤도' };
   mpa.wps = null; mpa.pk = -1; mpa.ci = 0; mpa.np = 0; mpa.datum = false; mpaPattern(MPA_BOX.east, '동해', 'ew');
   helis = SC.helis.map(([ship, type, sched]) => ({ ship, type, sched, k: 0, st: 'deck', pos: [0, 0], wps: [], flights: 0 })); handovers = [];
-  uav = { id: 'UAV', name: '무인기', pos: advance(SC.uav.center, 0, SC.uav.r), center: SC.uav.center.slice(), r: SC.uav.r, spd: 80, ph: 0, mode: 'orbit', hdg: 90, task: '서해 정찰 궤도' };
+  uav = { id: 'UAV-1', name: 'UAV-1', pos: advance(SC.uav.center, 0, SC.uav.r), center: SC.uav.center.slice(), r: SC.uav.r, spd: 80, ph: 0, mode: 'orbit', hdg: 90, task: '서해 정찰 궤도' };
+  uav2 = { id: 'UAV-2', name: 'UAV-2', pos: [128.0, 34.05], spd: 90, hdg: 90, wps: [], pk: -1, task: '' };
+  usvs = [
+    { id: 'USV-1', name: 'USV-1', ctl: 'F108', line: SC.nllWest.map(q => [q[0], q[1] - 0.045]).filter(q => q[0] >= 124.55 && q[0] <= 126.05), area: '서해 NLL' },
+    { id: 'USV-2', name: 'USV-2', ctl: 'F101', line: [[128.5, 38.56], [129.2, 38.56], [129.9, 38.56], [130.6, 38.56]], area: '동해 NLL' }
+  ].map((u, k) => ({ ...u, pos: u.line[k ? 1 : 2].slice(), wi: k ? 2 : 1, dir: k ? 1 : -1, spd: 15, hdg: 90, link: '정상', laps: 0 }));
   passes = []; tasks = []; comm = {}; commAt = -1;
   buildSats(); buildArctic(); arcSel = null; buildSloc();
   addLog('훈련 시나리오 개시. 전 센서 출처 가동.');
@@ -1031,12 +1040,12 @@ function moveTarget(t, dt) {
 }
 // ── 해상초계기: 바다 위로만 이동하고 동서·남북·지그재그·확장 사각 패턴으로 대잠 탐색 비행 ──
 // 초계 구역: [이름, 서경, 남위, 동경, 북위]. 평시에는 동해→남해→서해→남해 순으로 구역마다 두 가지 패턴씩 비행한다
-const MPA_BOX = { east: ['동해', 129.75, 36.3, 131.4, 38.35], south: ['남해', 127.15, 32.9, 129.0, 34.1], west: ['서해', 124.2, 35.6, 125.8, 37.35] };
+const MPA_BOX = { east: ['동해', 129.75, 36.3, 131.4, 38.35], south: ['남해', 127.15, 32.9, 129.0, 33.95], west: ['서해', 124.2, 35.6, 125.8, 37.35] };
 const MPA_CYCLE = ['east', 'south', 'west', 'south'];
 const PATS = ['ew', 'ns', 'zz', 'sq'], PATNM = { ew: '동서 방향 평행 탐색', ns: '남북 방향 평행 탐색', zz: '지그재그 탐색', sq: '확장 사각 탐색' };
 // 반도 남쪽을 돌아가는 해상 경유점 (서해→남해→동해 순)
 const SEA_GATES = [[125.3, 34.25], [126.6, 33.75], [127.6, 33.8], [129.0, 34.55], [129.7, 35.3]];
-const segLand = (a, b) => { const n = Math.max(2, Math.ceil(dist(a, b) / 4)); for (let i = 1; i < n; i++) { const f = i / n; if (isLand(a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) * f)) return true; } return false; };
+const segLand = (a, b) => { const n = Math.max(2, Math.ceil(dist(a, b) / 1.5)); for (let i = 1; i < n; i++) { const f = i / n; if (isLand(a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) * f)) return true; } return false; };
 function seaRoute(a, b) {
   if (!segLand(a, b)) return [b];
   let best = null, bl = 1e9;
@@ -1085,6 +1094,24 @@ function mpaMove(dt) {
       mpaPattern(['', d[0] - 0.5, d[1] - 0.38, d[0] + 0.5, d[1] + 0.38], mpa.arriveTask, 'sq');
       if (f) f();
     }
+  }
+}
+// UAV-2: 남해 상시 초계 (패턴 순환), USV: NLL을 따라 좌우 왕복 경비
+function uav2Step(dt) {
+  if (!uav2.wps.length) {
+    uav2.pk = (uav2.pk + 1) % PATS.length; const t = PATS[uav2.pk], pts = cleanPath(patternPts(MPA_BOX.south, t));
+    uav2.wps = [...seaRoute(uav2.pos, pts[0]), ...pts.slice(1)]; uav2.task = `남해 해상 초계 · ${PATNM[t]}`;
+  }
+  if (moveToward(uav2, uav2.wps[0], uav2.spd, dt)) uav2.wps.shift();
+}
+function usvStep(dt) {
+  for (const u of usvs) {
+    if (moveToward(u, u.line[u.wi], u.spd, dt)) {
+      if (u.wi + u.dir < 0 || u.wi + u.dir >= u.line.length) { u.dir *= -1; u.laps++; }
+      u.wi += u.dir;
+    }
+    // 재밍 영향권 안이면 데이터링크 저하
+    u.link = SC.jam && T >= SC.jam.at && !flags.jamDone && dist(u.pos, SC.jam.center) <= SC.jam.r ? '저하 (재밍)' : '정상';
   }
 }
 function moveAir(a, dt) {
@@ -1324,10 +1351,11 @@ function sense(t, friends, act, t0, taskHit) {
     if (layerOn.surface) {
       if (near(PORTS)) s.push('cctv');
       if (friends.some(f => f !== t && dist(f.pos, t.pos) <= SHIP_R)) s.push('shipradar');
+      if (usvs.some(u => dist(u.pos, t.pos) <= USV_R)) s.push('usv');
     }
     if (layerOn.air) {
       if (dist(mpa.pos, t.pos) <= MPA_R) s.push('mpa');
-      if (dist(uav.pos, t.pos) <= UAV_R) s.push('uav');
+      if (dist(uav.pos, t.pos) <= UAV_R || dist(uav2.pos, t.pos) <= UAV_R) s.push('uav');
       if (helis.some(h => h.st !== 'deck' && dist(h.pos, t.pos) <= HELI_R)) s.push('heli');
     }
     if (layerOn.space) spaceSense(t, s, act, taskHit);
@@ -1350,7 +1378,7 @@ function step(dt) {
   if (jx.st === 'exercise') orbit(jx, dt);
   else if (jx.st === 'leave') { jx.spd = 16; jx.hdg = 20; jx.pos = advance(jx.pos, jx.hdg, KMMIN(jx.spd) * dt); if (jx.pos[1] > 42.3) jx.gone = true; }
   for (const t of targets) moveTarget(t, dt);
-  moveAir(mpa, dt); moveAir(uav, dt); heliStep(dt);
+  moveAir(mpa, dt); moveAir(uav, dt); uav2Step(dt); usvStep(dt); heliStep(dt);
   const friends = targets.filter(t => t.truth === 'F');
   // 위성: 해도 상공에 들어오면 통과 기록을 열고, 관측 위성은 지나간 구간을 훑어 탐지한다
   const act = [];
@@ -1402,7 +1430,7 @@ function step(dt) {
       if (!tr) { tr = { id: t.id, first: T, by: {}, affil: t.truth === 'F' ? 'F' : s.some(x => COOP.has(x)) ? 'N' : 'U', contact: 0 }; tracks.set(t.id, tr); onNew(t, tr, s); }
       if (tr.lost) { tr.lost = false; onReacq(t, tr, s); }
       if (s.includes('rf') && t.truth !== 'F') onRf(t, tr);
-      // 영상(EO 위성·무인기·초계기)으로 본 미상 군함은 선형으로 식별한다
+      // 영상(EO 위성·UAV·초계기)으로 본 미상 군함은 선형으로 식별한다
       if (tr.affil === 'U' && (FOREIGN_NAVY.has(t.cls) || (t.cls === 'nkn' && t.mode === 'patrol')) && s.some(x => x === 'eo' || x === 'uav' || x === 'mpa' || x === 'heli')) {
         tr.affil = FOREIGN_NAVY.has(t.cls) ? 'N' : 'H'; tr.note = `영상 식별: ${CLS[t.cls]}`;
         addLog(`${s.filter(x => x === 'eo' || x === 'uav' || x === 'mpa' || x === 'heli').map(x => SN[x]).join('·')} 영상으로 ${t.id} ${CLS[t.cls]} 식별.`);
@@ -1549,9 +1577,9 @@ function taskSar(id, hw = 50) {
 }
 function taskUav(id) {
   const tr = tracks.get(id); if (!tr) return;
-  addReq(`무인기 근접 감시 · ${id}`, '수행');
-  sendAir(uav, tr.pos, 12, `${id} 근접 감시`, () => { addLog(`무인기 ${id} 해역 도착. 근접 감시 개시.`); feed('air', `무인기 ${id} 해역 도착`); });
-  feed('air', `무인기 ${id} 방향 재배치`);
+  addReq(`UAV-1 근접 감시 · ${id}`, '수행');
+  sendAir(uav, tr.pos, 12, `${id} 근접 감시`, () => { addLog(`UAV-1 ${id} 해역 도착. 근접 감시 개시.`); feed('air', `UAV-1 ${id} 해역 도착`); });
+  feed('air', `UAV-1 ${id} 방향 재배치`);
 }
 function dropBuoys(p, why) {
   buoys.push({ pos: p, until: T + 180 });
@@ -1721,7 +1749,7 @@ function scenario(dt = 0) {
     if (h.st === 'retreat' && h.pos[1] > nllLat(SC.nllWest, h.pos[0]) + 0.05) { flags.h201Retreated = true; f.mode = 'return'; closeAlert('nll', 'NLL 이북 퇴거 확인'); }
   }
   const dtr = tracks.get('D301'), d2 = tracks.get('D302');
-  if (dtr && dtr.affil === 'S' && d2 && !d2.lost) raise({ id: 'sts', sev: 'warn', title: '선박 간 환적 의심', tgt: 'D301·D302', rec: '무인기 재배치, F111 접근 식별', approve: approveSts });
+  if (dtr && dtr.affil === 'S' && d2 && !d2.lost) raise({ id: 'sts', sev: 'warn', title: '선박 간 환적 의심', tgt: 'D301·D302', rec: 'UAV 재배치, F111 접근 식별', approve: approveSts });
   if (d2 && dtr && dtr.affil === 'S' && d2.affil === 'U' && !d2.lost && dist(d2.pos, dtr.pos) < 30) { d2.affil = 'S'; d2.note = 'D301과 접현 기동'; }
   if (flags.stsAct && !flags.stsDone) {
     const f = byId.get('F111'), d = byId.get('D301');
@@ -1987,9 +2015,15 @@ function drawDyn() {
   }
   // 항공 자산
   if (layerOn.air && mpa.wps && mpa.wps.length) h += `<path class="mpap"${dash(z, 4, 4)} d="${pathD([mpa.pos, ...mpa.wps.slice(0, 14)])}"/>`;
-  if (layerOn.air) for (const a of [mpa, uav]) {
+  if (layerOn.air && uav2.wps.length) h += `<path class="mpap uavp"${dash(z, 3, 4)} d="${pathD([uav2.pos, ...uav2.wps.slice(0, 10)])}"/>`;
+  if (layerOn.surface) for (const u of usvs) {
+    const x = X(u.pos[0]), y = Y(u.pos[1]), r = 5 * z;
+    h += `<path class="usvl"${dash(z, 2, 5)} d="${pathD(u.line)}"/>` + circ('surf usvr', u.pos, USV_R, z, true);
+    h += `<path class="usv" d="M${f1(x - r)},${f1(y - r * .7)}H${f1(x + r)}L${f1(x + r * .6)},${f1(y + r * .7)}H${f1(x - r * .6)}Z"/>` + txt('tid F usvt', x + 8 * z, y + 12 * z, 10.5 * z, `${u.name}${u.link !== '정상' ? ' ⚠' : ''}`);
+  }
+  if (layerOn.air) for (const a of [mpa, uav, uav2]) {
     const x = X(a.pos[0]), y = Y(a.pos[1]);
-    h += circ('air', a.pos, a === mpa ? MPA_R : UAV_R, z) + sym('A', 'air', x, y, z) + txt('tid A', x + 8 * z, y - 4 * z, 10.5 * z, a === mpa && a.mode !== 'transit' ? `${a.name} · ${a.patNm}` : a.name);
+    h += circ('air', a.pos, a === mpa ? MPA_R : UAV_R, z) + sym('A', 'air', x, y, z) + txt('tid A', x + 8 * z, y - 4 * z, 10.5 * z, a === mpa && a.mode !== 'transit' ? `${a.name} · ${a.patNm}` : a === uav2 ? `UAV-2 · ${PATNM[PATS[uav2.pk]] || ''}` : a.name);
   }
 
   // 표적
@@ -2152,7 +2186,7 @@ function assets(dom) {
     }
     case 'air': {
       const fl = helis.filter(h => h.st !== 'deck'), nx = helis.filter(h => h.st === 'deck' && h.k < h.sched.length).sort((a, b) => a.sched[a.k] - b.sched[b.k])[0];
-      return [['해상초계기', mpa.task], ['해상작전헬기', fl.length ? fl.map(h => `${h.ship} ${h.st === 'dip' ? '디핑소나' : h.task} (${Math.round(T - h.t0)}분)`).join(', ') : `함상 대기 ${helis.length}대${nx ? ` · 다음 ${clock(nx.sched[nx.k]).hm} ${nx.ship}` : ''}`], ['무인기', uav.task]];
+      return [['해상초계기', mpa.task], ['해상작전헬기', fl.length ? fl.map(h => `${h.ship} ${h.st === 'dip' ? '디핑소나' : h.task} (${Math.round(T - h.t0)}분)`).join(', ') : `함상 대기 ${helis.length}대${nx ? ` · 다음 ${clock(nx.sched[nx.k]).hm} ${nx.ship}` : ''}`], ['UAV-1 (서해)', uav.task], ['UAV-2 (남해)', uav2.task]];
     }
     case 'ground': {
       const air = [...tracks.values()].filter(tr => !tr.lost && byId.get(tr.id).kind === 'air').length;
@@ -2229,7 +2263,7 @@ function prioTable(rows, urgent) {
       const kind = t.kind === 'air' ? '항공기' : tr.affil === 'U' && !tr.note ? `${KIND[t.kind]} · 식별 중` : CLS[clsOf(t, tr)] || KIND[t.kind];
       const src = tr.lost ? `<span class="lost">소실 ${fmtAge(T - tr.seen)}</span>` : (tr.now || []).map(x => SN[x]).slice(0, 2).join('·') || '–';
       const act = al ? `<span class="chip ${al.status === 'done' ? 'done' : 'act'}">${PST[al.status]}</span>` : urgent ? '<span class="chip act">감시 유지</span>'
-        : `<span class="chip">${t.kind === 'sub' ? '소노부이·소나 확인' : t.kind === 'air' ? '레이더·전투기 식별' : !t.ais ? 'EO·무인기 식별' : 'AIS 대조·검문'}</span>`;
+        : `<span class="chip">${t.kind === 'sub' ? '소노부이·소나 확인' : t.kind === 'air' ? '레이더·전투기 식별' : !t.ais ? 'EO·UAV 식별' : 'AIS 대조·검문'}</span>`;
       return `<button type="button" class="pr ${tr.affil}${sel === tr.id ? ' on' : ''}" data-sel="${tr.id}"><span class="l1"><b>${tr.id}</b><span class="k">${esc(kind)}</span>${act}</span>`
         + `<span class="l2">${esc(whereOf(tr.pos))} · ${f1(tr.spd ?? 0)}kn ${Math.round(tr.hdg ?? 0)}° · 최근접 ${nf ? `${nf.id} ${Math.round(nd)}km` : '–'}</span>`
         + `<span class="l2">${src} · ${fmtAge(T - tr.first)} 경과</span></button>`;
@@ -2269,13 +2303,31 @@ function renderAsw() {
     <h4 class="u" style="--pc: var(--l-under)">수중 음향 환경 (가상·개략)</h4>
     ${ASW_ENV.map(([n, d]) => `<p class="empty" style="font-size:11px;margin:1px 0"><b style="color:var(--fg)">${n}</b> ${d}</p>`).join('')}`);
 }
+// 유무인복합전투체계(MUM-T): 유인 함정·항공기와 UAV·USV가 정보를 나눠 탐지 범위를 넓힌다
+function renderMumt() {
+  const live = [...tracks.values()].filter(tr => !tr.lost && tr.affil !== 'F');
+  const inR = (p, r) => live.filter(tr => dist(tr.pos, p) <= r).length;
+  const where = p => whereOf(p);
+  const rows = [
+    ['유인', '해상초계기', where(mpa.pos), mpa.task, inR(mpa.pos, MPA_R), '지상통제', '정상'],
+    ...helis.map(h => ['유인', `${h.type.replace(/ \(.*|와일드캣/g, '').trim()} (${h.ship})`, h.st === 'deck' ? `${h.ship} 함상` : where(h.pos), h.st === 'deck' ? '함상 대기' : h.st === 'dip' ? '디핑소나 탐색' : h.task, h.st === 'deck' ? 0 : inR(h.pos, HELI_R), h.ship, '정상']),
+    ['무인', 'UAV-1', where(uav.pos), uav.task, inR(uav.pos, UAV_R), '지상통제', '정상'],
+    ['무인', 'UAV-2', where(uav2.pos), uav2.task, inR(uav2.pos, UAV_R), '지상통제', '정상'],
+    ...usvs.map(u => ['무인', u.name, u.area, `NLL 연한 좌우 경비 (${u.dir > 0 ? '동' : '서'}진, 왕복 ${u.laps}회)`, inR(u.pos, USV_R), `모함 ${u.ctl}`, u.link])
+  ];
+  const nMan = rows.filter(r => r[0] === '유인').length, nUn = rows.filter(r => r[0] === '무인').length, det = rows.filter(r => r[0] === '무인').reduce((a, r) => a + r[4], 0);
+  setHTML($('mumt'), 'mumt', `<h3>유무인복합전투체계 운용현황</h3>
+    <div class="phd"><div class="pk" style="--pc: var(--fr)"><b>${nMan}</b>유인 자산<small> · 초계기·헬기</small></div><div class="pk" style="--pc: var(--ne)"><b>${nUn}</b>무인 자산<small> · UAV ${2} · USV ${usvs.length}</small></div><div class="pk" style="--pc: var(--l-air)"><b>${det}</b>무인 자산 탐지 표적</div></div>
+    <table class="atab"><thead><tr><th>구분·자산</th><th>위치·임무</th><th>탐지</th><th>통제·링크</th></tr></thead><tbody>${rows.map(r => `<tr><td><small>${r[0]}</small>${esc(r[1])}</td><td>${esc(r[2])}<small>${esc(r[3])}</small></td><td>${r[4]}</td><td>${esc(r[5])}<small><b class="${r[6] === '정상' ? 'on' : 'warn'}">${esc(r[6])}</b></small></td></tr>`).join('')}</tbody></table>
+    <p class="empty" style="font-size:11px;margin:4px 0 0">USV는 모함(F108·F101)이 통제하며 NLL 전방 감시 정보를 전술데이터링크로 공유합니다. UAV는 지상 통제소에서 통제하고 해상초계기·함정과 영상 정보를 나눕니다.</p>`);
+}
 let domCls = {};
 function renderBoxes(det) {
   domCls = domainClsCounts();
   const all = {};
   for (const tr of tracks.values()) { if (tr.lost) continue; const k = clsOf(byId.get(tr.id), tr); if (k) all[k] = (all[k] || 0) + 1; }
   setHTML($('clsum'), 'clsum', `<h3>해양표적 식별 및 추적현황</h3>${kgrid(all, false)}`);
-  renderPrio(); renderAsw(); renderRegion();
+  renderPrio(); renderAsw(); renderRegion(); renderMumt();
   for (const [dom, d] of Object.entries(DOMS)) {
     const box = document.querySelector(`.box[data-dom="${dom}"]`);
     box.classList.toggle('off', !layerOn[dom]);
@@ -2348,7 +2400,7 @@ function renderPanel() {
     const rfBtn = '<button class="btn" type="button" data-task="rf">RF 신호 수집 요청</button>';
     const acts = tr.affil === 'F' ? '' : t.kind === 'air' ? rfBtn : t.kind === 'sub'
       ? '<button class="btn" type="button" data-task="buoy">소노부이 부설 요청</button>'
-      : t.kind === 'surface' ? '<button class="btn" type="button" data-task="sar">SAR 긴급 촬영</button><button class="btn" type="button" data-task="uav">무인기 근접 감시</button>' + rfBtn : '';
+      : t.kind === 'surface' ? '<button class="btn" type="button" data-task="sar">SAR 긴급 촬영</button><button class="btn" type="button" data-task="uav">UAV 근접 감시</button>' + rfBtn : '';
     setHTML($('selActs'), 'selActs', acts);
     setHTML($('selBody'), 'selBody', `<div class="hd"><b>${esc(t.id)}</b><span class="chip ${tr.lost ? '' : 'act'}">${AFF[tr.affil]} · ${{ surface: '수상', sub: '수중', air: '항공' }[t.kind]}${tr.lost ? ' · 추적 소실' : ''}</span></div><dl>
       <dt>선종</dt><dd>${t.kind === 'air' ? '항공기' : CLS[clsOf(t, tr)]}</dd>
