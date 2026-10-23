@@ -2120,7 +2120,7 @@ function drawDyn() {
   }
   if (layerOn.air) for (const a of [mpa, uav, uav2]) {
     const x = X(a.pos[0]), y = Y(a.pos[1]);
-    h += circ('air', a.pos, a === mpa ? MPA_R : UAV_R, z) + (a === mpa ? `<circle class="nvh" cx="${f1(x)}" cy="${f1(y)}" r="${f1(11 * z)}"/>` + sym('A', 'air', x, y, z * 1.5) : navyUav(x, y, z)) + txt('tid navyl', x + 13 * z, y - 8 * z, 12 * z, a === mpa && a.mode !== 'transit' ? `${a.name} · ${a.patNm}` : a === uav2 ? `UAV-2 · ${PATNM[PATS[uav2.pk]] || ''}` : a.name);
+    h += circ('air', a.pos, a === mpa ? MPA_R : UAV_R, z) + (a === mpa ? `<circle class="nvh" cx="${f1(x)}" cy="${f1(y)}" r="${f1(11 * z)}"/>` + sym('A', 'air', x, y, z * 1.5) : navyUav(x, y, z)) + txt('tid navyl', x + 13 * z, y - 8 * z, 12 * z, a === uav2 ? `UAV-2 · ${PATNM[PATS[uav2.pk]] || ''}` : a.name);
   }
 
   // 표적
