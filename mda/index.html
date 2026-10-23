@@ -86,9 +86,9 @@ button { font: inherit; color: inherit; }
 .seg .btn[aria-pressed="true"] { background: var(--fg); color: var(--panel); border-color: var(--fg); }
 
 /* 격자 배치 */
-.grid { flex: 1; min-height: 0; display: grid; gap: 8px; grid-template-columns: minmax(0, 1fr) 340px; grid-template-areas: "map mda"; }
+.grid { flex: 1; min-height: 0; display: grid; gap: 8px; grid-template-columns: minmax(0, 1fr) 380px; grid-template-areas: "map mda"; }
 /* 출처별 정보칸은 해도 오른쪽의 큰 상자 하나에 모은다: 우주·항공·지상·수상·수중 순 */
-.srcpanel { position: absolute; z-index: 2; top: 8px; right: 8px; width: 272px; max-height: calc(100% - 16px); overflow-y: auto;
+.srcpanel { position: absolute; z-index: 2; top: 8px; right: 8px; width: 340px; max-height: calc(100% - 16px); overflow-y: auto;
   background: color-mix(in srgb, var(--panel) 94%, transparent); border: 1px solid var(--line); border-radius: 5px;
   box-shadow: 0 2px 10px color-mix(in srgb, var(--fg) 14%, transparent); }
 .srcpanel > h2 { position: sticky; top: 0; z-index: 1; margin: 0; padding: 7px 11px; font-size: 13.5px; font-weight: 700; background: var(--panel); border-bottom: 1px solid var(--line); }
@@ -96,7 +96,7 @@ button { font: inherit; color: inherit; }
 .prio .phd { display: flex; gap: 6px; flex-wrap: wrap; margin: 2px 0 6px; }
 .prio .pk { flex: 1 1 0; min-width: 0; border: 1px solid var(--line); border-left: 3px solid var(--pc); border-radius: 4px; padding: 4px 7px; background: var(--panel); font-size: 10.5px; color: var(--muted); }
 .prio .pk b { display: block; font-size: 17px; color: var(--pc); font-variant-numeric: tabular-nums; line-height: 1.2; }
-.prio .pk small { color: var(--muted); }
+.prio .pk small { color: var(--muted); display: block; }
 .prio .pk.h { --pc: var(--ho); } .prio .pk.u { --pc: var(--un); }
 .prio h4 { margin: 6px 0 2px; font-size: 11px; color: var(--pc); font-weight: 700; } .prio h4.h { --pc: var(--ho); } .prio h4.u { --pc: var(--un); }
 .prio .pr { display: block; width: 100%; text-align: left; font: inherit; background: none; border: 0; border-bottom: 1px dotted var(--line); padding: 4px 2px; cursor: pointer; color: var(--fg); }
@@ -244,7 +244,27 @@ button { font: inherit; color: inherit; }
 .icls b { font-family: var(--font-data); font-weight: 500; color: var(--fg); }
 .icls .c b { color: var(--ho); }
 .icls .lbl2 { width: 100%; color: var(--faint); font-size: 11px; }
-.share { width: 100%; height: auto; display: block; margin-bottom: 6px; }
+.share { width: 100%; max-width: 300px; height: auto; display: block; margin: 0 auto 6px; }
+@media (max-height: 950px) and (min-width: 861px) { .share { max-width: 260px; } }
+/* 노트북 화면 (1001~1500px): 해도와 오른쪽 정보칸을 나란히 두고, 정보칸·글자·상단 막대를 비율에 맞게 줄인다 */
+@media (max-width: 1500px) and (min-width: 1001px) {
+  .grid { grid-template-columns: minmax(0, 1fr) 330px; }
+  .srcpanel { width: 300px; }
+  .mda, .srcpanel { zoom: .92; }
+  .mda { padding: 8px 11px 12px; gap: 12px; }
+  .top { gap: 6px 16px; }
+  .brand h1 { font-size: 16px; } .brand small { font-size: 11px; }
+  .dtg { font-size: 13.5px; } .counts { gap: 2px 9px; font-size: 12px; } .counts b { font-size: 12.5px; } .counts .sea b { font-size: 15px; }
+  .ctl .btn { padding: 4px 8px; font-size: 12px; }
+  .share { max-width: 250px; }
+}
+@media (max-width: 1280px) and (min-width: 1001px) {
+  .grid { grid-template-columns: minmax(0, 1fr) 300px; }
+  .srcpanel { width: 280px; }
+  .mda, .srcpanel { zoom: .86; }
+  .viewsw .btn, #kpre .btn, #spre .btn, #apre .btn { font-size: 11.5px; padding: 3px 8px; }
+  .brand small { display: none; } .brand h1 { font-size: 15px; } .top { gap: 4px 12px; } .counts { gap: 2px 7px; font-size: 11.5px; } .ctl { gap: 4px; } .ctl .btn { padding: 3px 7px; font-size: 11.5px; }
+}
 .share .nd { fill: var(--panel-2); stroke: var(--line); stroke-width: 1; }
 .share .nd.hub { fill: color-mix(in srgb, var(--fr) 8%, var(--panel)); stroke: var(--fr); }
 .share .nd.ext { stroke-dasharray: 4 3; }
@@ -333,6 +353,8 @@ button { font: inherit; color: inherit; }
 .rqtab th { position: sticky; top: 0; background: var(--panel-2); text-align: left; font-weight: 600; color: var(--muted); font-size: 10.5px; padding: 3px 4px; }
 .rqtab td { padding: 3px 4px; border-top: 1px dotted var(--line); vertical-align: top; }
 .rqtab td small { display: block; color: var(--muted); font-size: 10px; }
+.rqtab td.fit { white-space: nowrap; text-align: right; } .rqtab td.fit .btn { display: block; margin: 3px 0 0 auto; }
+.rqtab td:nth-child(2) { white-space: nowrap; }
 .rqtab tr.grp td { background: var(--panel-2); font-weight: 600; font-size: 11px; }
 .rqtab tr.no td { color: var(--faint); }
 .rqtab .btn { padding: 2px 7px; font-size: 11px; }
@@ -399,6 +421,14 @@ textarea.report { width: 100%; min-height: 150px; font: 12px/1.5 var(--font-data
 .nvs { fill: #0b3d91; stroke: var(--halo); stroke-width: 1; vector-effect: non-scaling-stroke; } .nvd { stroke: var(--halo); stroke-width: 1.6; vector-effect: non-scaling-stroke; }
 .nvu { fill: #0b3d91; stroke: var(--halo); stroke-width: 1; vector-effect: non-scaling-stroke; }
 .tid.navyl { fill: #0b3d91; font-weight: 800; }
+#slocpanel .atab.kv td:first-child { white-space: nowrap; color: var(--muted); width: 2.8em; } #slocpanel .atab.kv td:last-child { white-space: normal; }
+.mrow { border-bottom: 1px dotted var(--line); padding: 4px 1px; font-size: 11.5px; }
+.mrow .l1 { display: flex; align-items: center; gap: 6px; } .mrow .l1 b { white-space: nowrap; }
+.mrow .l1 .k { flex: 1; min-width: 0; color: var(--muted); font-size: 10.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mrow .l1 .r { color: var(--fg); font-size: 10.5px; white-space: nowrap; }
+.mrow .l1 .lk { margin-left: auto; font-size: 10.5px; font-weight: 700; white-space: nowrap; } .mrow .lk.on { color: var(--ne); } .mrow .lk.warn { color: var(--su); }
+.mrow .tag { font-size: 10px; padding: 0 5px; border-radius: 3px; background: color-mix(in srgb, #0b3d91 12%, var(--panel)); color: #0b3d91; white-space: nowrap; } .mrow .tag.un { background: color-mix(in srgb, var(--ne) 14%, var(--panel)); color: var(--ne); }
+.mrow .l2 { color: var(--muted); font-size: 10.5px; line-height: 1.35; }
 .tfbox { margin-top: 8px; border: 1px solid #0b3d91; border-left-width: 4px; border-radius: 5px; padding: 6px 8px; background: color-mix(in srgb, #0b3d91 4%, var(--panel)); }
 .tfbox h4 { margin: 0 0 4px; font-size: 12px; color: #0b3d91; } .tfbox h4 small { color: var(--muted); font-weight: 400; }
 #mumt .tfbox td:nth-child(2), #mumt .tfbox td:nth-child(3) { white-space: normal; }
@@ -454,11 +484,11 @@ textarea.report { width: 100%; min-height: 150px; font: 12px/1.5 var(--font-data
 .selring { fill: none; stroke: var(--fg); stroke-width: 1.4; vector-effect: non-scaling-stroke; }
 .ic { stroke: var(--fr); stroke-width: 1.2; fill: none; vector-effect: non-scaling-stroke; opacity: .8; }
 
-@media (max-width: 1280px) {
+@media (max-width: 1000px) {
   html, body { height: auto; }
   .grid { flex: none; grid-template-columns: minmax(0, 1fr); grid-template-areas: "map" "mda"; }
   .mapwrap { height: max(560px, 82vh); }
-  .mda { overflow: visible; contain: none; }
+  .mda { overflow: visible; contain: none; display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 14px 18px; align-items: start; }
 }
 @media (max-width: 860px) {
   /* 좁은 화면에서도 큰 상자는 해도 오른쪽에 두고, 출처별로 이름과 탐지 수만 보이다가 누르면 펼친다 */
@@ -2390,14 +2420,14 @@ function renderAsw() {
       + `<span class="l2">${esc(whereOf(tr.pos))} · ${f1(tr.spd ?? 0)}kn ${Math.round(tr.hdg ?? 0)}° · 추정 오차 ±${Math.round(err)}km · 최근접 ${esc(an)} ${asset ? Math.round(asset[1]) + 'km' : ''}</span>`
       + `<span class="l2">${rec.length ? rec.join('·') : '음향 접촉 없음'} · 최초 ${clock(tr.first).hm}</span></button>`;
   }).join('');
-  const hrow = helis.map(h => `<tr><td>${h.ship} ${esc(h.type.replace(/ \(.*/, ''))}</td><td>${h.st === 'deck' ? `함상 대기${h.k < h.sched.length ? ` · 이함 ${clock(h.sched[h.k]).hm}` : ''}` : h.st === 'dip' ? '디핑소나 탐색 중' : `${esc(h.task)} (${Math.round(T - h.t0)}분)`}</td><td>${h.flights}회</td></tr>`).join('');
+  const hrow = helis.map(h => `<tr><td>${h.ship} ${esc(h.type.replace(/ \(.*|와일드캣/g, '').trim())}</td><td>${h.st === 'deck' ? `함상 대기${h.k < h.sched.length ? ` · 이함 ${clock(h.sched[h.k]).hm}` : ''}` : h.st === 'dip' ? '디핑소나 탐색 중' : `${esc(h.task)} (${Math.round(T - h.t0)}분)`}</td><td>${h.flights}회</td></tr>`).join('');
   setHTML($('asw'), 'asw', `<h3>대잠 정보 현황</h3>
     <div class="phd"><div class="pk h"><b>${subs.filter(t => !tracks.get(t.id).lost).length}</b>수중 접촉<small> · 소실 ${subs.filter(t => tracks.get(t.id).lost).length}</small></div><div class="pk u"><b>${bs.length + dips}</b>음향 탐색 중<small> · 소노부이 ${bs.length} · 디핑 ${dips}</small></div></div>
     ${rows || '<p class="empty" style="font-size:11px;margin:2px 0">현재 수중 접촉 없음</p>'}
     <h4 class="u" style="--pc: var(--l-under)">대잠 자산</h4>
-    <table class="atab"><tbody><tr><td>고정형 수중감시</td><td>${ARRAYS.length}개소 가동</td><td></td></tr><tr><td>소노부이 필드</td><td>${bs.length ? `${bs.length}개 · 잔여 ${Math.round(Math.max(...bs.map(b => b.until - T)))}분` : '없음'}</td><td></td></tr>
-      <tr><td>해상초계기</td><td>${esc(mpa.task)}</td><td></td></tr>${hrow}
-      <tr><td>함정 소나</td><td>아군 함정 ${targets.filter(f => f.truth === 'F' && f.cls === 'kn').length}척 (탐지 ${SONAR_R}km)</td><td></td></tr></tbody></table>
+    <table class="atab"><tbody><tr><td>고정형 수중감시</td><td>${ARRAYS.length}개소 가동</td></tr><tr><td>소노부이 필드</td><td>${bs.length ? `${bs.length}개 · 잔여 ${Math.round(Math.max(...bs.map(b => b.until - T)))}분` : '없음'}</td></tr>
+      <tr><td>해상초계기</td><td>${esc(mpa.task)}</td></tr>${hrow}
+      <tr><td>함정 소나</td><td>아군 함정 ${targets.filter(f => f.truth === 'F' && f.cls === 'kn').length}척 (탐지 ${SONAR_R}km)</td></tr></tbody></table>
     <h4 class="u" style="--pc: var(--l-under)">수중 음향 환경 (가상·개략)</h4>
     ${ASW_ENV.map(([n, d]) => `<p class="empty" style="font-size:11px;margin:1px 0"><b style="color:var(--fg)">${n}</b> ${d}</p>`).join('')}`);
 }
@@ -2426,7 +2456,7 @@ function tfPanel() {
     <div class="csum"><span>상태 <b>${st}</b></span><span>위치 <b>${esc(whereOf(cvx.pos))}</b></span><span>속력 <b>${f1(K.wps.length ? K.spd : 2)}kn</b></span><span>정면 <b>${Math.round(K.face)}°</b></span>
     <span>전력 <b>유인 ${mem.filter(t => !t.un).length} · 무인 ${mem.filter(t => t.un).length}</b></span><span>무인 전방 감시 거리 <b>${fwd.length ? Math.round(Math.max(...fwd)) : 0}km</b></span>
     ${cnOn && cn ? `<span>랴오닝함까지 <b>${Math.round(dist(cvx.pos, cn.pos))}km</b></span>` : ''}</div>
-    <table class="atab"><thead><tr><th>함정·전력</th><th>역할</th><th>위치·속력·CVX 거리</th></tr></thead><tbody>${mem.map(t => `<tr><td style="white-space:nowrap"><b style="color:#0b3d91">${t.id}</b><small>${esc(t.type.replace(/ \(.*\)/, ''))}</small></td><td>${TF_ROLE[t.id] || ''}</td><td>${esc(whereOf(t.pos))}<small>${f1(t.spd || 0)}kn${t.id === 'CVX' ? '' : ` · ${Math.round(dist(t.pos, cvx.pos))}km`}</small></td></tr>`).join('')}</tbody></table></div>`;
+    ${mem.map(t => `<div class="mrow"><div class="l1"><b style="color:#0b3d91">${t.id}</b><span class="k">${esc(t.type.replace(/ \(.*\)/, ''))}</span><span class="r">${TF_ROLE[t.id] || ''}</span></div><div class="l2">${esc(whereOf(t.pos))} · ${f1(t.spd || 0)}kn${t.id === 'CVX' ? '' : ` · CVX ${Math.round(dist(t.pos, cvx.pos))}km`}</div></div>`).join('')}</div>`;
 }
 function renderMumt() {
   const live = [...tracks.values()].filter(tr => !tr.lost && tr.affil !== 'F');
@@ -2446,7 +2476,8 @@ function renderMumt() {
   const nMan = rows.filter(r => r[0].startsWith('유인')).length, nUn = rows.filter(r => r[0].startsWith('무인')).length, det = rows.filter(r => r[0].startsWith('무인')).reduce((a, r) => a + r[4], 0);
   setHTML($('mumt'), 'mumt', `<h3>유무인복합전투체계 운용현황</h3>
     <div class="phd"><div class="pk" style="--pc: var(--fr)"><b>${nMan}</b>유인 자산<small> · 초계기·헬기</small></div><div class="pk" style="--pc: var(--ne)"><b>${nUn}</b>무인 자산<small> · UAV ${2 + kun.filter(t => t.un === 'uav').length} · USV ${usvs.length + kun.filter(t => t.un === 'usv').length}</small></div><div class="pk" style="--pc: var(--l-air)"><b>${det}</b>무인 자산 탐지 표적</div></div>
-    <table class="atab"><thead><tr><th>구분·자산</th><th>위치·임무</th><th>탐지</th><th>데이터 전송</th></tr></thead><tbody>${rows.map(r => `<tr><td><small>${r[0]} · ${esc(r[5])}</small>${esc(r[1])}</td><td>${esc(r[2])}<small>${esc(r[3])}</small></td><td>${r[4]}</td><td><b class="${r[6].st === '정상' ? 'on' : 'warn'}">${esc(r[6].st)}</b><small>${esc(r[6].type)}<br>${r[6].rate}Mbps · ${r[6].lat}ms · 손실 ${r[6].loss}%</small></td></tr>`).join('')}</tbody></table>
+    ${rows.map(r => `<div class="mrow"><div class="l1"><span class="tag ${r[0].startsWith('무인') ? 'un' : ''}">${r[0].split(' · ')[0]}</span><b>${esc(r[1])}</b><span class="lk ${r[6].st === '정상' ? 'on' : 'warn'}">${esc(r[6].st)}</span></div>
+      <div class="l2">${esc(r[2])} · ${esc(r[3])}</div><div class="l2">탐지 ${r[4]} · ${esc(r[5])} · ${esc(r[6].type)} ${r[6].rate}Mbps · ${r[6].lat}ms · 손실 ${r[6].loss}%</div></div>`).join('')}
     <p class="empty" style="font-size:11px;margin:3px 0 0">평균 전송률 <b style="color:var(--fg)">${(rows.reduce((a, r) => a + r[6].rate, 0) / rows.length).toFixed(1)}Mbps</b> · 링크 저하 <b style="color:var(--fg)">${rows.filter(r => r[6].st !== '정상').length}</b>개 자산</p>
     ${tfPanel()}
     <p class="empty" style="font-size:11px;margin:4px 0 0"><b style="color:var(--fr)">기동부대 구성</b> CVX · 이지스 구축함 2 (정조대왕·세종대왕급) · 호위함 2 (충남·대구급) · 군수지원함 · 함재 UAV 2 · USV 2 — 무인전력 전방, 유인함정 후방 배치. ${TFG.cn && T >= TFG.cn.at ? `대치 상대: 랴오닝 항모전단 (항모·055·052D×2·054A·901, 중국 UAV 2·USV 2)` : ''}</p>
@@ -2497,7 +2528,7 @@ function renderPanel() {
     const sum = ks => ks.reduce((a, k) => a + det[k], 0);
     const recent = to => shares.some(x => T - x.t <= 15 && x.to.includes(to));
     const nIFC = alerts.filter(a => a.to.includes('해외 IFC')).length, nKCG = alerts.filter(a => a.to.includes('해경')).length;
-    const node = (x, y, w, t1, t2, cls = '', hh = 40) => `<rect class="nd ${cls}" x="${x}" y="${y}" width="${w}" height="${hh}" rx="5"/><text class="nt" x="${x + w / 2}" y="${y + hh / 2 - 3}" text-anchor="middle">${t1}</text><text class="ns" x="${x + w / 2}" y="${y + hh / 2 + 11}" text-anchor="middle">${t2}</text>`;
+    const node = (x, y, w, t1, t2, cls = '', hh = 40) => `<rect class="nd ${cls}" x="${x}" y="${y}" width="${w}" height="${hh}" rx="5"/><text class="nt" x="${x + w / 2}" y="${y + hh / 2 - 3}" text-anchor="middle">${t1}</text><text class="${cls === 'hub' ? 'nt' : 'ns'}" x="${x + w / 2}" y="${y + hh / 2 + 13}" text-anchor="middle">${t2}</text>`;
     const edge = (d, hot) => `<path class="eg${hot ? ' hot' : ''}" d="${d}"/>`;
     const lab = (x, y, t, a = 'middle') => `<text class="el" x="${x}" y="${y}" text-anchor="${a}">${t}</text>`;
     setHTML($('shareSvg'), 'share',
@@ -2785,12 +2816,12 @@ function renderRq() {
     if (!on.has(g)) continue;
     const list = rq.rows.map((r, i) => [r, i]).filter(([r]) => r.grp === g);
     if (!list.length) continue;
-    h += `<tr class="grp"><td colspan="4">${nm} <small style="display:inline">· 적합 ${list.filter(([r]) => r.fit === 'ok').length} / ${list.length}</small></td></tr>`
-      + list.map(([r, i]) => `<tr class="${r.fit === 'no' ? 'no' : ''}"><td>${esc(r.name)}<small>${esc(r.sub)}</small></td><td>${r.rf ? `오차 ${r.res / 1000}km` : r.res == null ? '탐지·추적' : r.res + 'm'}<small>폭 ${r.w}km</small></td><td>${fmtT(r)}</td>`
-        + `<td><span class="chip ${FIT[r.fit][1]}">${FIT[r.fit][0]}</span>${r.fit !== 'no' ? ` <button class="btn" type="button" data-rq="${i}">요청</button>` : ''}${r.why ? `<small>${esc(r.why)}</small>` : ''}</td></tr>`).join('');
+    h += `<tr class="grp"><td colspan="3">${nm} <small style="display:inline">· 적합 ${list.filter(([r]) => r.fit === 'ok').length} / ${list.length}</small></td></tr>`
+      + list.map(([r, i]) => `<tr class="${r.fit === 'no' ? 'no' : ''}"><td>${esc(r.name)}<small>${esc(r.sub)}${r.why ? ` · ${esc(r.why)}` : ''}</small></td><td>${r.rf ? `오차 ${r.res / 1000}km` : r.res == null ? '탐지·추적' : r.res + 'm'}<small>폭 ${r.w}km · ${fmtT(r)}</small></td>`
+        + `<td class="fit"><span class="chip ${FIT[r.fit][1]}">${FIT[r.fit][0]}</span>${r.fit !== 'no' ? `<button class="btn" type="button" data-rq="${i}">요청</button>` : ''}</td></tr>`).join('');
   }
   setHTML($('rqMsg'), 'rqMsg', `${esc(a.name)} ${fmtPos(a.pos)} · 관측폭 ${a.w}km · 해상도 ${a.res}m 이하 · ${a.win / 60}시간 이내 · 기준 ${clock(rq.at).hm}`);
-  setHTML($('rqCand'), 'rqCand', h ? `<table class="rqtab"><thead><tr><th>센서</th><th>해상도·폭</th><th>가용</th><th>판정</th></tr></thead><tbody>${h}</tbody></table>` : '<p class="empty" style="padding:6px">센서 영역을 하나 이상 고르세요.</p>');
+  setHTML($('rqCand'), 'rqCand', h ? `<table class="rqtab"><thead><tr><th>센서</th><th>해상도·폭·가용</th><th>판정</th></tr></thead><tbody>${h}</tbody></table>` : '<p class="empty" style="padding:6px">센서 영역을 하나 이상 고르세요.</p>');
 }
 function rqSubmit(rows) {
   const a = rqArea(), done = [], fresh = rqCatalog(a);
@@ -3254,7 +3285,7 @@ function chdPanel() {
   return `<div class="ahd"><h3>청해부대 현황 (아덴만)</h3>
     <b>CH2</b> ${esc(c.name)} <span class="chip ${chdS.st === 'convoy' ? 'act' : 'warn'}">${stNm}</span>
     <div class="empty" style="font-size:11.5px;margin:3px 0">${esc(c.task || '')} · ${slocWhere(c.pos)} · ${f1(c.spd || 0)}kn</div>
-    <table class="atab"><tbody>
+    <table class="atab kv"><tbody>
       <tr><td>유류</td><td>${bar(chdS.fuel)}${Math.round(chdS.fuel)}% <small>현 속력 기준 약 ${Math.round(fuelH)}시간 (잔량 10% 유지)</small></td></tr>
       <tr><td>청수</td><td>${bar(chdS.water)}${Math.round(chdS.water)}% <small>조수기 2대 가동</small></td></tr>
       <tr><td>부식</td><td>${bar(chdS.food / 60 * 100)}${f1(chdS.food)}일분 <small>냉동·건조 부식</small></td></tr>
@@ -3373,7 +3404,7 @@ function renderPolar() {
   const north = arcShips.filter(sh => sh.pos[1] > AR.geoLimit).length, sst = (-1.2 + 0.3 * Math.sin(T / 90)).toFixed(1), vis = Math.round(6 + 4 * Math.sin(T / 70));
   const nSent = cdseCount(cdseA);
   // 흐름도: 왼쪽 국내 기관, 오른쪽 위성·국제 정보, 가운데 통합 체계, 아래 활용
-  const node = (x, y, w, t1, t2, cls = '', hh = 36) => `<rect class="nd ${cls}" x="${x}" y="${y}" width="${w}" height="${hh}" rx="5"/><text class="nt" x="${x + w / 2}" y="${y + hh / 2 - 2}" text-anchor="middle">${t1}</text><text class="ns" x="${x + w / 2}" y="${y + hh / 2 + 11}" text-anchor="middle">${t2}</text>`;
+  const node = (x, y, w, t1, t2, cls = '', hh = 36) => `<rect class="nd ${cls}" x="${x}" y="${y}" width="${w}" height="${hh}" rx="5"/><text class="nt" x="${x + w / 2}" y="${y + hh / 2 - 2}" text-anchor="middle">${t1}</text><text class="${cls === 'hub' ? 'nt' : 'ns'}" x="${x + w / 2}" y="${y + hh / 2 + 13}" text-anchor="middle">${t2}</text>`;
   const edge = d => `<path class="eg hot" d="${d}"/>`, lab = (x, y, t, a = 'middle') => `<text class="el" x="${x}" y="${y}" text-anchor="${a}">${t}</text>`;
   const L = [['극지연구소', '아라온·다산기지 관측'], ['기상청', '극지 기상·해빙 예보'], ['해양수산부', '북극항로 운항 관리'], ['국립해양조사원', '극지 해도·해양관측'], ['한국해양수산개발원', '북극 물류·정책 분석']];
   const R = [['코페르니쿠스 CDSE', 'Sentinel-1·2·3 (EU)', 'ext'], ['우리 극궤도 위성', '아리랑·군 정찰위성', ''], ['국제 협력', '북극이사회·NAVAREA', 'ext']];
@@ -3401,7 +3432,7 @@ function renderSlocInfo() {
   const lrit = kr.filter(sh => T - sh.rep.t <= 60).length, chd = sById('CH1');
   const [w, s0, e, n] = SBOX[slocPre], inA = SATS.filter(o => { const q = satPos(o, T); return o.use && q[0] >= w && q[0] <= e && q[1] >= s0 && q[1] <= n; }).length;
   const navyN = slocShips.filter(sh => NAVY.has(sh.cls) && sh.rep.t > -1).length, thr = slocShips.filter(sh => ['ir', 'pir', 'cn', 'ccg', 'mil'].includes(sh.cls) && sh.rep.t > -1 && T - sh.rep.t <= 60).length;
-  const node = (x, y, w2, t1, t2, cls = '', hh = 36) => `<rect class="nd ${cls}" x="${x}" y="${y}" width="${w2}" height="${hh}" rx="5"/><text class="nt" x="${x + w2 / 2}" y="${y + hh / 2 - 2}" text-anchor="middle">${t1}</text><text class="ns" x="${x + w2 / 2}" y="${y + hh / 2 + 11}" text-anchor="middle">${t2}</text>`;
+  const node = (x, y, w2, t1, t2, cls = '', hh = 36) => `<rect class="nd ${cls}" x="${x}" y="${y}" width="${w2}" height="${hh}" rx="5"/><text class="nt" x="${x + w2 / 2}" y="${y + hh / 2 - 2}" text-anchor="middle">${t1}</text><text class="${cls === 'hub' ? 'nt' : 'ns'}" x="${x + w2 / 2}" y="${y + hh / 2 + 13}" text-anchor="middle">${t2}</text>`;
   const edge = d => `<path class="eg hot" d="${d}"/>`, lab = (x, y, t, a = 'middle') => `<text class="el" x="${x}" y="${y}" text-anchor="${a}">${t}</text>`;
   const L = [['해양수산부', 'LRIT·해적위험해역 관리'], ['외교부', '재외국민·현지 정세'], ['합참·해군작전사', '청해부대 작전 지휘'], ['한국해양수산개발원', '해운 물류·위험 분석'], ['선사·해운협회', '선박 보고·운항 계획']];
   const R = [['UKMTO·MSCHOA', '선박 보고·경보', 'ext'], ['CMF·IMSC (바레인)', '연합해군 정보 공유', 'ext'], ['IFC-IOR·싱가포르 IFC', 'ReCAAP 해적 정보', 'ext'], ['코페르니쿠스 CDSE', 'Sentinel 영상 (EU)', 'ext']];
