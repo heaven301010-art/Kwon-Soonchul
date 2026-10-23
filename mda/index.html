@@ -161,6 +161,11 @@ button { font: inherit; color: inherit; }
 .sbase { stroke: var(--halo); stroke-width: 1; vector-effect: non-scaling-stroke; } .sbase.kr { fill: var(--fr); } .sbase.us { fill: var(--k-usn); } .sbase.cn { fill: var(--k-cnn); } .sbase.co { fill: #7048e8; } .sbase.info { fill: var(--l-space); }
 .atx.sb { fill: var(--muted); } .atx.sb.kr { fill: var(--fr); font-weight: 600; } .atx.sb.info { fill: var(--l-space); }
 .atx.zchd { fill: var(--fr); font-weight: 600; } .atx.zhra { fill: var(--su); } .atx.zhou, .atx.zpir, .atx.zirg { fill: var(--ho); } .atx.zrec { fill: #8a6d00; } .atx.zsts { fill: var(--k-shadow); }
+.hub { fill: var(--ne); stroke: var(--ne); stroke-width: 1.6; vector-effect: non-scaling-stroke; } .atx.hubt { fill: var(--ne); font-weight: 700; }
+.hubbox { fill: color-mix(in srgb, var(--ne) 4%, transparent); stroke: var(--ne); }
+.ux { stroke: var(--halo); stroke-width: 1; vector-effect: non-scaling-stroke; } .ux.uav { fill: #2f9e44; } .ux.usv { fill: #0b7285; }
+.uxp, .uxp.uav, .uxp.usv { fill: none !important; } .uxp.uav { stroke: #2f9e44; } .uxp.usv { stroke: #0b7285; } .uxr { fill: none; opacity: .5; } .uxr.uav { stroke: #2f9e44; } .uxr.usv { stroke: #0b7285; }
+.bar { display: inline-block; width: 70px; height: 7px; background: var(--panel-2); border-radius: 3px; overflow: hidden; vertical-align: middle; margin-right: 5px; } .bar i { display: block; height: 100%; background: var(--ne); } .bar i.w { background: var(--su); } .bar i.c { background: var(--ho); }
 .ssh { stroke: var(--halo); stroke-width: 1; vector-effect: non-scaling-stroke; }
 .ssh.kr { fill: #1e6bd0; color: #1e6bd0; } .ssh.chd { fill: #0b4fb3; color: #0b4fb3; } .ssh.co { fill: #7048e8; color: #7048e8; } .ssh.us { fill: var(--k-usn); color: var(--k-usn); } .ssh.cn { fill: var(--k-cnn); color: var(--k-cnn); }
 .ssh.ir { fill: var(--ho); color: var(--ho); } .ssh.pir { fill: #b91c1c; color: #b91c1c; } .ssh.shd { fill: var(--k-shadow); color: var(--k-shadow); } .ssh.mer { fill: #9aa7b1; color: #9aa7b1; }
@@ -2304,21 +2309,34 @@ function renderAsw() {
     ${ASW_ENV.map(([n, d]) => `<p class="empty" style="font-size:11px;margin:1px 0"><b style="color:var(--fg)">${n}</b> ${d}</p>`).join('')}`);
 }
 // 유무인복합전투체계(MUM-T): 유인 함정·항공기와 UAV·USV가 정보를 나눠 탐지 범위를 넓힌다
+// 데이터 전송 상태: [링크 종류, 전송률 Mbps, 지연 ms, 손실 %]. 재밍 영향권 안이면 손실이 커진다
+const GCS = { west: [126.62, 36.95], south: [126.55, 33.5] };
+function mumtLink(kind, pos, ctlPos) {
+  const jam = SC.jam && T >= SC.jam.at && !flags.jamDone && dist(pos, SC.jam.center) <= SC.jam.r * 1.3;
+  let l;
+  if (kind === 'mpa') l = ['Link-16 · 위성', 0.115, 250, 0.3];
+  else if (kind === 'heli') { const d = dist(pos, ctlPos); l = d < 1 ? ['함상 유선', 100, 2, 0] : ['함-헬기 데이터링크', +(10 * Math.max(0.15, 1 - d / 180)).toFixed(1), 40, +(0.2 + d / 300).toFixed(1)]; }
+  else if (kind === 'uav') { const d = dist(pos, ctlPos); l = d <= 200 ? ['C밴드 LOS', +(20 * (1 - d / 260)).toFixed(1), 60, 0.2] : ['Ku 위성 중계', 2.5, 650, 1.2]; }
+  else { const d = dist(pos, ctlPos); l = d <= 150 ? ['UHF/C밴드 LOS (모함 중계)', +(6 * Math.max(0.1, 1 - d / 180)).toFixed(1), 80, +(0.3 + d / 300).toFixed(1)] : ['위성 중계', 0.45, 700, 2.5]; }
+  if (jam) l = [l[0], +(l[1] * 0.15).toFixed(2), l[2] * 3, +(l[3] + 30).toFixed(1)];
+  return { type: l[0], rate: l[1], lat: l[2], loss: l[3], st: jam ? '저하 (재밍)' : l[3] > 2 ? '주의' : '정상' };
+}
 function renderMumt() {
   const live = [...tracks.values()].filter(tr => !tr.lost && tr.affil !== 'F');
   const inR = (p, r) => live.filter(tr => dist(tr.pos, p) <= r).length;
   const where = p => whereOf(p);
   const rows = [
-    ['유인', '해상초계기', where(mpa.pos), mpa.task, inR(mpa.pos, MPA_R), '지상통제', '정상'],
-    ...helis.map(h => ['유인', `${h.type.replace(/ \(.*|와일드캣/g, '').trim()} (${h.ship})`, h.st === 'deck' ? `${h.ship} 함상` : where(h.pos), h.st === 'deck' ? '함상 대기' : h.st === 'dip' ? '디핑소나 탐색' : h.task, h.st === 'deck' ? 0 : inR(h.pos, HELI_R), h.ship, '정상']),
-    ['무인', 'UAV-1', where(uav.pos), uav.task, inR(uav.pos, UAV_R), '지상통제', '정상'],
-    ['무인', 'UAV-2', where(uav2.pos), uav2.task, inR(uav2.pos, UAV_R), '지상통제', '정상'],
-    ...usvs.map(u => ['무인', u.name, u.area, `NLL 연한 좌우 경비 (${u.dir > 0 ? '동' : '서'}진, 왕복 ${u.laps}회)`, inR(u.pos, USV_R), `모함 ${u.ctl}`, u.link])
+    ['유인', '해상초계기', where(mpa.pos), mpa.task, inR(mpa.pos, MPA_R), '지상통제', mumtLink('mpa', mpa.pos)],
+    ...helis.map(h => { const sh = byId.get(h.ship); return ['유인', `${h.type.replace(/ \(.*|와일드캣/g, '').trim()} (${h.ship})`, h.st === 'deck' ? `${h.ship} 함상` : where(h.pos), h.st === 'deck' ? '함상 대기' : h.st === 'dip' ? '디핑소나 탐색' : h.task, h.st === 'deck' ? 0 : inR(h.pos, HELI_R), h.ship, mumtLink('heli', h.st === 'deck' ? sh.pos : h.pos, sh.pos)]; }),
+    ['무인', 'UAV-1', where(uav.pos), uav.task, inR(uav.pos, UAV_R), '지상통제 (서해)', mumtLink('uav', uav.pos, GCS.west)],
+    ['무인', 'UAV-2', where(uav2.pos), uav2.task, inR(uav2.pos, UAV_R), '지상통제 (남해)', mumtLink('uav', uav2.pos, GCS.south)],
+    ...usvs.map(u => ['무인', u.name, u.area, `NLL 연한 좌우 경비 (${u.dir > 0 ? '동' : '서'}진, 왕복 ${u.laps}회)`, inR(u.pos, USV_R), `모함 ${u.ctl}`, mumtLink('usv', u.pos, byId.get(u.ctl).pos)])
   ];
   const nMan = rows.filter(r => r[0] === '유인').length, nUn = rows.filter(r => r[0] === '무인').length, det = rows.filter(r => r[0] === '무인').reduce((a, r) => a + r[4], 0);
   setHTML($('mumt'), 'mumt', `<h3>유무인복합전투체계 운용현황</h3>
     <div class="phd"><div class="pk" style="--pc: var(--fr)"><b>${nMan}</b>유인 자산<small> · 초계기·헬기</small></div><div class="pk" style="--pc: var(--ne)"><b>${nUn}</b>무인 자산<small> · UAV ${2} · USV ${usvs.length}</small></div><div class="pk" style="--pc: var(--l-air)"><b>${det}</b>무인 자산 탐지 표적</div></div>
-    <table class="atab"><thead><tr><th>구분·자산</th><th>위치·임무</th><th>탐지</th><th>통제·링크</th></tr></thead><tbody>${rows.map(r => `<tr><td><small>${r[0]}</small>${esc(r[1])}</td><td>${esc(r[2])}<small>${esc(r[3])}</small></td><td>${r[4]}</td><td>${esc(r[5])}<small><b class="${r[6] === '정상' ? 'on' : 'warn'}">${esc(r[6])}</b></small></td></tr>`).join('')}</tbody></table>
+    <table class="atab"><thead><tr><th>구분·자산</th><th>위치·임무</th><th>탐지</th><th>데이터 전송</th></tr></thead><tbody>${rows.map(r => `<tr><td><small>${r[0]} · ${esc(r[5])}</small>${esc(r[1])}</td><td>${esc(r[2])}<small>${esc(r[3])}</small></td><td>${r[4]}</td><td><b class="${r[6].st === '정상' ? 'on' : 'warn'}">${esc(r[6].st)}</b><small>${esc(r[6].type)}<br>${r[6].rate}Mbps · ${r[6].lat}ms · 손실 ${r[6].loss}%</small></td></tr>`).join('')}</tbody></table>
+    <p class="empty" style="font-size:11px;margin:3px 0 0">평균 전송률 <b style="color:var(--fg)">${(rows.reduce((a, r) => a + r[6].rate, 0) / rows.length).toFixed(1)}Mbps</b> · 링크 저하 <b style="color:var(--fg)">${rows.filter(r => r[6].st !== '정상').length}</b>개 자산</p>
     <p class="empty" style="font-size:11px;margin:4px 0 0">USV는 모함(F108·F101)이 통제하며 NLL 전방 감시 정보를 전술데이터링크로 공유합니다. UAV는 지상 통제소에서 통제하고 해상초계기·함정과 영상 정보를 나눕니다.</p>`);
 }
 let domCls = {};
@@ -2426,7 +2444,7 @@ function renderPanel() {
   setHTML($('alerts'), 'alerts', alerts.length ? alerts.map(a => `<div class="al ${a.status === 'done' ? 'done' : a.sev}">
     <div class="t">${esc(a.title)}<span>${esc(a.tgt)}</span></div>
     <div class="r">${a.status === 'done' ? '평가: ' + esc(a.result) : '→ ' + esc(a.rec)}</div>
-    <div class="a"><span class="chip ${a.status}">${stName[a.status]}</span><span class="chip">${esc(a.cat)}</span><span class="chip ${a.share === '국내 한정' ? 'cls' : 'shr'}">${a.share}</span><span class="chip">→ ${a.to.length ? a.to.join('·') : '군 내부'}</span>${a.status === 'open' ? `<button class="btn go" type="button" data-approve="${a.id}">조치 승인</button>` : ''}${a.status !== 'done' && a.sat ? a.sat.map(([lb], i) => a.satReq?.[i] ? `<span class="chip act">${lb.replace(' 요청', '')} 요청됨</span>` : `<button class="btn sat" type="button" data-alsat="${a.id}:${i}">🛰 ${lb}</button>`).join('') : ''}<span class="empty">${clock(a.t).hm}</span></div></div>`).join('')
+    <div class="a"><span class="chip ${a.status}">${stName[a.status]}</span><span class="chip">${esc(a.cat)}</span><span class="chip ${a.share === '국내 한정' ? 'cls' : 'shr'}">${a.share}</span><span class="chip">→ ${a.to.length ? a.to.join('·') : '군 내부'}</span>${a.status === 'open' ? `<button class="btn go" type="button" data-approve="${a.id}">조치 승인</button>` : ''}${a.status !== 'done' && a.sat ? a.sat.map(([lb], i) => a.satReq?.[i] ? `<span class="chip act">${lb.replace(' 요청', '')} 요청됨</span>` : `<button class="btn sat" type="button" data-alsat="${a.id}:${i}">${/^U[AS]V/.test(lb) ? '✈ ' : '🛰 '}${lb}</button>`).join('') : ''}<span class="empty">${clock(a.t).hm}</span></div></div>`).join('')
     : '<p class="empty">현재 이상징후가 없습니다. 시나리오가 진행되면 AIS 신호 소실, EEZ 침범, NLL 침범, 수중 접촉, KADIZ 진입이 차례로 나타납니다.</p>');
   // 전자기스펙트럼 영향성 평가: 대역·체계별 영향 범위, 영향 받는 우군·민간 수, 평가 등급, 대응
   {
@@ -2765,7 +2783,8 @@ function buildSloc() {
   }
   for (const sh of slocShips) { sh.rep = { t: 0, pos: sh.pos.slice(), src: sh.ais ? 'S-AIS' : sh.cls === 'chd' ? '전술데이터링크' : '연합해군 공유 (CMF)' }; sh.ph = rnd() * 20; }
   slocShips.filter(sh => ['cn', 'ir', 'pir', 'shd', 'mil', 'tw'].includes(sh.cls)).forEach(sh => { sh.rep.t = -999; sh.rep.src = '미탐지'; });
-  slocFx = []; slocSel = null;
+  slocFx = []; slocSel = null; buildSlUx();
+  Object.assign(chdS, { fuel: 58, water: 71, food: 34, st: 'convoy', resupT: null });
 }
 const sById = id => slocShips.find(x => x.id === id);
 // 현지 시각 기준 주간 여부 (KST는 UTC+9)
@@ -2796,12 +2815,14 @@ function slocStep(t0, dt) {
     if ((sh.cls === 'co' || sh.cls === 'us') && tick(30)) { sh.rep = { t: T, pos: sh.pos.slice(), src: '연합해군 공유 (CMF)' }; continue; }
     if (gdist(chd.pos, sh.pos) <= 60) { sh.rep = { t: T, pos: sh.pos.slice(), src: '청해부대 레이더' }; continue; }
     if (coal.some(c => c !== sh && gdist(c.pos, sh.pos) <= 60)) { sh.rep = { t: T, pos: sh.pos.slice(), src: '연합해군 공유 (CMF)' }; continue; }
+    { const u = slUx.find(x => x.st !== 'base' && gdist(x.pos, sh.pos) <= UXR[x.kind]); if (u) { sh.rep = { t: T, pos: sh.pos.slice(), src: `${u.id} (${u.kind === 'uav' ? 'EO/IR·레이더' : '레이더·EO'})` }; continue; } }
     SATS.forEach((o, i) => {
       const q = sp[i]; if (!q || (o.mis !== 'rf' && o.mis !== 'sar' && !o.night && !localDay(T, q[0]))) return;
       if (o.mis === 'rf' && !NAVY.has(sh.cls) && sh.cls !== 'pir') return;
       if (gdist(q, sh.pos) <= (o.mis === 'rf' ? 600 : 250)) sh.rep = { t: T, pos: sh.pos.slice(), src: `${SAT_MIS[o.mis]} 위성 (${o.name})` };
     });
   }
+  uxStep(dt); chdStep(dt);
   slocScenario(dt);
 }
 const inZone = (sh, k) => { const z = SL.zones[k]; return z.c ? gdist(sh.pos, z.c) <= z.r : inPoly(sh.pos, z.poly); };
@@ -2815,7 +2836,7 @@ function slocScenario(dt) {
     boats.forEach((b, i) => { b.mode = 'goto'; b.goKn = 30; b.goal = () => advance(k1.pos, (k1.hdg + (i ? 60 : -60)) % 360, 1.2); });
   }
   if (flags.hzStart && !flags.hzDone && boats.some(b => gdist(b.pos, k1.pos) < 15)) raise({ id: 'hormuz', sev: 'crit', title: '[원해] 호르무즈 해협 IRGCN 고속정 접근 (나포 위협)', tgt: `${k1.id}·${boats.map(b => b.id).join('·')}`,
-    rec: '청해부대 근접 호위, UKMTO·IMSC 통보, 선사에 항로·속력 유지 권고', approve: () => {
+    rec: '청해부대 근접 호위, UKMTO·IMSC 통보, 선사에 항로·속력 유지 권고', sat: [['UAV·USV 대응 출동 (푸자이라 거점)', () => uxRespond('H', () => k1.pos, `${k1.id} 나포 위협`)]], approve: () => {
       chd.mode = 'goto'; chd.goKn = 28; chd.goal = () => k1.pos;
       chd.onArrive = () => { chd.mode = 'escort'; chd.goTo = k1.id; chd.off = 1.5; flags.hzEsc = T; k1.hold = false; boats.forEach(b => { b.mode = 'goto'; b.goKn = 30; b.goal = () => b.home; b.onArrive = () => { b.mode = 'station'; b.center = b.home.slice(); }; });
         addLog('청해부대, K01 근접 호위 개시. IRGCN 고속정 이탈.'); feed('surface', '[원해] 청해부대 K01 근접 호위 개시'); };
@@ -2834,7 +2855,7 @@ function slocScenario(dt) {
     slocFx.push({ a: R.launch, b: vic.pos.slice(), t: T, kind: 'msl' }, { a: [43.4, 15.6], b: vic.pos.slice(), t: T + 2, kind: 'uav' });
     addLog(`후티, 홍해 남부 상선 ${vic.id} 공격 (대함미사일·무인기). 선박 피격.`); feed('space', `[원해] 홍해 남부 ${vic.id} 피격 · 발사 지점 호데이다 일대`);
     raise({ id: 'redsea', sev: 'crit', title: '[원해] 홍해 남부 후티 대함미사일·무인기 공격', tgt: `${vic.id}·${k5.id}`,
-      rec: `${k5.id} 바브엘만데브 진입 보류·희망봉 우회 권고, 아스피데스·CMF 위협 정보 공유`, approve: () => {
+      rec: `${k5.id} 바브엘만데브 진입 보류·희망봉 우회 권고, 아스피데스·CMF 위협 정보 공유`, sat: [['UAV·USV 대응 출동 (지부티 거점)', () => uxRespond('A', () => vic.pos, `${vic.id} 피격 현장`)]], approve: () => {
         k5.dir = -1; k5.reroute = true; flags.rsAct = T;
         addReq(`${k5.id} 홍해 진입 보류 · 희망봉 우회 권고 (선사·해수부)`, '수행'); addReq('아스피데스·CMF 위협 정보 공유 · 홍해 남부', '완료');
       } });
@@ -2853,7 +2874,7 @@ function slocScenario(dt) {
   if (sk && !flags.pyDone && gdist(sk.pos, k6.pos) < 40) {
     if (!sk.rep || sk.rep.t < T - 1) sk.rep = { t: T, pos: sk.pos.slice(), src: `UKMTO 보고 (${k6.id} 육안·레이더)` };
     raise({ id: 'piracy', sev: 'crit', title: '[원해] 해적 의심 소형선 고속 접근 (소말리아 동방)', tgt: `${k6.id}·${sk.id}`,
-      rec: `연합해군(CTF-151) 함정 헬기 출동, ${k6.id} 증속·회피·시타델 대피 준비, MSCHOA·UKMTO 통보`, approve: () => {
+      rec: `연합해군(CTF-151) 함정 헬기 출동, ${k6.id} 증속·회피·시타델 대피 준비, MSCHOA·UKMTO 통보`, sat: [['UAV 대응 출동 (지부티 거점)', () => uxRespond('A', () => sById(P.skiff)?.pos || k6.pos, `${k6.id} 해적 접근`)]], approve: () => {
         const cand = slocShips.filter(x => x.cls === 'chd' || x.cls === 'co' || x.cls === 'us').sort((a, b) => gdist(a.pos, k6.pos) - gdist(b.pos, k6.pos));
         const resp = cand.find(x => x.cls === 'chd' && gdist(x.pos, k6.pos) < 400) || cand[0];
         flags.pyHeli = { pos: resp.pos.slice(), from: resp.id, nm: resp.name }; k6.kn = 16;
@@ -2927,6 +2948,88 @@ function slocScenario(dt) {
     } });
   if (flags.ieWarn && !flags.ieDone && gdist(cs.pos, SL.ieodo) > 30) { flags.ieDone = true; kn.mode = 'goto'; kn.goKn = 14; kn.goal = () => kn.home; kn.onArrive = () => { kn.mode = 'station'; kn.center = kn.home.slice(); }; closeAlert('ieodo', '초계함 근접 감시·경고 방송으로 조사선 이탈, 외교 채널 통보 (가상)'); }
 }
+// ── 거점항만 배치 무인전력 (UAV·USV): 거점 대기 → 기동탐색(패턴) / 대응 출동 → 복귀 ──
+const SLBB = SLAND.map(r => { let a = 1e9, b = 1e9, c = -1e9, d = -1e9; for (const [x, y] of r) { a = Math.min(a, x); b = Math.min(b, y); c = Math.max(c, x); d = Math.max(d, y); } return [a, b, c, d]; });
+const slLand = (lon, lat) => SLAND.some((r, i) => { const bb = SLBB[i]; return lon >= bb[0] && lon <= bb[2] && lat >= bb[1] && lat <= bb[3] && inPoly([lon, lat], r); });
+const segLandS = (a, b) => { const n = Math.max(2, Math.ceil(gdist(a, b) / 2)); for (let i = 1; i < n; i++) { const f = i / n; if (slLand(a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) * f)) return true; } return false; };
+function routeS(a, b, hub) {
+  if (!segLandS(a, b)) return [b];
+  if (hub.via) { const v = gdist(a, hub.via[0]) < gdist(a, hub.via[hub.via.length - 1]) ? hub.via : hub.via.slice().reverse(); return [...v, b]; }
+  return [b];
+}
+const UXR = { uav: 80, usv: 30 }, UXREACH = { uav: 1600, usv: 500 };
+let slUx = [];
+function buildSlUx() {
+  slUx = [];
+  for (const hb of SL.hubs) for (const kind of ['uav', 'usv'])
+    slUx.push({ id: `${kind.toUpperCase()}-${hb.id}`, kind, hub: hb, pos: hb.stage.slice(), st: 'base', wps: [], spd: kind === 'uav' ? 160 : 30, hdg: 0, t0: 0, fuel: 100, pk: -1,
+      next: { H: { uav: 20, usv: 70 }, A: { uav: 45, usv: 100 } }[hb.id][kind], task: '거점 대기', det: 0 });
+}
+function uxSearch(u) {
+  u.pk = (u.pk + 1) % PATS.length;
+  const [w, s0, e, n] = u.hub.box, t = PATS[u.pk];
+  const raw = patternPts(['', w, s0, e, n], t), pts = [];
+  for (const q of raw) { if (slLand(q[0], q[1]) || (pts.length && segLandS(pts[pts.length - 1], q))) continue; pts.push(q); }
+  if (!pts.length) pts.push([(w + e) / 2, (s0 + n) / 2]);
+  u.wps = [...routeS(u.pos, pts[0], u.hub), ...pts.slice(1)]; u.st = 'search'; u.t0 = T; u.task = `${u.hub.area} 기동탐색 · ${PATNM[t]}`;
+}
+function uxRespond(hubId, tgt, label) {
+  const sent = [];
+  for (const u of slUx.filter(x => x.hub.id === hubId)) {
+    const p = tgt(); if (!p || gdist(u.pos, p) > UXREACH[u.kind]) continue;
+    if (u.st === 'base') u.t0 = T; u.st = 'respond'; u.tgt = tgt; u.wps = routeS(u.pos, p, u.hub); u.task = `대응 출동 · ${label}`; u.until = null; sent.push(u.id);
+  }
+  addReq(sent.length ? `${sent.join('·')} 대응 출동 · ${label}` : `거점 무인전력 대응 불가 (거리 초과) · ${label}`, sent.length ? '수행' : '불가');
+  if (sent.length) addLog(`${sent.join('·')} ${label} 대응 출동.`);
+  return sent;
+}
+function uxStep(dt) {
+  for (const u of slUx) {
+    if (u.st === 'base') { u.fuel = Math.min(100, u.fuel + dt * 0.5); if (T >= u.next) uxSearch(u); continue; }
+    u.fuel = Math.max(0, u.fuel - dt * (u.kind === 'uav' ? 100 / 900 : 100 / 2400));
+    const tooLong = u.fuel < 25 && u.st !== 'rtb';
+    if (tooLong) { u.st = 'rtb'; u.wps = routeS(u.pos, u.hub.stage, u.hub); u.task = '거점 복귀 (연료)'; }
+    if (u.st === 'onscene') {
+      const p = u.tgt(); if (p) moveToward(u, advance(p, (T * 8) % 360, u.kind === 'uav' ? 10 : 2), u.spd, dt);
+      if (T >= u.until) { u.st = 'rtb'; u.wps = routeS(u.pos, u.hub.stage, u.hub); u.task = '거점 복귀'; }
+      continue;
+    }
+    if (u.st === 'respond' && u.wps.length === 1) { const p = u.tgt(); if (p) u.wps[0] = p; }
+    if (!u.wps.length) {
+      if (u.st === 'respond') { u.st = 'onscene'; u.until = T + 90; u.task = u.task.replace('대응 출동', '현장 감시'); addLog(`${u.id} 현장 도착, 감시 개시.`); continue; }
+      if (u.st === 'search') { u.st = 'rtb'; u.wps = routeS(u.pos, u.hub.stage, u.hub); u.task = '거점 복귀'; continue; }
+      if (u.st === 'rtb') { u.st = 'base'; u.task = '거점 대기 (정비·충전)'; u.next = T + (u.kind === 'uav' ? 120 : 240); continue; }
+    }
+    if (moveToward(u, u.wps[0], u.spd, dt)) u.wps.shift();
+  }
+}
+// 무인전력 데이터링크: 거점 LOS(UAV 250km·USV 60km) 안이면 LOS, 밖이면 위성 중계
+function uxLink(u) {
+  const d = gdist(u.pos, u.hub.port);
+  if (u.st === 'base') return ['거점 유선·LOS', 50, 5, 0];
+  if (u.kind === 'uav') return d <= 250 ? ['C밴드 LOS', +(20 * (1 - d / 300)).toFixed(1), 60, 0.2] : ['Ku 위성 중계', 2.5, 650, 1.2];
+  return d <= 60 ? ['UHF/C밴드 LOS', +(6 * (1 - d / 80)).toFixed(1), 80, 0.5] : ['위성 중계 (Inmarsat)', 0.45, 700, 2.5];
+}
+// 청해부대 (아덴만): IRTC 선단 호송, 유류·청수·부식 소모와 살랄라 보급
+const chdS = { fuel: 58, water: 71, food: 34, st: 'convoy', resupT: null, fuelLow: 35 };
+function chdStep(dt) {
+  const c = sById('CH2'); if (!c) return;
+  if (c.mode === 'station' && !c.line) { c.line = SL.irtc[0]; c.wi = 1; c.ldir = 1; c.mode = 'line'; }
+  if (c.mode === 'line') {
+    if (moveToward(c, c.line[c.wi], c.kn, dt)) { c.ldir *= -1; c.wi = c.ldir > 0 ? 1 : 0; }
+    c.spd = c.kn; c.task = `IRTC 선단 호송 (${c.ldir > 0 ? '동진' : '서진'})`;
+  }
+  chdS.fuel = Math.max(0, chdS.fuel - dt * (0.002 + ((c.spd || 0) / 20) ** 2 * 0.006));
+  chdS.water = Math.max(0, chdS.water - dt * 0.0035); chdS.food = Math.max(0, chdS.food - dt / 1440);
+  if (chdS.st === 'convoy' && (chdS.fuel < chdS.fuelLow || chdS.water < 25 || chdS.food < 7)) {
+    chdS.st = 'toSupply'; c.mode = 'goto'; c.goKn = 16; c.goal = () => SL.supply.pos;
+    c.onArrive = () => { chdS.st = 'resupply'; chdS.resupT = T; c.mode = 'hold'; c.spd = 0; c.task = '살랄라 군수 보급 중'; addLog('청해부대 CH2 살랄라 입항, 유류·청수·부식 보급.'); };
+    c.task = '살랄라 보급 이동'; addLog('청해부대 CH2 보급 필요 (유류·청수), 살랄라로 이동.');
+  }
+  if (chdS.st === 'resupply' && T - chdS.resupT > 240) {
+    chdS.fuel = 95; chdS.water = 95; chdS.food = 60; chdS.st = 'convoy'; c.mode = 'line'; c.wi = 0; c.ldir = -1; addLog('청해부대 CH2 보급 완료, IRTC 호송 임무 복귀.');
+  }
+}
 function slocStatus(sh) {
   if (sh.hit) return ['피격', 3];
   if (sh.hold) return sh.id === SL.taiwan.tgt ? ['통항 대기 (훈련구역)', 2] : [sh.cls === 'kr' ? (sh.id === SL.piracy.tgt ? '해적 접근 (시타델)' : '정선 강요') : '정지', 3];
@@ -2985,6 +3088,8 @@ function drawSlocStatic() {
   for (const [n, x, y] of SL.ports) { const v = SP(x, y); h += `<circle cx="${f1(v[0])}" cy="${f1(v[1])}" r="${fs(2.6)}" fill="var(--muted)"/><text class="atx port" x="${f1(v[0] + 5 * zz)}" y="${f1(v[1] + 4 * zz)}" font-size="${fs(10)}">${n}</text>`; }
   for (const [n, x, y] of SL.chokes) { const v = SP(x, y), d = 6 * zz; h += `<path d="M${f1(v[0])},${f1(v[1] - d)}l${f1(d)},${f1(d)}l${f1(-d)},${f1(d)}l${f1(-d)},${f1(-d)}Z" class="choke"/><text class="atx ck" x="${f1(v[0] + d + 3 * zz)}" y="${f1(v[1] - d)}" font-size="${fs(11.5)}">${n}</text>`; }
   for (const [n, x, y, c] of SL.bases) { const v = SP(x, y), d = 3.2 * zz; h += `<rect class="sbase ${c}" x="${f1(v[0] - d)}" y="${f1(v[1] - d)}" width="${f1(2 * d)}" height="${f1(2 * d)}"/><text class="atx sb ${c}" x="${f1(v[0] + 2 * d)}" y="${f1(v[1] + 2 * d)}" font-size="${fs(9.5)}">${n}</text>`; }
+  for (const hb of SL.hubs) { const v = SP(...hb.port), d = 5 * zz; h += `<path class="hub" d="M${f1(v[0])},${f1(v[1] - d)}l${f1(d * .6)},${f1(d * 1.6)}h${f1(-d * 1.2)}Z M${f1(v[0] - d)},${f1(v[1] + d * .2)}h${f1(d * 2)}"/><text class="atx hubt" x="${f1(v[0] - 6 * zz)}" y="${f1(v[1] + 14 * zz)}" font-size="${fs(10.5)}" text-anchor="end">${hb.nm} · UAV·USV</text>`; const [w, s0, e, n] = hb.box; h += `<path class="hubbox" d="${spath([[w, s0], [e, s0], [e, n], [w, n]], true)}" stroke-width="${fs(1.2)}" stroke-dasharray="${fs(5)} ${fs(4)}"/>`; }
+  { const v = SP(...SL.supply.pos); h += `<text class="atx hubt" x="${f1(v[0] + 6 * zz)}" y="${f1(v[1] + 14 * zz)}" font-size="${fs(10)}">청해부대 보급항</text>`; }
   { const v = SP(52.5, -15.8); h += `<text class="atx rt CAPE" x="${f1(v[0] - 4)}" y="${f1(v[1] - 6 * zz)}" font-size="${fs(10)}" text-anchor="end">→ 희망봉 (+10~14일)</text>`; }
   $('sStatic').innerHTML = h; slocZ = zz; $('sloc').style.setProperty('--hw', f1(3 * zz) + 'px');
 }
@@ -3018,7 +3123,40 @@ function drawSloc() {
     if (slocSel === sh.id) h += `<circle class="selring" cx="${f1(v[0])}" cy="${f1(v[1])}" r="${f1(r + 8 * z)}"/>`;
     if (sh.cls !== 'mer' || sh.hit) h += `<text class="atx id" x="${f1(v[0] + r + 3 * z)}" y="${f1(v[1] - r)}" font-size="${f1(10.5 * z)}" fill="var(--fg)"${op}>${sh.id}</text>`;
   }
+  for (const u of slUx) {
+    if (u.st === 'base') continue;
+    const v = SP(...u.pos), r = 4.5 * z;
+    if (u.wps.length) h += `<path class="uxp ${u.kind}" fill="none" d="${spath([u.pos, ...u.wps.slice(0, 12)])}" stroke-width="${f1(1.2 * z)}" stroke-dasharray="${f1(4 * z)} ${f1(3 * z)}"/>`;
+    h += `<circle class="uxr ${u.kind}" cx="${f1(v[0])}" cy="${f1(v[1])}" r="${f1(UXR[u.kind] / 111.2 * SK)}" stroke-width="${f1(z)}"/>`;
+    h += u.kind === 'uav' ? `<path class="ux uav" d="M${f1(v[0])},${f1(v[1] - r * 1.3)}l${f1(r * 1.2)},${f1(r * 2)}h${f1(-r * 2.4)}Z"/>` : `<path class="ux usv" d="M${f1(v[0] - r)},${f1(v[1] - r * .7)}h${f1(2 * r)}l${f1(-r * .4)},${f1(r * 1.4)}h${f1(-r * 1.2)}Z"/>`;
+    h += `<text class="atx id" x="${f1(v[0] + 7 * z)}" y="${f1(v[1] - 5 * z)}" font-size="${f1(10 * z)}" fill="var(--ne)">${u.id}</text>`;
+  }
   $('sDyn').innerHTML = h;
+}
+const bar = v => `<span class="bar"><i class="${v < 30 ? 'c' : v < 50 ? 'w' : ''}" style="width:${Math.round(v)}%"></i></span>`;
+function chdPanel() {
+  const c = sById('CH2'), c1 = sById('CH1'); if (!c) return '';
+  const stNm = { convoy: '임무 수행', toSupply: '보급 이동', resupply: '보급 중' }[chdS.st];
+  const fuelH = Math.max(0, chdS.fuel - 10) / (0.002 + ((c.kn || 14) / 20) ** 2 * 0.006) / 60;
+  return `<div class="ahd"><h3>청해부대 현황 (아덴만)</h3>
+    <b>CH2</b> ${esc(c.name)} <span class="chip ${chdS.st === 'convoy' ? 'act' : 'warn'}">${stNm}</span>
+    <div class="empty" style="font-size:11.5px;margin:3px 0">${esc(c.task || '')} · ${slocWhere(c.pos)} · ${f1(c.spd || 0)}kn</div>
+    <table class="atab"><tbody>
+      <tr><td>유류</td><td>${bar(chdS.fuel)}${Math.round(chdS.fuel)}% <small>현 속력 기준 약 ${Math.round(fuelH)}시간 (잔량 10% 유지)</small></td></tr>
+      <tr><td>청수</td><td>${bar(chdS.water)}${Math.round(chdS.water)}% <small>조수기 2대 가동</small></td></tr>
+      <tr><td>부식</td><td>${bar(chdS.food / 60 * 100)}${f1(chdS.food)}일분 <small>냉동·건조 부식</small></td></tr>
+      <tr><td>무장</td><td>5인치 함포 정상 · 하푼 8발 · SM-2 32발 · 골키퍼 정상 · 승선검색대 대기</td></tr>
+      <tr><td>기관</td><td>가스터빈 2/2 · 디젤 2/2 정상 · 발전기 3/4 <small>(1대 정비)</small></td></tr>
+      <tr><td>장비</td><td>대공·대함 레이더 정상 · 선체 소나 정상 · 링스 헬기 1대 가용 · 위성통신 정상</td></tr>
+      <tr><td>보급</td><td>${esc(SL.supply.nm)} <small>(유류 35%·청수 25%·부식 7일분 미만 시 이동, 보급 4시간)</small></td></tr>
+    </tbody></table>
+    <div class="empty" style="font-size:11px;margin-top:4px">호르무즈 파견함 CH1 · ${slocWhere(c1.pos)} · ${c1.mode === 'escort' ? `${c1.goTo} 근접 호위` : c1.mode === 'goto' ? '호위 대상으로 이동' : '초계'}</div></div>`;
+}
+function uxPanel() {
+  const stNm = { base: '거점 대기', search: '기동탐색', respond: '대응 출동', onscene: '현장 감시', rtb: '복귀' };
+  return `<div class="ahd"><h3>거점항만 무인전력 (UAV·USV)</h3><table class="atab"><thead><tr><th>자산·거점</th><th>상태·임무</th><th>데이터링크</th></tr></thead><tbody>`
+    + slUx.map(u => { const l = uxLink(u); return `<tr><td style="white-space:nowrap"><b style="color:${u.kind === 'uav' ? '#2f9e44' : '#0b7285'}">${u.id}</b><small>${esc(u.hub.nm.replace(/ 거점| \(.*\)/g, ''))}</small></td><td><span class="chip ${u.st === 'base' ? '' : u.st === 'search' ? 'act' : u.st === 'rtb' ? 'done' : 'warn'}">${stNm[u.st]}</span> ${bar(u.fuel)}<small>${esc(u.task)}${u.st === 'base' && T < u.next ? ` · 다음 출동 ${clock(u.next).hm}` : ''}</small></td><td>${l[0]}<small>${l[1]}Mbps · ${l[2]}ms · 손실 ${l[3]}%</small></td></tr>`; }).join('')
+    + `</tbody></table><div class="row" style="margin-top:4px;gap:6px;display:flex;flex-wrap:wrap">${SL.hubs.map(hb => `<button class="btn" type="button" data-uxs="${hb.id}">${hb.nm.replace(/ \(.*| 거점/g, '')} 기동탐색</button>`).join('')}</div></div>`;
 }
 function renderSlocPanel() {
   const kr = slocShips.filter(sh => sh.cls === 'kr'), rows = kr.map(sh => [sh, slocStatus(sh)]);
@@ -3047,6 +3185,8 @@ function renderSlocPanel() {
   setHTML($('slocInfo'), 'sloc', `<div class="ahd"><h3>우리 선박·청해부대</h3>
       <div class="csum"><span>우리 선박 <b>${kr.length}</b></span><span>위험 상태 <b>${risk}</b></span><span>고위험해역 통항 <b>${kr.filter(sh => inZone(sh, 'hra')).length}</b></span><span>희망봉 우회 <b>${kr.filter(sh => sh.route === 'CAPE' || sh.reroute).length}</b></span></div>
       <div class="empty" style="font-size:11.5px;margin-top:4px">청해부대 CH1 · ${slocWhere(chd.pos)} · ${chdTask} · ${f1(chd.spd)}kn</div></div>
+    ${chdPanel()}
+    ${uxPanel()}
     ${selH}
     <div class="ahd"><h3>초크포인트 현황</h3><table class="atab"><thead><tr><th>해협</th><th>우리 선박 (400km)</th><th>위협</th></tr></thead><tbody>${ck}</tbody></table></div>
     <div class="ahd"><h3>우리 선박 추적</h3><table class="atab stab"><thead><tr><th>선박</th><th>선명·선종·해역</th><th>상태·속력</th><th>보고</th></tr></thead><tbody>`
@@ -3194,7 +3334,7 @@ $('sloc').addEventListener('click', e => {
   for (const sh of slocShips) { if (sh.rep.t < -1) continue; const v = SP(sh.rep.pos[0], sh.rep.pos[1]), d = Math.hypot(v[0] - q.x, v[1] - q.y); if (d < bd) { bd = d; best = sh.id; } }
   slocSel = best; drawSloc(); renderSlocPanel();
 });
-$('slocpanel').addEventListener('click', e => { const r = e.target.closest('[data-sloc]'); if (r) { slocSel = r.dataset.sloc; drawSloc(); renderSlocPanel(); } });
+$('slocpanel').addEventListener('click', e => { const ux = e.target.closest('[data-uxs]'); if (ux) { slUx.filter(u => u.hub.id === ux.dataset.uxs && u.st === 'base').forEach(u => { uxSearch(u); addLog(`${u.id} 기동탐색 출동 (운용자 지시).`); }); renderSlocPanel(); drawSloc(); return; } const r = e.target.closest('[data-sloc]'); if (r) { slocSel = r.dataset.sloc; drawSloc(); renderSlocPanel(); } });
 $('spre').addEventListener('click', e => {
   const b = e.target.closest('[data-sp]'); if (!b) return;
   slocPre = b.dataset.sp; document.querySelectorAll('[data-sp]').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
