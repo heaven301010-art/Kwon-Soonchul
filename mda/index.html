@@ -394,6 +394,14 @@ textarea.report { width: 100%; min-height: 150px; font: 12px/1.5 var(--font-data
 .pmz { fill: color-mix(in srgb, var(--un) 6%, transparent); stroke: var(--un); stroke-width: 1.2; vector-effect: non-scaling-stroke; } .btx.pmz { fill: #8a6d00; }
 .tfl { stroke-width: 1; vector-effect: non-scaling-stroke; } .tfl.kr { stroke: var(--fr); } .tfl.cn { stroke: var(--k-cnn); }
 .btx.tf.kr { fill: var(--fr); font-weight: 700; } .btx.tf.cn { fill: var(--k-cnn); font-weight: 700; }
+.nvh { fill: color-mix(in srgb, #0b3d91 10%, var(--halo)); stroke: #0b3d91; stroke-width: 1.8; vector-effect: non-scaling-stroke; opacity: .95; }
+.nvh.un { stroke-dasharray: 3 2; fill: color-mix(in srgb, #0b3d91 6%, var(--halo)); } .nvh.cv { stroke-width: 2.4; }
+.nvs { fill: #0b3d91; stroke: var(--halo); stroke-width: 1; vector-effect: non-scaling-stroke; } .nvd { stroke: var(--halo); stroke-width: 1.6; vector-effect: non-scaling-stroke; }
+.nvu { fill: #0b3d91; stroke: var(--halo); stroke-width: 1; vector-effect: non-scaling-stroke; }
+.tid.navyl { fill: #0b3d91; font-weight: 800; }
+.tfbox { margin-top: 8px; border: 1px solid #0b3d91; border-left-width: 4px; border-radius: 5px; padding: 6px 8px; background: color-mix(in srgb, #0b3d91 4%, var(--panel)); }
+.tfbox h4 { margin: 0 0 4px; font-size: 12px; color: #0b3d91; } .tfbox h4 small { color: var(--muted); font-weight: 400; }
+#mumt .tfbox td:nth-child(2), #mumt .tfbox td:nth-child(3) { white-space: normal; }
 .mpap { fill: none; stroke: var(--l-air); stroke-width: 1.3; opacity: .7; vector-effect: non-scaling-stroke; }
 .nm12 { fill: color-mix(in srgb, #d9b26f 30%, var(--sea)); stroke: color-mix(in srgb, #d9b26f 30%, var(--sea)); stroke-linejoin: round; }
 .nm12e { fill: none; stroke: color-mix(in srgb, var(--l-ground) 75%, var(--sea)); stroke-linejoin: round; }
@@ -655,6 +663,11 @@ textarea.report { width: 100%; min-height: 150px; font: 12px/1.5 var(--font-data
         <span><svg width="16" height="16" viewBox="-8 -8 16 16"><path class="sy k-other sus" d="M0,-7 L7,0 L0,7 L-7,0Z"/></svg>의심</span>
         <span><svg width="16" height="16" viewBox="-8 -8 16 16"><path class="sy k-unk" d="M-2.3,-6.5H2.3V-2.3H6.5V2.3H2.3V6.5H-2.3V2.3H-6.5V-2.3H-2.3Z"/></svg>미상</span>
         <span><svg width="14" height="14" viewBox="-7 -7 14 14"><rect class="sy k-other" x="-5" y="-5" width="10" height="10"/></svg>중립</span>
+        <b class="lgh">해군 전력 (크게 표시)</b>
+        <span><svg width="26" height="18" viewBox="-13 -9 26 18"><circle class="nvh cv" r="8.5"/><rect class="nvs" x="-10" y="-3.5" width="20" height="7" rx="3.5"/></svg>CVX (유무인전력항모)</span>
+        <span><svg width="18" height="18" viewBox="-9 -9 18 18"><circle class="nvh" r="8"/><circle class="sy F k-kn" r="5"/></svg>해군 함정·항공기</span>
+        <span><svg width="18" height="18" viewBox="-9 -9 18 18"><circle class="nvh un" r="8"/><path class="nvu" d="M0,-4.5L6,2.5L0,0.5L-6,2.5Z"/></svg>UAV</span>
+        <span><svg width="18" height="18" viewBox="-9 -9 18 18"><circle class="nvh un" r="8"/><path class="nvu" d="M-5,-2.5H5L3,3H-3Z"/></svg>USV</span>
         <b class="lgh">색 = 선종 (오른쪽 종합 현황 참고)</b>
       </div>
       <p class="notes">기호 모양은 식별 상태, 색은 선종입니다. 의심 표적은 주황 테두리를 두릅니다. 아래 반쪽 기호는 수중, 위 반쪽은 항공 표적입니다. 흐린 기호와 점선 원은 추적 소실 표적과 추정 위치 오차이고, 선은 30분 뒤 예상 위치입니다. 각 센서 칸의 가동 단추로 출처를 끄면 그 탐지가 융합에서 빠집니다.<br>해안선, NLL, KADIZ, EEZ는 개략이며 MCA(KTO)는 좌표가 입력된 경우에만 표시합니다. EEZ는 한·일 대륙붕 북부 경계 외에는 미획정 구간입니다. 표적과 센서 배치는 모두 가상입니다.<br>참고: 오경원·임경한·이숙연·김재호(2024), 「인도-태평양 전략 추진을 위한 한국형 해양영역인식 발전 방안」, 『한국해군과학기술학회지』 7(3), 327–334 · <a href="https://kims.or.kr/issubrief/kims-periscope/peri363/" target="_blank" rel="noopener">KIMS Periscope 363</a> · <a href="https://opendata.mofa.go.kr/mofapub/resource/Publication/14315.page" target="_blank" rel="noopener">외교부 발간자료</a></p>
@@ -1928,6 +1941,17 @@ function leader(cls, t, x, y) {
   return `<line class="ld ${cls}" x1="${f1(x)}" y1="${f1(y)}" x2="${f1(X(p[0]))}" y2="${f1(Y(p[1]))}"/>`;
 }
 
+// 해군 전력 기호: 다른 표적보다 크게, 남색 테두리 원 안에 넣어 구분한다
+const isNavy = t => t.truth === 'F' && t.cls === 'kn';
+const NAVY_C = '#0b3d91';
+function navyUav(x, y, z, cls = '') { const r = 6.5 * z; return `<circle class="nvh un${cls}" cx="${f1(x)}" cy="${f1(y)}" r="${f1(r * 1.75)}"/><path class="nvu" d="M${f1(x)},${f1(y - r)}L${f1(x + r * 1.3)},${f1(y + r * .55)}L${f1(x)},${f1(y + r * .1)}L${f1(x - r * 1.3)},${f1(y + r * .55)}Z"/>`; }
+function navyUsv(x, y, z) { const r = 6.5 * z; return `<circle class="nvh un" cx="${f1(x)}" cy="${f1(y)}" r="${f1(r * 1.75)}"/><path class="nvu" d="M${f1(x - r * 1.1)},${f1(y - r * .55)}H${f1(x + r * 1.1)}L${f1(x + r * .7)},${f1(y + r * .6)}H${f1(x - r * .7)}Z"/>`; }
+function navyShip(t, x, y, z) {
+  if (t.id === 'CVX') { const w = 15 * z, hh = 5 * z; return `<circle class="nvh cv" cx="${f1(x)}" cy="${f1(y)}" r="${f1(w * 1.25)}"/><rect class="nvs" x="${f1(x - w)}" y="${f1(y - hh)}" width="${f1(2 * w)}" height="${f1(2 * hh)}" rx="${f1(hh)}"/><path class="nvd" d="M${f1(x - w * .7)},${f1(y + hh * .35)}L${f1(x + w * .8)},${f1(y - hh * .45)}"/>`; }
+  if (t.un === 'uav') return navyUav(x, y, z);
+  if (t.un === 'usv') return navyUsv(x, y, z);
+  return `<circle class="nvh" cx="${f1(x)}" cy="${f1(y)}" r="${f1(11 * z)}"/>` + sym('F', t.kind, x, y, z * 1.45, 'kn');
+}
 function drawDyn() {
   const z = vb.w / VW;
   let h = '';
@@ -2068,12 +2092,12 @@ function drawDyn() {
   // 해상작전헬기 (비행 중)
   if (layerOn.air) for (const hh of helis) {
     if (hh.st === 'deck') continue;
-    const x = X(hh.pos[0]), y = Y(hh.pos[1]), r = 4 * z;
+    const x = X(hh.pos[0]), y = Y(hh.pos[1]), r = 5.5 * z;
     h += circ('air', hh.pos, HELI_R, z, true);
     const rest = hh.st === 'rtb' ? [] : hh.wps.slice(hh.wi).map(w => w.p);
     h += `<path class="orbit"${dash(z, 3, 3)} d="${pathD([hh.pos, ...rest, byId.get(hh.ship).pos])}"/>`;
     if (hh.st === 'dip') for (const k of [1, 2, 3]) h += `<circle class="dipr" cx="${f1(x)}" cy="${f1(y)}" r="${f1(k * DIP_R / 3 * PXKM)}"/>`;
-    h += `<circle class="heli" cx="${f1(x)}" cy="${f1(y)}" r="${f1(r)}"/><path class="rotor" d="M${f1(x - 2.2 * r)},${f1(y - 2.2 * r)}L${f1(x + 2.2 * r)},${f1(y + 2.2 * r)}M${f1(x + 2.2 * r)},${f1(y - 2.2 * r)}L${f1(x - 2.2 * r)},${f1(y + 2.2 * r)}"/>`;
+    h += `<circle class="nvh" cx="${f1(x)}" cy="${f1(y)}" r="${f1(r * 2.3)}"/><circle class="heli" cx="${f1(x)}" cy="${f1(y)}" r="${f1(r)}"/><path class="rotor" d="M${f1(x - 2.2 * r)},${f1(y - 2.2 * r)}L${f1(x + 2.2 * r)},${f1(y + 2.2 * r)}M${f1(x + 2.2 * r)},${f1(y - 2.2 * r)}L${f1(x - 2.2 * r)},${f1(y + 2.2 * r)}"/>`;
     h += txt('tid A', x + 9 * z, y - 5 * z, 10 * z, `${hh.type.replace(/ \(.*|와일드캣/g, '').trim()} (${hh.ship})${hh.st === 'dip' ? ' · 디핑' : ''}`);
   }
   // 항공 자산
@@ -2091,11 +2115,11 @@ function drawDyn() {
   if (layerOn.surface) for (const u of usvs) {
     const x = X(u.pos[0]), y = Y(u.pos[1]), r = 5 * z;
     h += `<path class="usvl"${dash(z, 2, 5)} d="${pathD(u.line)}"/>` + circ('surf usvr', u.pos, USV_R, z, true);
-    h += `<path class="usv" d="M${f1(x - r)},${f1(y - r * .7)}H${f1(x + r)}L${f1(x + r * .6)},${f1(y + r * .7)}H${f1(x - r * .6)}Z"/>` + txt('tid F usvt', x + 8 * z, y + 12 * z, 10.5 * z, `${u.name}${u.link !== '정상' ? ' ⚠' : ''}`);
+    h += navyUsv(x, y, z) + txt('tid navyl', x + 13 * z, y + 14 * z, 12 * z, `${u.name}${u.link !== '정상' ? ' ⚠' : ''}`);
   }
   if (layerOn.air) for (const a of [mpa, uav, uav2]) {
     const x = X(a.pos[0]), y = Y(a.pos[1]);
-    h += circ('air', a.pos, a === mpa ? MPA_R : UAV_R, z) + sym('A', 'air', x, y, z) + txt('tid A', x + 8 * z, y - 4 * z, 10.5 * z, a === mpa && a.mode !== 'transit' ? `${a.name} · ${a.patNm}` : a === uav2 ? `UAV-2 · ${PATNM[PATS[uav2.pk]] || ''}` : a.name);
+    h += circ('air', a.pos, a === mpa ? MPA_R : UAV_R, z) + (a === mpa ? `<circle class="nvh" cx="${f1(x)}" cy="${f1(y)}" r="${f1(11 * z)}"/>` + sym('A', 'air', x, y, z * 1.5) : navyUav(x, y, z)) + txt('tid navyl', x + 13 * z, y - 8 * z, 12 * z, a === mpa && a.mode !== 'transit' ? `${a.name} · ${a.patNm}` : a === uav2 ? `UAV-2 · ${PATNM[PATS[uav2.pk]] || ''}` : a.name);
   }
 
   // 표적
@@ -2108,10 +2132,11 @@ function drawDyn() {
     if (!tr.lost && (big || z < 0.6)) h += leader(tr.affil + (k ? ' k-' + k : ''), tr, x, y);
     if (layerOn.space && tr.rf && tr.affil !== 'F' && T - tr.rf.t <= 15) h += `<ellipse class="rfe" cx="${f1(x)}" cy="${f1(y)}" rx="${f1(tr.rf.err * PXKM)}" ry="${f1(tr.rf.err * .55 * PXKM)}" transform="rotate(103 ${f1(x)} ${f1(y)})"${dash(z, 2, 2)}/>`;
     if (t.mode === 'intercept' && t.goal) { const g = t.goal(); if (g) h += `<line class="ic"${dash(z, 5, 4)} x1="${f1(x)}" y1="${f1(y)}" x2="${f1(X(g[0]))}" y2="${f1(Y(g[1]))}"/>`; }
-    h += `<g${tr.lost ? ' class="lost"' : ''}>${sym(tr.affil, t.kind, x, y, big ? z : z * .72, k)}</g>`;
+    h += `<g${tr.lost ? ' class="lost"' : ''}>${isNavy(t) ? navyShip(t, x, y, z) : sym(tr.affil, t.kind, x, y, big ? z : z * .72, k)}</g>`;
     if (!big && z < 0.42 && !tr.lost) labels += txt('tid N', x + 6 * z, y - 4 * z, 9 * z, t.id);
-    if (big) labels += `<g${tr.lost ? ' class="lost"' : ''}>` + txt('tid ' + tr.affil + (FOREIGN_NAVY.has(k) || k === 'kcg' || k === 'usn' ? ' k-' + k : ''), x + 8 * z, y - 6 * z, 11 * z, t.id) + '</g>';
-    if (sel === t.id) h += `<circle class="selring" cx="${f1(x)}" cy="${f1(y)}" r="${f1(12 * z)}"/>`;
+    if (isNavy(t)) labels += txt('tid navyl', x + (t.id === 'CVX' ? 20 : 13) * z, y - 9 * z, 12.5 * z, t.id);
+    else if (big) labels += `<g${tr.lost ? ' class="lost"' : ''}>` + txt('tid ' + tr.affil + (FOREIGN_NAVY.has(k) || k === 'kcg' || k === 'usn' ? ' k-' + k : ''), x + 8 * z, y - 6 * z, 11 * z, t.id) + '</g>';
+    if (sel === t.id) h += `<circle class="selring" cx="${f1(x)}" cy="${f1(y)}" r="${f1((isNavy(t) ? (t.id === 'CVX' ? 23 : 16) : 12) * z)}"/>`;
   }
   // 해역명: 화면 기준 크기로 크게, 표적·센서 위에 반투명으로 얹고 표적 번호는 그 위에 둔다. 확대 중인 해역은 더 크게
   let seaL = '';
@@ -2388,6 +2413,20 @@ function mumtLink(kind, pos, ctlPos) {
   if (jam) l = [l[0], +(l[1] * 0.15).toFixed(2), l[2] * 3, +(l[3] + 30).toFixed(1)];
   return { type: l[0], rate: l[1], lat: l[2], loss: l[3], st: jam ? '저하 (재밍)' : l[3] > 2 ? '주의' : '정상' };
 }
+// 기동부대 현황: 부대 상태·위치·대치 상대와 함정·전력별 역할·상태
+const TF_ROLE = { CVX: '지휘·유무인 통제', DDG1: '대공·탄도탄 방어', DDG2: '대공 방어', FFG1: '대잠 초계', FFG2: '대잠·근접 방어', AOE1: '해상 보급', KUSV1: '전방 수상 감시', KUSV2: '전방 수상 감시', KUAV1: '전방 공중 감시', KUAV2: '전방 공중 감시' };
+function tfPanel() {
+  const K = TFG.kr, cvx = byId.get('CVX'), cn = byId.get('CV16'), cnOn = TFG.cn && T >= TFG.cn.at;
+  const rem = K.wps.reduce((a, q, i) => a + dist(i ? K.wps[i - 1] : K.pos, q), 0), eta = K.wps.length ? clock(T + rem / KMMIN(K.spd)).hm : null;
+  const st = K.wps.length ? `서해 전개 이동 중 · 도착 예정 ${eta}` : K.st === 'station' ? '서해 대치 감시' : '동해 기동 초계';
+  const mem = targets.filter(t => t.grp === 'kr');
+  const fwd = mem.filter(t => t.un).map(t => dist(t.pos, cvx.pos));
+  return `<div class="tfbox"><h4>기동부대 현황 <small>· 한국형 유무인전력항모 기동부대</small></h4>
+    <div class="csum"><span>상태 <b>${st}</b></span><span>위치 <b>${esc(whereOf(cvx.pos))}</b></span><span>속력 <b>${f1(K.wps.length ? K.spd : 2)}kn</b></span><span>정면 <b>${Math.round(K.face)}°</b></span>
+    <span>전력 <b>유인 ${mem.filter(t => !t.un).length} · 무인 ${mem.filter(t => t.un).length}</b></span><span>무인 전방 감시 거리 <b>${fwd.length ? Math.round(Math.max(...fwd)) : 0}km</b></span>
+    ${cnOn && cn ? `<span>랴오닝함까지 <b>${Math.round(dist(cvx.pos, cn.pos))}km</b></span>` : ''}</div>
+    <table class="atab"><thead><tr><th>함정·전력</th><th>역할</th><th>위치·속력·CVX 거리</th></tr></thead><tbody>${mem.map(t => `<tr><td style="white-space:nowrap"><b style="color:#0b3d91">${t.id}</b><small>${esc(t.type.replace(/ \(.*\)/, ''))}</small></td><td>${TF_ROLE[t.id] || ''}</td><td>${esc(whereOf(t.pos))}<small>${f1(t.spd || 0)}kn${t.id === 'CVX' ? '' : ` · ${Math.round(dist(t.pos, cvx.pos))}km`}</small></td></tr>`).join('')}</tbody></table></div>`;
+}
 function renderMumt() {
   const live = [...tracks.values()].filter(tr => !tr.lost && tr.affil !== 'F');
   const inR = (p, r) => live.filter(tr => dist(tr.pos, p) <= r).length;
@@ -2408,6 +2447,7 @@ function renderMumt() {
     <div class="phd"><div class="pk" style="--pc: var(--fr)"><b>${nMan}</b>유인 자산<small> · 초계기·헬기</small></div><div class="pk" style="--pc: var(--ne)"><b>${nUn}</b>무인 자산<small> · UAV ${2 + kun.filter(t => t.un === 'uav').length} · USV ${usvs.length + kun.filter(t => t.un === 'usv').length}</small></div><div class="pk" style="--pc: var(--l-air)"><b>${det}</b>무인 자산 탐지 표적</div></div>
     <table class="atab"><thead><tr><th>구분·자산</th><th>위치·임무</th><th>탐지</th><th>데이터 전송</th></tr></thead><tbody>${rows.map(r => `<tr><td><small>${r[0]} · ${esc(r[5])}</small>${esc(r[1])}</td><td>${esc(r[2])}<small>${esc(r[3])}</small></td><td>${r[4]}</td><td><b class="${r[6].st === '정상' ? 'on' : 'warn'}">${esc(r[6].st)}</b><small>${esc(r[6].type)}<br>${r[6].rate}Mbps · ${r[6].lat}ms · 손실 ${r[6].loss}%</small></td></tr>`).join('')}</tbody></table>
     <p class="empty" style="font-size:11px;margin:3px 0 0">평균 전송률 <b style="color:var(--fg)">${(rows.reduce((a, r) => a + r[6].rate, 0) / rows.length).toFixed(1)}Mbps</b> · 링크 저하 <b style="color:var(--fg)">${rows.filter(r => r[6].st !== '정상').length}</b>개 자산</p>
+    ${tfPanel()}
     <p class="empty" style="font-size:11px;margin:4px 0 0"><b style="color:var(--fr)">기동부대 구성</b> CVX · 이지스 구축함 2 (정조대왕·세종대왕급) · 호위함 2 (충남·대구급) · 군수지원함 · 함재 UAV 2 · USV 2 — 무인전력 전방, 유인함정 후방 배치. ${TFG.cn && T >= TFG.cn.at ? `대치 상대: 랴오닝 항모전단 (항모·055·052D×2·054A·901, 중국 UAV 2·USV 2)` : ''}</p>
     <p class="empty" style="font-size:11px;margin:4px 0 0">USV는 모함(F108·F101)이 통제하며 NLL 전방 감시 정보를 전술데이터링크로 공유합니다. UAV는 지상 통제소에서 통제하고 해상초계기·함정과 영상 정보를 나눕니다.</p>`);
 }
