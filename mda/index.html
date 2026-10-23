@@ -2102,7 +2102,8 @@ function drawDyn() {
       h += circ('surf', r.pos, r.r, z) + `<rect class="f-surf" x="${f1(x - 3.5 * z)}" y="${f1(y - 3.5 * z)}" width="${f1(7 * z)}" height="${f1(7 * z)}"/>`;
       h += txt('lbl t-surf', x + 7 * z, y - 5 * z, 9.5 * z, r.name);
     }
-    for (const t of targets) if (t.truth === 'F') h += circ('surf', t.pos, SHIP_R, z);
+    // 제주 기지에 대기 중인 기동부대는 탐지권을 그리지 않고, 출항하면 그린다
+    for (const t of targets) if (t.truth === 'F' && !(t.grp === 'kr' && TFG.kr.st === 'base')) h += circ('surf', t.pos, SHIP_R, z);
     for (const r of VTS) {
       const x = X(r.pos[0]), y = Y(r.pos[1]);
       h += circ('surf vts', r.pos, r.r, z, true) + `<path class="f-surf" d="M${f1(x - 4 * z)},${f1(y + 3 * z)} L${f1(x)},${f1(y - 4 * z)} L${f1(x + 4 * z)},${f1(y + 3 * z)}Z"/>`;
