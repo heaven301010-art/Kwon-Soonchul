@@ -244,8 +244,7 @@ button { font: inherit; color: inherit; }
 .icls b { font-family: var(--font-data); font-weight: 500; color: var(--fg); }
 .icls .c b { color: var(--ho); }
 .icls .lbl2 { width: 100%; color: var(--faint); font-size: 11px; }
-.share { width: 100%; max-width: 300px; height: auto; display: block; margin: 0 auto 6px; }
-@media (max-height: 950px) and (min-width: 861px) { .share { max-width: 260px; } }
+.share { width: 100%; max-width: 350px; height: auto; display: block; margin: 0 auto 6px; }
 /* 노트북 화면 (1001~1500px): 해도와 오른쪽 정보칸을 나란히 두고, 정보칸·글자·상단 막대를 비율에 맞게 줄인다 */
 @media (max-width: 1500px) and (min-width: 1001px) {
   .grid { grid-template-columns: minmax(0, 1fr) 330px; }
@@ -256,7 +255,7 @@ button { font: inherit; color: inherit; }
   .brand h1 { font-size: 16px; } .brand small { font-size: 11px; }
   .dtg { font-size: 13.5px; } .counts { gap: 2px 9px; font-size: 12px; } .counts b { font-size: 12.5px; } .counts .sea b { font-size: 15px; }
   .ctl .btn { padding: 4px 8px; font-size: 12px; }
-  .share { max-width: 250px; }
+  .share { max-width: 100%; }
 }
 @media (max-width: 1280px) and (min-width: 1001px) {
   .grid { grid-template-columns: minmax(0, 1fr) 300px; }
@@ -615,8 +614,8 @@ textarea.report { width: 100%; min-height: 150px; font: 12px/1.5 var(--font-data
       </div>
     </section>
     <section id="slocSec" hidden>
-      <h2>원해 해양정보 통합체계</h2>
-      <svg class="share" id="slocSvg" viewBox="0 0 340 300" role="img" aria-label="해양수산부, 외교부, 합동참모본부, 한국해양수산개발원, 선사와 UKMTO, CMF, IFC, 코페르니쿠스 CDSE 등에서 원해 해양정보 통합체계로 흐르는 정보"></svg>
+      <h2>관심해역 해양정보 통합체계</h2>
+      <svg class="share" id="slocSvg" viewBox="0 0 340 300" role="img" aria-label="해양수산부, 외교부, 합동참모본부, 한국해양수산개발원, 선사와 UKMTO, CMF, IFC, 코페르니쿠스 CDSE 등에서 관심해역 해양정보 통합체계로 흐르는 정보"></svg>
       <div id="slocDom"></div>
       <div class="cdse">
         <div class="row"><b>코페르니쿠스 CDSE 연동</b><select id="scdseMis" aria-label="Sentinel 임무"><option value="SENTINEL-1">Sentinel-1 (SAR)</option><option value="SENTINEL-2">Sentinel-2 (광학)</option><option value="SENTINEL-3">Sentinel-3 (해색·해빙)</option></select><button class="btn go" type="button" id="scdseGo">최신 영상 조회</button></div>
@@ -2184,6 +2183,17 @@ function drawDyn() {
 }
 
 // ── 북극 해도 ───────────────────────────────────────
+// 보여 줄 범위 [x, y, w, h]가 오른쪽 정보칸 왼쪽 빈 곳에 다 들어가도록 viewBox를 잡고, 사용자 단위/픽셀을 돌려준다
+function fitLeftOfPanel(el, box, panel) {
+  const rc = el.getBoundingClientRect();
+  if (!rc.width || !rc.height) { el.setAttribute('viewBox', box.map(f1).join(' ')); return box[2] / 900; }
+  const pr = panel && !panel.hidden && !$('mapwrap').classList.contains('nobox') && rc.width > 860 ? panel.getBoundingClientRect() : null;
+  const aw = pr ? Math.max(rc.width * 0.45, pr.left - rc.left - 12) : rc.width, ah = rc.height - 70;   // 위쪽 단추 줄 높이만큼 비운다
+  const s = Math.min(aw / box[2], ah / box[3]), W = rc.width / s, H = rc.height / s;
+  const x = box[0] - (aw / s - box[2]) / 2, y = box[1] - (ah / s - box[3]) / 2 - 60 / s;
+  el.setAttribute('viewBox', [x, y, W, H].map(f1).join(' '));
+  return 1 / s;
+}
 function drawArcStatic() {
   // 보기 범위: 전체 또는 항로별(북위 58° 이북 구간의 범위)
   let vb = [0, 0, 1000, 1000];
@@ -2192,9 +2202,7 @@ function drawArcStatic() {
     const xs = ps.map(q => q[0]), ys = ps.map(q => q[1]), pad = 45;
     vb = [Math.min(...xs) - pad, Math.min(...ys) - pad, Math.max(...xs) - Math.min(...xs) + 2 * pad, Math.max(...ys) - Math.min(...ys) + 2 * pad];
   }
-  $('arc').setAttribute('viewBox', vb.map(f1).join(' '));
-  const rc = $('arc').getBoundingClientRect();
-  az = rc.width ? Math.max(vb[2] / rc.width, vb[3] / rc.height) : vb[2] / 900;
+  az = fitLeftOfPanel($('arc'), vb, $('arcpanel'));
   $('arc').style.setProperty('--hw', f1(3 * az) + 'px');
   let h = '<circle class="asea" cx="500" cy="500" r="482"/>';
   const ice = [], ice2 = []; for (let lon = 0; lon <= 360; lon += 4) { ice.push([lon, iceLat(lon)]); ice2.push([lon, iceLat(lon) - 1.2]); }
@@ -3197,11 +3205,10 @@ function slocWhere(p) {
   return best;
 }
 function drawSlocStatic() {
-  const [, w0, n0, e0, s0] = SPRE[slocPre], a = SP(w0, n0), b = SP(e0, s0), vw = b[0] - a[0], vh = b[1] - a[1];
-  $('sloc').setAttribute('viewBox', `${f1(a[0])} ${f1(a[1])} ${f1(vw)} ${f1(vh)}`);
-  // 글자·기호 크기를 화면 픽셀 기준으로 맞춘다 (사용자 단위/픽셀)
-  const rc = $('sloc').getBoundingClientRect(), zz = rc.width ? Math.max(vw / rc.width, vh / rc.height) : vw / 1100, fs = v => (v * zz).toFixed(2);
-  let h = `<rect class="asea" x="0" y="0" width="${f1(SVW)}" height="${f1(SVH)}"/>`;
+  const [, w0, n0, e0, s0] = SPRE[slocPre], a = SP(w0, n0), b = SP(e0, s0);
+  // 글자·기호 크기를 화면 픽셀 기준으로 맞춘다 (사용자 단위/픽셀). 오른쪽 정보칸에 가리지 않게 칸 왼쪽에 맞춘다
+  const zz = fitLeftOfPanel($('sloc'), [a[0], a[1], b[0] - a[0], b[1] - a[1]], $('slocpanel')), fs = v => (v * zz).toFixed(2);
+  let h = `<rect class="asea" x="${f1(-SVW)}" y="${f1(-SVH)}" width="${f1(3 * SVW)}" height="${f1(3 * SVH)}"/>`;
   for (let lon = 30; lon <= 150; lon += 10) h += `<line class="agl" x1="${f1(SP(lon, 0)[0])}" y1="0" x2="${f1(SP(lon, 0)[0])}" y2="${f1(SVH)}" stroke-width="${fs(1)}"/>`;
   for (let lat = -10; lat <= 40; lat += 10) h += `<line class="agl" x1="0" y1="${f1(SP(26, lat)[1])}" x2="${f1(SVW)}" y2="${f1(SP(26, lat)[1])}" stroke-width="${fs(1)}"/>`;
   const zp = (k, cls) => { const zz = SL.zones[k]; if (zz.poly) return `<path class="${cls}" d="${spath(zz.poly, true)}" stroke-width="${fs(1.4)}"/>`; const c = SP(...zz.c); return `<circle class="${cls}" cx="${f1(c[0])}" cy="${f1(c[1])}" r="${f1(zz.r / 111.2 * SK)}" stroke-width="${fs(1.4)}"/>`; };
@@ -3425,7 +3432,7 @@ function renderPolar() {
     <div class="sp"><h4>우주</h4><p>극궤도 관측·정찰 위성 북극권 <b>${polar}기</b></p><p>극궤도 통신 (Iridium·OneWeb) <b>${pComm}기</b></p><p>정지궤도 한계 ${AR.geoLimit}°N 이북 운항 <b>${north}척</b></p><p>Sentinel 영상 (CDSE) <b>${nSent}건</b></p></div></div>`);
   cdseRender(cdseA);
 }
-// 원해 SLOC 통합체계: 국내 기관·선사와 국제 해양안보 보고·정보융합센터, 위성 정보가 모여 청해부대·선박으로 전파된다
+// 관심해역 해양정보 통합체계: 국내 기관·선사와 국제 해양안보 보고·정보융합센터, 위성 정보가 모여 청해부대·선박으로 전파된다
 const SBOX = { all: [40, 0, 110, 30], hormuz: [49.5, 21.5, 61.5, 30.5], aden: [31, 6, 62, 31.5], malacca: [93, -3, 111, 10], scs: [104, 2, 128, 28.5], ecs: [118, 23, 132, 35.6] };
 function renderSlocInfo() {
   const kr = slocShips.filter(sh => sh.cls === 'kr'), risk = kr.filter(sh => slocStatus(sh)[1] >= 2).length;
@@ -3442,7 +3449,7 @@ function renderSlocInfo() {
   g += edge('M152,158 L82,238') + edge('M188,158 L258,238');
   L.forEach(([a, b], i) => { g += node(0, 6 + i * 44, 114, a, b, 'ext2'); });
   R.forEach(([a, b, c], i) => { g += node(226, 6 + i * 44, 114, a, b, c); });
-  g += node(128, 98, 84, '원해 해양정보', '통합체계', 'hub', 60);
+  g += node(122, 98, 96, '관심해역', '해양정보통합체계', 'hub', 60);
   g += node(12, 238, 140, '청해부대·해군 MDA', '원해 SLOC 상황도') + node(188, 238, 140, '우리 선박 (선사)', '위협 경보·항로 권고');
   g += lab(170, 182, `우리 선박 ${kr.length}척 · 위성 ${inA}기`);
   setHTML($('slocSvg'), 'slocSvg', g);
@@ -3493,6 +3500,7 @@ $('arcpanel').addEventListener('click', e => { const rt = e.target.closest('[dat
 $('bBoxes').onclick = () => {
   const hide = $('mapwrap').classList.toggle('nobox');
   $('bBoxes').textContent = hide ? '정보칸 보이기' : '정보칸 숨기기'; $('bBoxes').setAttribute('aria-pressed', String(!hide));
+  if (slocView) { drawSlocStatic(); drawSloc(); } else if (arcView) { drawArcStatic(); drawArc(); } else if (krPre !== 'all') regionView(krPre);
 };
 $('bReport').onclick = () => { $('report').value = makeReport(); $('copyMsg').textContent = ''; };
 $('bCopy').onclick = () => {
