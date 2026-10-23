@@ -844,10 +844,10 @@ function init() {
     type: cls === 'cnn' ? '중국 해군 구축함 (연합훈련)' : '러시아 해군 구축함 (연합훈련)', off: [dx, dy], pos: fromLocal(jx.pos, dx, dy), hdg: 90, spd: 12,
     ais: false, emitter: EMIT.mil, mode: 'group', jx: true }));
   foreign(SC.jpCoastGuard, 'jcg', '일본 해상보안청 순시선', true, '431');
-  // 기동부대: 한국(동해) · 중국 랴오닝 항모전단(서해 잠정조치수역 접근)
+  // 기동부대: 한국(제주 해군기지) · 중국 랴오닝 항모전단(서해 잠정조치수역 접근)
   TFG = {};
   for (const [k, g] of Object.entries(SC.tf)) {
-    TFG[k] = { k, nm: g.nm, pos: g.pos.slice(), face: g.face, spd: g.spd, wps: k === 'cn' ? [g.station] : [], station: g.station, at: g.at || 0, st: k === 'cn' ? 'transit' : 'patrol' };
+    TFG[k] = { k, nm: g.nm, pos: g.pos.slice(), face: g.face, spd: g.spd, wps: k === 'cn' ? [g.station] : [], station: g.station, at: g.at || 0, st: k === 'cn' ? 'transit' : 'base' };
     for (const [idx, [id, type, kind, fwd, lat, un]] of g.members.entries()) {
       const t = { id, cls: k === 'kr' ? 'kn' : 'cnn', kind, truth: k === 'kr' ? 'F' : 'N', type, grp: k, idx, off: [fwd, lat], un: un || null, mode: 'tf', hdg: g.face, spd: g.spd,
         ais: false, emitter: kind === 'air' ? null : EMIT.mil, startAt: g.at || 0 };
@@ -995,7 +995,8 @@ function heliStep(dt) {
 
 // ── 기동부대: 편대 중심을 움직이고 함정·무인전력은 정해진 편대 위치(전방·측방 km)를 따른다 ──
 function tfSlot(G, t) {
-  const k = G.wps.length ? 0.35 : 1;   // 이동 중에는 편대를 좁힌다
+  // 기지 정박 중에는 모여 있고, 출동하면 무인전력(UAV·USV)이 앞서고 유인함정은 좁은 편대로 뒤따른다
+  const k = G.st === 'base' ? (t.un ? 0.05 : 0.15) : G.wps.length ? (t.un ? 1 : 0.6) : 1;
   const p = advance(advance(G.pos, G.face, t.off[0] * k), (G.face + 90) % 360, t.off[1] * k);
   // 좁은 수로·도서 부근에서 편대 위치가 육지에 걸리면 기함 뒤에 일렬로 선다
   return t.kind !== 'air' && isLand(p[0], p[1]) ? advance(G.pos, (G.face + 180) % 360, (t.idx + 1) * 2.5) : p;
@@ -1004,7 +1005,7 @@ function tfStep(dt) {
   for (const G of Object.values(TFG)) {
     if (T < G.at) continue;
     if (G.wps.length) { G.hdg = bearing(G.pos, G.wps[0]); G.face = G.hdg; if (moveToward(G, G.wps[0], G.spd, dt)) { G.wps.shift(); if (!G.wps.length) { G.st = 'station'; G.arrived = T; } } }
-    else if (G.st === 'patrol') { G.face = (G.face + dt * 0.4) % 360; }
+
     // 대치 중에는 상대 편대 쪽을 바라본다
     const o = G.k === 'kr' ? TFG.cn : TFG.kr;
     if (!G.wps.length && G.st === 'station' && o && T >= o.at) G.face = bearing(G.pos, o.pos);
@@ -1715,13 +1716,13 @@ function scenario(dt = 0) {
   // 서해 잠정조치수역: 중국 랴오닝 항모전단 접근 → 한국 기동부대 서해 전개, 함재 UAV·USV 전방 감시선 형성
   const lv = tracks.get('CV16');
   if (lv && !lv.lost) raise({ id: 'liaoning', sev: 'crit', title: '서해 잠정조치수역 중국 랴오닝 항모전단 기동', tgt: 'CV16',
-    rec: '한국형 유무인전력항모 기동부대 서해 전개, 함재 UAV 선행 감시·USV 전방 배치, 해경·해수부 통보', approve: () => {
-      const K = TFG.kr; K.wps = seaRoute(K.pos, K.station); K.st = 'transit'; flags.lnAct = T;
+    rec: '제주 기지 한국형 유무인전력항모 기동부대 출동·서해 전개, 함재 UAV 선행 감시·USV 전방 배치, 해경·해수부 통보', approve: () => {
+      const K = TFG.kr, sw = [126.05, 33.05]; K.wps = [sw, ...seaRoute(sw, K.station)]; K.st = 'transit'; flags.lnAct = T;   // 제주 남서쪽으로 나가 서해로 북상
       // 함재 UAV는 먼저 날아가 대치선 앞에 감시선을 만든다
       const face = bearing(K.station, TFG.cn.station);
       for (const t of targets.filter(x => x.grp === 'kr' && x.un === 'uav')) t.detach = advance(advance(K.station, face, t.off[0]), (face + 90) % 360, t.off[1]);
-      addReq('한국 기동부대 서해 전개 · 랴오닝 항모전단 대응', '수행'); addReq('CVX 함재 UAV 선행 감시 · 서해 잠정조치수역', '수행');
-      addLog('한국형 유무인전력항모 기동부대, 서해 전개 개시. 함재 UAV 2대 선행 출격.'); feed('air', 'CVX 함재 UAV 2대 서해 선행 출격');
+      addReq('한국 기동부대 제주 출동·서해 전개 · 랴오닝 항모전단 대응', '수행'); addReq('CVX 함재 UAV 선행 감시 · 서해 잠정조치수역', '수행');
+      addLog('한국형 유무인전력항모 기동부대, 제주 해군기지에서 출동. 함재 UAV 2대 선행 출격, USV 2척 전방 기동.'); feed('air', 'CVX 함재 UAV 2대 서해 선행 출격');
     } });
   if (flags.lnAct != null && !flags.lnDone) {
     const ku = targets.filter(x => x.grp === 'kr' && x.un === 'uav');
@@ -2108,7 +2109,7 @@ function drawDyn() {
     if (!mem.length) continue;
     const c = tracks.get(G.k === 'kr' ? 'CVX' : 'CV16');
     for (const t of mem) if (t.un && c) h += `<line class="tfl ${G.k}" x1="${f1(X(c.pos[0]))}" y1="${f1(Y(c.pos[1]))}" x2="${f1(X(tracks.get(t.id).pos[0]))}" y2="${f1(Y(tracks.get(t.id).pos[1]))}"${dash(z, 2, 4)}/>`;
-    if (c) h += txt('btx tf ' + G.k, X(c.pos[0]), Y(c.pos[1]) - 34 * z, 11.5 * z, (G.k === 'kr' ? '한국 기동부대 (CVX)' : '랴오닝 항모전단') + (G.wps.length ? ' · 이동 중' : ''), 'middle');
+    if (c) h += txt('btx tf ' + G.k, X(c.pos[0]), Y(c.pos[1]) - 34 * z, 11.5 * z, (G.k === 'kr' ? '한국 기동부대 (CVX)' : '랴오닝 항모전단') + (G.wps.length ? ' · 이동 중' : G.st === 'base' ? ' · 제주 기지' : ''), 'middle');
   }
   if (layerOn.air && mpa.wps && mpa.wps.length) h += `<path class="mpap"${dash(z, 4, 4)} d="${pathD([mpa.pos, ...mpa.wps.slice(0, 14)])}"/>`;
   if (layerOn.air && uav2.wps.length) h += `<path class="mpap uavp"${dash(z, 3, 4)} d="${pathD([uav2.pos, ...uav2.wps.slice(0, 10)])}"/>`;
@@ -2418,7 +2419,7 @@ const TF_ROLE = { CVX: '지휘·유무인 통제', DDG1: '대공·탄도탄 방�
 function tfPanel() {
   const K = TFG.kr, cvx = byId.get('CVX'), cn = byId.get('CV16'), cnOn = TFG.cn && T >= TFG.cn.at;
   const rem = K.wps.reduce((a, q, i) => a + dist(i ? K.wps[i - 1] : K.pos, q), 0), eta = K.wps.length ? clock(T + rem / KMMIN(K.spd)).hm : null;
-  const st = K.wps.length ? `서해 전개 이동 중 · 도착 예정 ${eta}` : K.st === 'station' ? '서해 대치 감시' : '동해 기동 초계';
+  const st = K.wps.length ? `제주 출동 · 서해 전개 이동 중 (도착 예정 ${eta})` : K.st === 'station' ? '서해 대치 감시' : '제주 해군기지 대기 (즉응 태세)';
   const mem = targets.filter(t => t.grp === 'kr');
   const fwd = mem.filter(t => t.un).map(t => dist(t.pos, cvx.pos));
   return `<div class="tfbox"><h4>기동부대 현황 <small>· 한국형 유무인전력항모 기동부대</small></h4>
@@ -2431,7 +2432,7 @@ function renderMumt() {
   const live = [...tracks.values()].filter(tr => !tr.lost && tr.affil !== 'F');
   const inR = (p, r) => live.filter(tr => dist(tr.pos, p) <= r).length;
   const where = p => whereOf(p);
-  const cvx = byId.get('CVX'), K = TFG.kr, tfTask = K.wps.length ? '서해 전개 이동 중' : K.st === 'station' ? '서해 대치 감시 (랴오닝 항모전단)' : '동해 기동 초계';
+  const cvx = byId.get('CVX'), K = TFG.kr, tfTask = K.wps.length ? '제주 출동 · 서해 전개 이동 중' : K.st === 'station' ? '서해 대치 감시 (랴오닝 항모전단)' : '제주 기지 대기';
   const kun = targets.filter(t => t.grp === 'kr' && t.un);
   const rows = [
     ['유인 · 통제함', '한국형 유무인전력항모 (CVX)', where(cvx.pos), `${tfTask} · 무인전력 ${kun.length}기 통제`, inR(cvx.pos, 150), '기동부대 지휘', { type: 'Link-16·위성 (함대 C2)', rate: 16, lat: 280, loss: 0.2, st: '정상' }],
