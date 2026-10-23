@@ -391,6 +391,9 @@ textarea.report { width: 100%; min-height: 150px; font: 12px/1.5 var(--font-data
 .usv { fill: var(--fr); stroke: var(--halo); stroke-width: 1; vector-effect: non-scaling-stroke; } .usvl { fill: none; stroke: var(--fr); stroke-width: 1.4; opacity: .55; vector-effect: non-scaling-stroke; }
 .mumt td:first-child, .mumt td:nth-child(3) { white-space: nowrap; } #mumt td:nth-child(2), #mumt td:nth-child(4) { white-space: normal; } #mumt td:nth-child(2) { width: 50%; }
 .mumt td b.on { color: var(--ne); } .mumt td b.warn { color: var(--su); }
+.pmz { fill: color-mix(in srgb, var(--un) 6%, transparent); stroke: var(--un); stroke-width: 1.2; vector-effect: non-scaling-stroke; } .btx.pmz { fill: #8a6d00; }
+.tfl { stroke-width: 1; vector-effect: non-scaling-stroke; } .tfl.kr { stroke: var(--fr); } .tfl.cn { stroke: var(--k-cnn); }
+.btx.tf.kr { fill: var(--fr); font-weight: 700; } .btx.tf.cn { fill: var(--k-cnn); font-weight: 700; }
 .mpap { fill: none; stroke: var(--l-air); stroke-width: 1.3; opacity: .7; vector-effect: non-scaling-stroke; }
 .nm12 { fill: color-mix(in srgb, #d9b26f 30%, var(--sea)); stroke: color-mix(in srgb, #d9b26f 30%, var(--sea)); stroke-linejoin: round; }
 .nm12e { fill: none; stroke: color-mix(in srgb, var(--l-ground) 75%, var(--sea)); stroke-linejoin: round; }
@@ -766,6 +769,7 @@ const EMIT = {
   vhf: { type: 'VHF 해상 무선', band: '156.8MHz (16채널)' },
   air: { type: '항공기 탑재 레이더', band: 'X밴드 10.1GHz', mil: true }
 };
+let TFG = {};
 let rnd, T, targets, byId, tracks, alerts, reqs, logs, feeds, passes, buoys, mpa, uav, uav2, usvs = [], sel, stats, flags, nid, shares, jx, helis = [], handovers = [];
 
 function routeShip(route, i, o = {}) {
@@ -827,6 +831,16 @@ function init() {
     type: cls === 'cnn' ? '중국 해군 구축함 (연합훈련)' : '러시아 해군 구축함 (연합훈련)', off: [dx, dy], pos: fromLocal(jx.pos, dx, dy), hdg: 90, spd: 12,
     ais: false, emitter: EMIT.mil, mode: 'group', jx: true }));
   foreign(SC.jpCoastGuard, 'jcg', '일본 해상보안청 순시선', true, '431');
+  // 기동부대: 한국(동해) · 중국 랴오닝 항모전단(서해 잠정조치수역 접근)
+  TFG = {};
+  for (const [k, g] of Object.entries(SC.tf)) {
+    TFG[k] = { k, nm: g.nm, pos: g.pos.slice(), face: g.face, spd: g.spd, wps: k === 'cn' ? [g.station] : [], station: g.station, at: g.at || 0, st: k === 'cn' ? 'transit' : 'patrol' };
+    for (const [idx, [id, type, kind, fwd, lat, un]] of g.members.entries()) {
+      const t = { id, cls: k === 'kr' ? 'kn' : 'cnn', kind, truth: k === 'kr' ? 'F' : 'N', type, grp: k, idx, off: [fwd, lat], un: un || null, mode: 'tf', hdg: g.face, spd: g.spd,
+        ais: false, emitter: kind === 'air' ? null : EMIT.mil, startAt: g.at || 0 };
+      t.pos = tfSlot(TFG[k], t); targets.push(t);
+    }
+  }
   SC.usNavy.forEach(([id, x, y, r, type]) => targets.push({ id, cls: 'usn', kind: 'surface', truth: 'F', type, pos: [x, y], home: [x, y],
     hdg: 0, spd: 12, ais: false, emitter: EMIT.mil, mode: 'patrol', ph: rnd() * 360, orbitR: r }));
   targets.push({ id: SC.ruTransit.id, cls: 'run', kind: 'surface', truth: 'N', type: '러시아 해군 호위함', pos: SC.ruTransit.path[1].slice(), hdg: 200, spd: 14,
@@ -966,6 +980,23 @@ function heliStep(dt) {
   }
 }
 
+// ── 기동부대: 편대 중심을 움직이고 함정·무인전력은 정해진 편대 위치(전방·측방 km)를 따른다 ──
+function tfSlot(G, t) {
+  const k = G.wps.length ? 0.35 : 1;   // 이동 중에는 편대를 좁힌다
+  const p = advance(advance(G.pos, G.face, t.off[0] * k), (G.face + 90) % 360, t.off[1] * k);
+  // 좁은 수로·도서 부근에서 편대 위치가 육지에 걸리면 기함 뒤에 일렬로 선다
+  return t.kind !== 'air' && isLand(p[0], p[1]) ? advance(G.pos, (G.face + 180) % 360, (t.idx + 1) * 2.5) : p;
+}
+function tfStep(dt) {
+  for (const G of Object.values(TFG)) {
+    if (T < G.at) continue;
+    if (G.wps.length) { G.hdg = bearing(G.pos, G.wps[0]); G.face = G.hdg; if (moveToward(G, G.wps[0], G.spd, dt)) { G.wps.shift(); if (!G.wps.length) { G.st = 'station'; G.arrived = T; } } }
+    else if (G.st === 'patrol') { G.face = (G.face + dt * 0.4) % 360; }
+    // 대치 중에는 상대 편대 쪽을 바라본다
+    const o = G.k === 'kr' ? TFG.cn : TFG.kr;
+    if (!G.wps.length && G.st === 'station' && o && T >= o.at) G.face = bearing(G.pos, o.pos);
+  }
+}
 function moveTarget(t, dt) {
   if (!active(t)) return;
   switch (t.mode) {
@@ -1033,6 +1064,12 @@ function moveTarget(t, dt) {
         t.pos = advance(t.pos, t.hdg, KMMIN(t.spd) * dt);
       } else { t.spd = 12; t.hdg = 255; t.pos = advance(t.pos, t.hdg, KMMIN(t.spd) * dt); if (t.pos[0] < 122.8) t.gone = true; }
       break;
+    case 'tf': {
+      const G = TFG[t.grp], sl = t.detach && !TFG[t.grp].arrived ? t.detach : tfSlot(G, t), mx = t.kind === 'air' ? 150 : t.un ? 35 : 32;
+      if (moveToward(t, sl, mx, dt)) t.spd = G.wps.length ? G.spd : 2; else t.spd = mx;
+      if (t.kind !== 'air' && isLand(t.pos[0], t.pos[1])) { const q = advance(G.pos, (G.face + 180) % 360, (t.idx + 1) * 2.5); t.pos = isLand(q[0], q[1]) ? G.pos.slice() : q; }
+      break;
+    }
     case 'group':
       if (jx.gone) { t.gone = true; break; }
       t.pos = fromLocal(jx.pos, t.off[0], t.off[1]); t.hdg = jx.hdg; t.spd = jx.spd; break;
@@ -1382,6 +1419,7 @@ function step(dt) {
   const t0 = T; T += dt;
   if (jx.st === 'exercise') orbit(jx, dt);
   else if (jx.st === 'leave') { jx.spd = 16; jx.hdg = 20; jx.pos = advance(jx.pos, jx.hdg, KMMIN(jx.spd) * dt); if (jx.pos[1] > 42.3) jx.gone = true; }
+  tfStep(dt);
   for (const t of targets) moveTarget(t, dt);
   moveAir(mpa, dt); moveAir(uav, dt); uav2Step(dt); usvStep(dt); heliStep(dt);
   const friends = targets.filter(t => t.truth === 'F');
@@ -1538,6 +1576,7 @@ const CAT = {
   cable: ['해양 기반시설 위협', '국외 공유 가능', ['해경', '해수부']],
   shadow: ['제재 회피·그림자선단 의심', '국외 공유 가능', ['해경', '해수부', '해외 IFC']],
   jointex: ['주변국 연합 군사활동', '국내 한정', ['해경']],
+  liaoning: ['주변국 항모 활동 (잠정조치수역)', '국내 한정', ['해경', '해수부']],
   jam: ['전자전·위성통신 방해', '국내 한정', ['해경']],
   gnss: ['전자전·GPS 전파교란 (항행 안전)', '국외 공유 가능', ['해수부', '해경', '해외 IFC']],
   arcice: ['북극항로 항행 안전 (결빙)', '국외 공유 가능', ['해수부', '해외 IFC']],
@@ -1660,6 +1699,25 @@ function scenario(dt = 0) {
   if (T >= AR.exercise.at) raise({ id: 'arcmil', sev: 'warn', title: '[북극] 러시아 북방함대 훈련구역 설정 (카라해, 항로 인접)', tgt: 'N42',
     rec: '항행경보(NAVAREA XX) 공유, 해당 구간 통항 선박 일정 조정 권고', approve: () => { flags.arcmilAct = T; addReq('북극 항행경보 공유 · 카라해 훈련구역', '완료'); } });
   if (flags.arcmilAct != null && !flags.arcmilDone && T - flags.arcmilAct > 60) { flags.arcmilDone = true; closeAlert('arcmil', '항행경보 전파, 통항 선박 일정 조정 권고'); }
+  // 서해 잠정조치수역: 중국 랴오닝 항모전단 접근 → 한국 기동부대 서해 전개, 함재 UAV·USV 전방 감시선 형성
+  const lv = tracks.get('CV16');
+  if (lv && !lv.lost) raise({ id: 'liaoning', sev: 'crit', title: '서해 잠정조치수역 중국 랴오닝 항모전단 기동', tgt: 'CV16',
+    rec: '한국형 유무인전력항모 기동부대 서해 전개, 함재 UAV 선행 감시·USV 전방 배치, 해경·해수부 통보', approve: () => {
+      const K = TFG.kr; K.wps = seaRoute(K.pos, K.station); K.st = 'transit'; flags.lnAct = T;
+      // 함재 UAV는 먼저 날아가 대치선 앞에 감시선을 만든다
+      const face = bearing(K.station, TFG.cn.station);
+      for (const t of targets.filter(x => x.grp === 'kr' && x.un === 'uav')) t.detach = advance(advance(K.station, face, t.off[0]), (face + 90) % 360, t.off[1]);
+      addReq('한국 기동부대 서해 전개 · 랴오닝 항모전단 대응', '수행'); addReq('CVX 함재 UAV 선행 감시 · 서해 잠정조치수역', '수행');
+      addLog('한국형 유무인전력항모 기동부대, 서해 전개 개시. 함재 UAV 2대 선행 출격.'); feed('air', 'CVX 함재 UAV 2대 서해 선행 출격');
+    } });
+  if (flags.lnAct != null && !flags.lnDone) {
+    const ku = targets.filter(x => x.grp === 'kr' && x.un === 'uav');
+    if (ku.every(t => dist(t.pos, t.detach) < 3)) {
+      flags.lnDone = true; const K = TFG.kr, rem = K.wps.reduce((a, q, i) => a + dist(i ? K.wps[i - 1] : K.pos, q), 0);
+      closeAlert('liaoning', `CVX 함재 UAV 전방 감시선 형성, 랴오닝 항모전단 감시 유지 · 기동부대 서해 도착 약 ${Math.round(rem / KMMIN(K.spd) / 60)}시간 후`);
+    }
+  }
+  if (TFG.kr.arrived && !flags.lnArr) { flags.lnArr = true; addLog('한국 기동부대 서해 전개 완료. 유인함정 후방·UAV·USV 전방 배치로 대치 감시.'); feed('surface', '한국 기동부대 서해 전개 완료 · 랴오닝 항모전단 대치 감시'); }
   // GPS 전파교란: 레이더 위치와 AIS·V-PASS 위치가 어긋나는 선박이 8척 이상 5분 넘게 이어지면
   flags.gnssT = gnssMis.size >= 8 ? (flags.gnssT || 0) + dt : 0;
   if (flags.gnssT > 5) raise({ id: 'gnss', sev: 'crit', title: 'GPS 전파교란 의심 (서해 북부)', tgt: '서해 북부',
@@ -2019,6 +2077,15 @@ function drawDyn() {
     h += txt('tid A', x + 9 * z, y - 5 * z, 10 * z, `${hh.type.replace(/ \(.*|와일드캣/g, '').trim()} (${hh.ship})${hh.st === 'dip' ? ' · 디핑' : ''}`);
   }
   // 항공 자산
+  if (showB.eez) h += `<path class="pmz" d="${pathD(SC.pmz, true)}"${dash(z, 8, 4)}/>` + txt('btx pmz', X(123.55), Y(34.0), 11 * z, '한·중 잠정조치수역', 'middle');
+  for (const G of Object.values(TFG)) {
+    if (T < G.at) continue;
+    const mem = targets.filter(t => t.grp === G.k && tracks.get(t.id) && !tracks.get(t.id).lost);
+    if (!mem.length) continue;
+    const c = tracks.get(G.k === 'kr' ? 'CVX' : 'CV16');
+    for (const t of mem) if (t.un && c) h += `<line class="tfl ${G.k}" x1="${f1(X(c.pos[0]))}" y1="${f1(Y(c.pos[1]))}" x2="${f1(X(tracks.get(t.id).pos[0]))}" y2="${f1(Y(tracks.get(t.id).pos[1]))}"${dash(z, 2, 4)}/>`;
+    if (c) h += txt('btx tf ' + G.k, X(c.pos[0]), Y(c.pos[1]) - 34 * z, 11.5 * z, (G.k === 'kr' ? '한국 기동부대 (CVX)' : '랴오닝 항모전단') + (G.wps.length ? ' · 이동 중' : ''), 'middle');
+  }
   if (layerOn.air && mpa.wps && mpa.wps.length) h += `<path class="mpap"${dash(z, 4, 4)} d="${pathD([mpa.pos, ...mpa.wps.slice(0, 14)])}"/>`;
   if (layerOn.air && uav2.wps.length) h += `<path class="mpap uavp"${dash(z, 3, 4)} d="${pathD([uav2.pos, ...uav2.wps.slice(0, 10)])}"/>`;
   if (layerOn.surface) for (const u of usvs) {
@@ -2325,18 +2392,23 @@ function renderMumt() {
   const live = [...tracks.values()].filter(tr => !tr.lost && tr.affil !== 'F');
   const inR = (p, r) => live.filter(tr => dist(tr.pos, p) <= r).length;
   const where = p => whereOf(p);
+  const cvx = byId.get('CVX'), K = TFG.kr, tfTask = K.wps.length ? '서해 전개 이동 중' : K.st === 'station' ? '서해 대치 감시 (랴오닝 항모전단)' : '동해 기동 초계';
+  const kun = targets.filter(t => t.grp === 'kr' && t.un);
   const rows = [
+    ['유인 · 통제함', '한국형 유무인전력항모 (CVX)', where(cvx.pos), `${tfTask} · 무인전력 ${kun.length}기 통제`, inR(cvx.pos, 150), '기동부대 지휘', { type: 'Link-16·위성 (함대 C2)', rate: 16, lat: 280, loss: 0.2, st: '정상' }],
+    ...kun.map(t => ['무인 · CVX', `${t.un.toUpperCase()} ${t.id}`, where(t.pos), t.detach && !K.arrived ? '선행 감시선 이동·감시' : '기동부대 전방 감시', inR(t.pos, t.un === 'uav' ? UAV_R : USV_R), 'CVX', mumtLink(t.un, t.pos, cvx.pos)]),
     ['유인', '해상초계기', where(mpa.pos), mpa.task, inR(mpa.pos, MPA_R), '지상통제', mumtLink('mpa', mpa.pos)],
     ...helis.map(h => { const sh = byId.get(h.ship); return ['유인', `${h.type.replace(/ \(.*|와일드캣/g, '').trim()} (${h.ship})`, h.st === 'deck' ? `${h.ship} 함상` : where(h.pos), h.st === 'deck' ? '함상 대기' : h.st === 'dip' ? '디핑소나 탐색' : h.task, h.st === 'deck' ? 0 : inR(h.pos, HELI_R), h.ship, mumtLink('heli', h.st === 'deck' ? sh.pos : h.pos, sh.pos)]; }),
     ['무인', 'UAV-1', where(uav.pos), uav.task, inR(uav.pos, UAV_R), '지상통제 (서해)', mumtLink('uav', uav.pos, GCS.west)],
     ['무인', 'UAV-2', where(uav2.pos), uav2.task, inR(uav2.pos, UAV_R), '지상통제 (남해)', mumtLink('uav', uav2.pos, GCS.south)],
     ...usvs.map(u => ['무인', u.name, u.area, `NLL 연한 좌우 경비 (${u.dir > 0 ? '동' : '서'}진, 왕복 ${u.laps}회)`, inR(u.pos, USV_R), `모함 ${u.ctl}`, mumtLink('usv', u.pos, byId.get(u.ctl).pos)])
   ];
-  const nMan = rows.filter(r => r[0] === '유인').length, nUn = rows.filter(r => r[0] === '무인').length, det = rows.filter(r => r[0] === '무인').reduce((a, r) => a + r[4], 0);
+  const nMan = rows.filter(r => r[0].startsWith('유인')).length, nUn = rows.filter(r => r[0].startsWith('무인')).length, det = rows.filter(r => r[0].startsWith('무인')).reduce((a, r) => a + r[4], 0);
   setHTML($('mumt'), 'mumt', `<h3>유무인복합전투체계 운용현황</h3>
-    <div class="phd"><div class="pk" style="--pc: var(--fr)"><b>${nMan}</b>유인 자산<small> · 초계기·헬기</small></div><div class="pk" style="--pc: var(--ne)"><b>${nUn}</b>무인 자산<small> · UAV ${2} · USV ${usvs.length}</small></div><div class="pk" style="--pc: var(--l-air)"><b>${det}</b>무인 자산 탐지 표적</div></div>
+    <div class="phd"><div class="pk" style="--pc: var(--fr)"><b>${nMan}</b>유인 자산<small> · 초계기·헬기</small></div><div class="pk" style="--pc: var(--ne)"><b>${nUn}</b>무인 자산<small> · UAV ${2 + kun.filter(t => t.un === 'uav').length} · USV ${usvs.length + kun.filter(t => t.un === 'usv').length}</small></div><div class="pk" style="--pc: var(--l-air)"><b>${det}</b>무인 자산 탐지 표적</div></div>
     <table class="atab"><thead><tr><th>구분·자산</th><th>위치·임무</th><th>탐지</th><th>데이터 전송</th></tr></thead><tbody>${rows.map(r => `<tr><td><small>${r[0]} · ${esc(r[5])}</small>${esc(r[1])}</td><td>${esc(r[2])}<small>${esc(r[3])}</small></td><td>${r[4]}</td><td><b class="${r[6].st === '정상' ? 'on' : 'warn'}">${esc(r[6].st)}</b><small>${esc(r[6].type)}<br>${r[6].rate}Mbps · ${r[6].lat}ms · 손실 ${r[6].loss}%</small></td></tr>`).join('')}</tbody></table>
     <p class="empty" style="font-size:11px;margin:3px 0 0">평균 전송률 <b style="color:var(--fg)">${(rows.reduce((a, r) => a + r[6].rate, 0) / rows.length).toFixed(1)}Mbps</b> · 링크 저하 <b style="color:var(--fg)">${rows.filter(r => r[6].st !== '정상').length}</b>개 자산</p>
+    <p class="empty" style="font-size:11px;margin:4px 0 0"><b style="color:var(--fr)">기동부대 구성</b> CVX · 이지스 구축함 2 (정조대왕·세종대왕급) · 호위함 2 (충남·대구급) · 군수지원함 · 함재 UAV 2 · USV 2 — 무인전력 전방, 유인함정 후방 배치. ${TFG.cn && T >= TFG.cn.at ? `대치 상대: 랴오닝 항모전단 (항모·055·052D×2·054A·901, 중국 UAV 2·USV 2)` : ''}</p>
     <p class="empty" style="font-size:11px;margin:4px 0 0">USV는 모함(F108·F101)이 통제하며 NLL 전방 감시 정보를 전술데이터링크로 공유합니다. UAV는 지상 통제소에서 통제하고 해상초계기·함정과 영상 정보를 나눕니다.</p>`);
 }
 let domCls = {};
