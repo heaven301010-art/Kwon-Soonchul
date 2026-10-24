@@ -2332,19 +2332,16 @@ function renderArcPanel() {
   const polar = SATS.filter(o => satPos(o, T)[1] > 66.5), north = arcShips.filter(sh => sh.pos[1] > AR.geoLimit).length;
   const polarComm = COMMS.filter(c => c.name !== 'Starlink' && satPos(c, T)[1] > 66.5).length;
   const lv = ['done', 'act', 'warn', 'open'];
-  let selH = '';
+  // 선택 선박은 지도 위 팝업으로 보여 준다
   const ss = arcSel && arcShips.find(x => x.id === arcSel);
-  if (ss) {
-    const st = arcStatus(ss);
-    selH = `<div class="ahd"><h3>선택 선박</h3><b>${ss.id}</b> ${esc(ss.name)} <small>(${ss.flag})</small> <span class="chip ${lv[st[1]]}">${st[0]}</span>
-      <div class="empty" style="font-size:11.5px;margin-top:3px">${ss.type} · 빙급 ${ss.ice} · ${ss.route ? AR.routes[ss.route === 'LNG' ? 'NSR' : ss.route].nm : '해역 체류'} · ${arcSea(ss.pos)}<br>
-      ${fmtPos(ss.rep.pos)} · ${f1(ss.spd)}kn · 최종 보고 ${clock(ss.rep.t).hm} (${esc(ss.rep.src)})${ss.escort ? ` · 호송 ${ss.escort}` : ''}${ss.heavy ? ` · 해빙 가장자리 ${f1(iceLat(ss.pos[0]))}°N` : ''}</div></div>`;
-  }
+  if (arcView) popShip(ss && 'arc-' + ss.id, ss && (() => { const st = arcStatus(ss); return [ss.id, lv[st[1]], st[0], `<dt>선명</dt><dd>${esc(ss.name)} (${ss.flag})</dd>
+      <dt>선종</dt><dd>${ss.type} · 빙급 ${ss.ice}</dd><dt>항로</dt><dd>${ss.route ? AR.routes[ss.route === 'LNG' ? 'NSR' : ss.route].nm : '해역 체류'}</dd><dt>해역</dt><dd>${arcSea(ss.pos)}</dd>
+      <dt>위치</dt><dd>${fmtPos(ss.rep.pos)}</dd><dt>속력</dt><dd>${f1(ss.spd)}kn</dd><dt>최종 보고</dt><dd>${clock(ss.rep.t).hm} · ${esc(ss.rep.src)}</dd>
+      ${ss.escort ? `<dt>호송</dt><dd>${ss.escort}</dd>` : ''}${ss.heavy ? `<dt>해빙</dt><dd class="warn">해빙 가장자리 ${f1(iceLat(ss.pos[0]))}°N</dd>` : ''}`]; })());
   setHTML($('arcInfo'), 'arc', `<div class="ahd"><h3>항로·선박 현황</h3>
       <div class="csum"><span>NSR <b>${onR('NSR')}</b></span><span>NWP <b>${onR('NWP')}</b></span><span>해역 체류 <b>${arcShips.filter(sh => !sh.route).length}</b></span><span>한국 관련 <b>${arcShips.filter(sh => sh.kr).length}</b></span>
       <span>호송 <b>${nSt('호송 중')}</b></span><span>결빙 정체 <b>${nSt('결빙 정체')}</b></span><span>AIS 공백 <b>${nSt('AIS 공백')}</b></span><span>러시아 군함 <b>${arcShips.filter(sh => sh.cls === 'run').length}</b></span></div></div>
     ${arcRouteH()}
-    ${selH}
     <div class="ahd"><table class="atab"><thead><tr><th>선박</th><th>선종·빙급·해역</th><th>상태·속력</th><th>보고</th></tr></thead><tbody>`
     + rows.filter(([sh]) => arcPre === 'all' || onRoute(sh, arcPre) || AR.routes[arcPre].pts.some(q => q[1] >= 58 && gdist(q, sh.pos) < 300)).map(([sh, st]) => `<tr data-arc="${sh.id}" class="${arcSel === sh.id ? 'on' : ''}"><td><i class="ash ${sh.cls}" style="background:currentColor"></i>${sh.id}<small>${esc(sh.name)} · ${sh.flag}</small></td><td>${sh.type}<small>${sh.ice} · ${arcSea(sh.pos)}</small></td><td><span class="chip ${lv[st[1]]}">${st[0]}</span><small>${f1(sh.spd)}kn</small></td><td>${clock(sh.rep.t).hm}<small>${esc(sh.rep.src.replace(/ \(.*/, ''))}</small></td></tr>`).join('')
     + `</tbody></table></div>
@@ -2627,13 +2624,13 @@ function renderPanel() {
   const t = sel && byId.get(sel), tr = sel && tracks.get(sel);
   // 정보는 계속 갱신하되, 단추 줄은 선택 표적이 바뀔 때만 다시 그려 클릭이 끊기지 않게 한다
   const wrapKey = t && tr ? 'sel-' + sel : 'none';
-  if (elCache.get('selwrap') !== wrapKey) {
+  if (!arcView && !slocView && elCache.get('selwrap') !== wrapKey) {
     elCache.set('selwrap', wrapKey); elCache.delete('selBody'); elCache.delete('selActs');
     $('selSec').innerHTML = t && tr ? '<h2><span>선택 표적</span><button class="pfold" type="button" data-selclose aria-label="선택 표적 정보 닫기">✕ 닫기</button></h2><div class="sel"><div id="selBody"></div><div class="acts" id="selActs"></div></div>' : '';
     $('selSec').hidden = !(t && tr);
     if (t && tr) requestAnimationFrame(placeSel);
   }
-  if (t && tr) {
+  if (t && tr && !arcView && !slocView) {
     const recent = Object.entries(tr.by).filter(([, v]) => T - v <= 10).map(([k]) => SN[k]);
     const known = tr.affil === 'N' || tr.affil === 'F' || !!tr.note;
     const rfBtn = '<button class="btn" type="button" data-task="rf">RF 신호 수집 요청</button>';
@@ -3390,14 +3387,10 @@ function renderSlocPanel() {
     const lvN = a && a.status !== 'done' ? 3 : n === '바브엘만데브 해협' ? 2 : ['말라카·싱가포르 해협', '호르무즈 해협', '대만 해협'].includes(n) ? 1 : 0;
     return `<tr><td>${n}<small>${esc(info)}</small></td><td>${near}</td><td><span class="chip ${lv[lvN]}">${['정상', '주의', '경계', '심각'][lvN]}</span></td></tr>`;
   }).join('');
-  let selH = '';
   const ss = slocSel && sById(slocSel);
-  if (ss) {
-    const st = slocStatus(ss);
-    selH = `<div class="ahd"><h3>선택 선박</h3><b>${ss.id}</b> ${esc(ss.name)} <small>(${ss.flag})</small> <span class="chip ${lv[st[1]]}">${st[0]}</span>
-      <div class="empty" style="font-size:11.5px;margin-top:3px">${SCLS[ss.cls]} · ${ss.type}${ss.route ? ` · ${SL.routes[ss.route].nm}` : ''} · ${slocWhere(ss.pos)}<br>
-      ${ss.rep.t < -1 ? '위치 미확인' : `${fmtPos(ss.rep.pos)} · ${f1(ss.spd)}kn · 최종 보고 ${clock(ss.rep.t).hm} (${esc(ss.rep.src)})`}</div></div>`;
-  }
+  if (slocView) popShip(ss && 'sloc-' + ss.id, ss && (() => { const st = slocStatus(ss); return [ss.id, lv[st[1]], st[0], `<dt>선명</dt><dd>${esc(ss.name)} (${ss.flag})</dd>
+      <dt>구분</dt><dd>${SCLS[ss.cls]}</dd><dt>선종</dt><dd>${ss.type}</dd>${ss.route ? `<dt>항로</dt><dd>${SL.routes[ss.route].nm}</dd>` : ''}<dt>해역</dt><dd>${slocWhere(ss.pos)}</dd>
+      ${ss.rep.t < -1 ? '<dt>위치</dt><dd class="warn">위치 미확인</dd>' : `<dt>위치</dt><dd>${fmtPos(ss.rep.pos)}</dd><dt>속력</dt><dd>${f1(ss.spd)}kn</dd><dt>최종 보고</dt><dd>${clock(ss.rep.t).hm} · ${esc(ss.rep.src)}</dd>`}`]; })());
   const inA = SATS.filter(o => { const q = satPos(o, T); return o.use && q[0] >= 26 && q[0] <= 134 && q[1] >= -16 && q[1] <= 44; });
   const thr = [['후티 (홍해 남부·바브엘만데브)', 'houthi', alerts.some(a => a.id === 'redsea' && a.status !== 'done') ? 3 : 2], ['IRGCN (호르무즈)', 'irgcn', alerts.some(a => a.id === 'hormuz' && a.status !== 'done') ? 3 : 1],
     ['소말리아 해적', 'piracy', alerts.some(a => a.id === 'piracy' && a.status !== 'done') ? 3 : 1], ['해상강도 (싱가포르 해협)', 'recaap', 1], ['그림자선단 STS (말레이시아 동방)', 'sts', 1],
@@ -3408,7 +3401,6 @@ function renderSlocPanel() {
       <div class="empty" style="font-size:11.5px;margin-top:4px">청해부대 CH1 · ${slocWhere(chd.pos)} · ${chdTask} · ${f1(chd.spd)}kn</div></div>
     ${chdPanel()}
     ${uxPanel()}
-    ${selH}
     <div class="ahd"><h3>초크포인트 현황</h3><table class="atab"><thead><tr><th>해협</th><th>우리 선박 (400km)</th><th>위협</th></tr></thead><tbody>${ck}</tbody></table></div>
     <div class="ahd"><h3>우리 선박 추적</h3><table class="atab stab"><thead><tr><th>선박</th><th>선명·선종·해역</th><th>상태·속력</th><th>보고</th></tr></thead><tbody>`
     + rows.map(([sh, st]) => `<tr data-sloc="${sh.id}" class="${slocSel === sh.id ? 'on' : ''}"><td><i class="ssh kr" style="background:currentColor"></i>${sh.id}</td><td>${esc(sh.name)}<small>${sh.type} · ${slocWhere(sh.pos)}</small></td><td><span class="chip ${lv[st[1]]}">${st[0]}</span><small>${f1(sh.spd)}kn</small></td><td>${clock(sh.rep.t).hm}<small>${esc(sh.rep.src.replace(/ \(.*/, ''))}</small></td></tr>`).join('')
@@ -3536,7 +3528,7 @@ $('cdseGo').onclick = () => cdseQuery(cdseA, CDSE_AREA[arcPre], CDSE_NM[arcPre],
 
 function setView(v) {
   arcView = v === 'arc'; slocView = v === 'sloc'; const kr = v === 'kr';
-  if (!kr && sel) { sel = null; selAt = null; elCache.delete('selwrap'); $('selSec').hidden = true; }   // 선택 표적 팝업은 한반도 해역에서만
+  sel = arcSel = slocSel = null; selAt = null; elCache.set('selwrap', 'none'); $('selSec').hidden = true; $('selSec').innerHTML = '';   // 보기를 바꾸면 선택 팝업을 닫는다
   $('map').toggleAttribute('hidden', !kr); $('arc').toggleAttribute('hidden', !arcView); $('sloc').toggleAttribute('hidden', !slocView);
   document.querySelector('.zoom').hidden = !kr; document.querySelector('.bounds').hidden = !kr; $('abounds').hidden = !arcView; $('spre').hidden = !slocView; $('apre').hidden = !arcView; $('kpre').hidden = !kr;
   $('srcpanel').hidden = !kr; $('arcpanel').hidden = !arcView; $('slocpanel').hidden = !slocView; $('polarSec').hidden = !arcView; $('slocSec').hidden = !slocView;
@@ -3549,15 +3541,15 @@ $('arc').addEventListener('click', e => {
   const q = new DOMPoint(e.clientX, e.clientY).matrixTransform($('arc').getScreenCTM().inverse());
   let best = null, bd = 16 * az;
   for (const sh of arcShips) { const v = AP(sh.rep.pos[0], sh.rep.pos[1]), d = Math.hypot(v[0] - q.x, v[1] - q.y); if (d < bd) { bd = d; best = sh.id; } }
-  arcSel = best; drawArc(); renderArcPanel();
+  arcSel = best; selAt = [e.clientX, e.clientY]; elCache.delete('selwrap'); drawArc(); renderArcPanel();
 });
 $('sloc').addEventListener('click', e => {
   const q = new DOMPoint(e.clientX, e.clientY).matrixTransform($('sloc').getScreenCTM().inverse());
   let best = null, bd = 16 * slocZ;
   for (const sh of slocShips) { if (sh.rep.t < -1) continue; const v = SP(sh.rep.pos[0], sh.rep.pos[1]), d = Math.hypot(v[0] - q.x, v[1] - q.y); if (d < bd) { bd = d; best = sh.id; } }
-  slocSel = best; drawSloc(); renderSlocPanel();
+  slocSel = best; selAt = [e.clientX, e.clientY]; elCache.delete('selwrap'); drawSloc(); renderSlocPanel();
 });
-$('slocpanel').addEventListener('click', e => { const ux = e.target.closest('[data-uxs]'); if (ux) { slUx.filter(u => u.hub.id === ux.dataset.uxs && u.st === 'base').forEach(u => { uxSearch(u); addLog(`${u.id} 기동탐색 출동 (운용자 지시).`); }); renderSlocPanel(); drawSloc(); return; } const r = e.target.closest('[data-sloc]'); if (r) { slocSel = r.dataset.sloc; drawSloc(); renderSlocPanel(); } });
+$('slocpanel').addEventListener('click', e => { const ux = e.target.closest('[data-uxs]'); if (ux) { slUx.filter(u => u.hub.id === ux.dataset.uxs && u.st === 'base').forEach(u => { uxSearch(u); addLog(`${u.id} 기동탐색 출동 (운용자 지시).`); }); renderSlocPanel(); drawSloc(); return; } const r = e.target.closest('[data-sloc]'); if (r) { slocSel = r.dataset.sloc; selAt = null; elCache.delete('selwrap'); drawSloc(); renderSlocPanel(); } });
 $('spre').addEventListener('click', e => {
   const b = e.target.closest('[data-sp]'); if (!b) return;
   slocPre = b.dataset.sp; document.querySelectorAll('[data-sp]').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
@@ -3576,7 +3568,7 @@ $('apre').addEventListener('click', e => {
   arcPre = b.dataset.ap; document.querySelectorAll('[data-ap]').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
   drawArcStatic(); drawArc(); renderArcPanel();
 });
-$('arcpanel').addEventListener('click', e => { const rt = e.target.closest('[data-route]'); if (rt) { document.querySelector(`[data-ap="${rt.dataset.route}"]`).click(); return; } const r = e.target.closest('[data-arc]'); if (r) { arcSel = r.dataset.arc; drawArc(); renderArcPanel(); } });
+$('arcpanel').addEventListener('click', e => { const rt = e.target.closest('[data-route]'); if (rt) { document.querySelector(`[data-ap="${rt.dataset.route}"]`).click(); return; } const r = e.target.closest('[data-arc]'); if (r) { arcSel = r.dataset.arc; selAt = null; elCache.delete('selwrap'); drawArc(); renderArcPanel(); } });
 $('bBoxes').onclick = () => {
   const hide = $('mapwrap').classList.toggle('nobox');
   $('bBoxes').textContent = hide ? '정보칸 보이기' : '정보칸 숨기기'; $('bBoxes').setAttribute('aria-pressed', String(!hide));
@@ -3694,7 +3686,7 @@ let selAt = null;
 function placeSel() {
   const pop = $('selSec'), wr = $('mapwrap').getBoundingClientRect();
   if (pop.hidden || matchMedia('(max-width: 860px)').matches) { pop.style.left = pop.style.top = ''; return; }
-  const sp = $('srcpanel'), pr = !sp.hidden && !$('mapwrap').classList.contains('nobox') ? sp.getBoundingClientRect() : null;
+  const sp = $(arcView ? 'arcpanel' : slocView ? 'slocpanel' : 'srcpanel'), pr = !sp.hidden && !sp.classList.contains('fold') && !$('mapwrap').classList.contains('nobox') ? sp.getBoundingClientRect() : null;
   const right = (pr ? pr.left : wr.right) - wr.left - 8, w = pop.offsetWidth, h = pop.offsetHeight;
   let x = 56, y = 60;
   if (selAt) {
@@ -3704,8 +3696,22 @@ function placeSel() {
   pop.style.left = Math.max(8, Math.min(x, right - w)) + 'px';
   pop.style.top = Math.max(8, Math.min(y, wr.height - h - 8)) + 'px';
 }
-function closeSel() { sel = null; selAt = null; renderPanel(); drawDyn(); }
-document.addEventListener('keydown', e => { if (e.key === 'Escape' && sel) closeSel(); });
+function closeSel() {
+  sel = arcSel = slocSel = null; selAt = null;
+  if (arcView) { drawArc(); renderArcPanel(); } else if (slocView) { drawSloc(); renderSlocPanel(); } else { renderPanel(); drawDyn(); }
+}
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && (sel || arcSel || slocSel)) closeSel(); });
+// 북극항로·원해 SLOC 선택 선박 팝업: d = [식별부호, 상태 칩 class, 상태, 항목(dt/dd)]
+function popShip(key, d) {
+  const pop = $('selSec');
+  if (!key) { if (elCache.get('selwrap') !== 'none') { elCache.set('selwrap', 'none'); pop.innerHTML = ''; pop.hidden = true; } return; }
+  if (elCache.get('selwrap') !== key) {
+    elCache.set('selwrap', key); elCache.delete('selBody');
+    pop.innerHTML = '<h2><span>선택 선박</span><button class="pfold" type="button" data-selclose aria-label="선택 선박 정보 닫기">✕ 닫기</button></h2><div class="sel"><div id="selBody"></div></div>';
+    pop.hidden = false; requestAnimationFrame(placeSel);
+  }
+  setHTML($('selBody'), 'selBody', `<div class="hd"><b>${esc(d[0])}</b><span class="chip ${d[1]}">${d[2]}</span></div><dl>${d[3]}</dl>`);
+}
 const center = () => [vb.x + vb.w / 2, vb.y + vb.h / 2];
 $('bZin').onclick = () => zoomAt(0.7, ...center());
 $('bZout').onclick = () => zoomAt(1 / 0.7, ...center());
