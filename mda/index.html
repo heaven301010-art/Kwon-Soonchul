@@ -132,6 +132,11 @@ button { font: inherit; color: inherit; }
 .box[data-dom="surface"] { --c: var(--l-surf); }
 .box[data-dom="under"] { --c: var(--l-under); }
 .mapwrap.nobox .srcpanel { display: none; }
+/* 접을 수 있는 정보칸: 접으면 제목줄만 남기고 지도가 화면 폭 전체를 쓴다 */
+.srcpanel > h2.fh { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.pfold { flex: none; font: inherit; font-size: 11.5px; font-weight: 600; color: var(--fg); background: var(--bg); border: 1px solid var(--line); border-radius: 4px; padding: 2px 7px; cursor: pointer; }
+.srcpanel.fold { width: auto; overflow: hidden; } .srcpanel.fold > :not(h2) { display: none; } .srcpanel.fold > h2 { border-bottom: 0; } .srcpanel.fold > h2 > span { display: none; }
+@media (max-width: 860px) { .srcpanel.fold { top: 46px; } .srcpanel.fold > h2 { padding: 4px 6px; } }
 [hidden] { display: none !important; }
 .viewsw { position: absolute; top: 8px; left: 50%; transform: translateX(-50%); z-index: 3; }
 .viewsw .btn { padding: 4px 10px; }
@@ -589,7 +594,7 @@ textarea.report { width: 100%; min-height: 150px; font: 12px/1.5 var(--font-data
       <div id="arcInfo"></div>
     </aside>
     <aside class="srcpanel arcpanel" id="slocpanel" hidden aria-label="원해 해상교통로 관심해역 현황">
-      <h2>원해 해상교통로(SLOC) 관심해역 현황</h2>
+      <h2 class="fh"><span>원해 해상교통로(SLOC) 관심해역 현황</span><button class="pfold" id="slocFold" type="button" aria-expanded="true" aria-controls="slocInfo">접기 ▴</button></h2>
       <div id="slocInfo"></div>
     </aside>
     <aside class="srcpanel" id="srcpanel" aria-label="해양영역인식 종합 정보 현황">
@@ -2198,7 +2203,7 @@ function drawDyn() {
 function fitLeftOfPanel(el, box, panel) {
   const rc = el.getBoundingClientRect();
   if (!rc.width || !rc.height) { el.setAttribute('viewBox', box.map(f1).join(' ')); return box[2] / 900; }
-  const pr = panel && !panel.hidden && !$('mapwrap').classList.contains('nobox') && rc.width > 860 ? panel.getBoundingClientRect() : null;
+  const pr = panel && !panel.hidden && !panel.classList.contains('fold') && !$('mapwrap').classList.contains('nobox') && rc.width > 860 ? panel.getBoundingClientRect() : null;
   const aw = pr ? Math.max(rc.width * 0.45, pr.left - rc.left - 12) : rc.width, ah = rc.height - 70;   // 위쪽 단추 줄 높이만큼 비운다
   const s = Math.min(aw / box[2], ah / box[3]), W = rc.width / s, H = rc.height / s;
   const x = box[0] - (aw / s - box[2]) / 2, y = box[1] - (ah / s - box[3]) / 2 - 60 / s;
@@ -3500,8 +3505,16 @@ $('slocpanel').addEventListener('click', e => { const ux = e.target.closest('[da
 $('spre').addEventListener('click', e => {
   const b = e.target.closest('[data-sp]'); if (!b) return;
   slocPre = b.dataset.sp; document.querySelectorAll('[data-sp]').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
-  drawSlocStatic(); drawSloc();
+  setSlocFold(slocPre === 'all');
 });
+// 전체 보기는 동서로 넓어 정보칸을 접고 지도를 화면 폭 전체에 맞춘다. 해역별 보기는 정보칸을 편다
+function setSlocFold(f) {
+  $('slocpanel').classList.toggle('fold', f);
+  $('slocFold').setAttribute('aria-expanded', String(!f)); $('slocFold').textContent = f ? 'SLOC 관심해역 현황 펼치기 ▾' : '접기 ▴';
+  if (slocView) { drawSlocStatic(); drawSloc(); }
+}
+$('slocFold').onclick = () => setSlocFold(!$('slocpanel').classList.contains('fold'));
+setSlocFold(true);
 $('apre').addEventListener('click', e => {
   const b = e.target.closest('[data-ap]'); if (!b) return;
   arcPre = b.dataset.ap; document.querySelectorAll('[data-ap]').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
