@@ -467,6 +467,10 @@ textarea.report { width: 100%; min-height: 150px; font: 12px/1.5 var(--font-data
 .rg.jamz { stroke: var(--ho); fill: color-mix(in srgb, var(--ho) 6%, transparent); }
 .rg.yam { stroke: var(--infra); fill: color-mix(in srgb, var(--infra) 6%, transparent); }
 .swl { fill: none; stroke: var(--l-space); stroke-linecap: butt; stroke-linejoin: round; }
+/* 위성 관측폭: 센서별 연한 색 (SAR 연녹색, EO/IR 연보라, 다분광 연하늘, 초분광 연분홍, RF 연주황) */
+.swl.m-sar { stroke: #7ccf7c; } .swl.m-eo { stroke: #b99af0; } .swl.m-msi { stroke: #7cc4ec; } .swl.m-hsi { stroke: #f0a0c8; } .swl.m-rf { stroke: #f5b06a; }
+.rffp { fill: color-mix(in srgb, #f5b06a 10%, transparent); stroke: #e8954a; stroke-width: 1; opacity: .8; vector-effect: non-scaling-stroke; }
+.bounds .swk { display: inline-block; width: 16px; height: 9px; border-radius: 2px; opacity: .55; vertical-align: -1px; margin-right: 3px; }
 .f-comm { fill: var(--l-surf); opacity: .85; }
 .clink { stroke: var(--l-surf); stroke-width: 1.4; vector-effect: non-scaling-stroke; }
 .sat rect { fill: var(--l-space); stroke: var(--halo); stroke-width: .8; vector-effect: non-scaling-stroke; }
@@ -599,6 +603,7 @@ textarea.report { width: 100%; min-height: 150px; font: 12px/1.5 var(--font-data
       <label id="bdMCAwrap"><input type="checkbox" id="bdMCA" checked><svg width="22" height="6"><line x1="0" y1="3" x2="22" y2="3" class="mca" stroke-dasharray="12 4"/></svg>MCA(KTO)</label>
       <label><input type="checkbox" id="bdNM12" checked><svg width="22" height="8"><rect x="0" y="1" width="22" height="6" class="nm12" stroke-width="0"/></svg>12해리 (육군 내측·해군 외측)</label>
       <label><input type="checkbox" id="bdINFRA" checked><svg width="22" height="6"><line x1="0" y1="3" x2="22" y2="3" class="cable" stroke-dasharray="7 2 1 2"/></svg>해양 기반시설</label>
+      <span class="swlg"><b>위성 관측폭</b> <i class="swk" style="background:#7ccf7c"></i>SAR <i class="swk" style="background:#b99af0"></i>EO/IR <i class="swk" style="background:#7cc4ec"></i>다분광 <i class="swk" style="background:#f0a0c8"></i>초분광 <i class="swk" style="background:#f5b06a"></i>RF</span>
     </div>
     <div class="bounds abounds" id="abounds" hidden>
       <b>북극권 시설</b>
@@ -2080,16 +2085,18 @@ function drawDyn() {
   // 우주: 관측폭 흔적, 저궤도 통신위성, 관측·정찰 위성과 궤적, 정지궤도 위성
   if (layerOn.space) {
     for (const ps of passes) {
-      if (!ps.o || !ps.o.use || ps.sat === 'rf' || ps.pts.length < 2) continue;
+      if (!ps.o || !ps.o.use || ps.pts.length < 2) continue;
       const age = ps.done ? T - ps.end : 0; if (age > 25) continue;
-      h += `<path class="swl" stroke-width="${f1(2 * ps.o.hw * PXKM)}" opacity="${f1(Math.max(.1, .5 - age / 50))}" d="${pathD(ps.pts)}"/>`;
+      // 센서별 색으로 연하게 칠해 지도가 가려지지 않게 한다 (RF는 관측폭이 넓어 더 연하게)
+      const top = ps.sat === 'rf' ? .16 : .3;
+      h += `<path class="swl m-${ps.sat}" stroke-width="${f1(2 * ps.o.hw * PXKM)}" opacity="${f1(Math.max(.05, top - age * top / 30))}" d="${pathD(ps.pts)}"/>`;
     }
     for (const c of COMMS) { const q = satPos(c, T); if (inView(q)) h += `<circle class="f-comm" cx="${f1(X(q[0]))}" cy="${f1(Y(q[1]))}" r="${f1(2.2 * z)}"/>`; }
     for (const o of SATS) {
       const q = satPos(o, T); if (!inView(q, 1)) continue;
       const tr6 = []; for (let k = -6; k <= 6; k++) tr6.push(satPos(o, T + k * 0.5));
       h += `<path class="orbit"${dash(z, 2, 4)} d="${pathD(tr6)}"/>`;
-      if (o.mis === 'rf' && o.use) h += circ('space', q, o.hw, z, true);
+      if (o.mis === 'rf' && o.use) h += `<circle class="rffp" cx="${f1(X(q[0]))}" cy="${f1(Y(q[1]))}" r="${f1(o.hw * PXKM)}"${dash(z, 3, 3)}/>`;
       const x = X(q[0]), y = Y(q[1]);
       h += `<g class="sat ${o.op}"><line class="satbar" x1="${f1(x - 12 * z)}" y1="${f1(y)}" x2="${f1(x + 12 * z)}" y2="${f1(y)}"/><rect x="${f1(x - 4 * z)}" y="${f1(y - 4 * z)}" width="${f1(8 * z)}" height="${f1(8 * z)}"/></g>`;
       h += txt('lbl ' + (o.op === 'foreign' ? 't-foe' : 't-space'), x + 15 * z, y + 4 * z, 10.5 * z, `${o.name} (${o.cc}·${SAT_MIS[o.mis]})`);
