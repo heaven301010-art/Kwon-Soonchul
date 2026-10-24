@@ -2907,8 +2907,8 @@ $('rqAuto').onclick = rqAuto;
 
 // ── 원해 해상교통로(SLOC) 관심해역: 호르무즈·아덴만·홍해·말라카 ─────────
 const SL = SC.sloc, SLAND = window.MDA_SLOC_LAND || [];
-const SK = 13.5, SCOS = Math.cos(14 * D2R), SVW = (152 - 26) * SYMK * SCOS, SVH = 60 * SK;
-const SP = (lon, lat) => [(lon - 26) * SYMK * SCOS, (44 - lat) * SK];
+const SK = 13.5, SCOS = Math.cos(14 * D2R), SVW = (152 - 26) * SK * SCOS, SVH = 60 * SK;
+const SP = (lon, lat) => [(lon - 26) * SK * SCOS, (44 - lat) * SK];
 const spath = (pts, close) => 'M' + pts.map(p => SP(p[0], p[1]).map(f1).join(',')).join('L') + (close ? 'Z' : '');
 const SCLS = { kr: '우리 상선', chd: '청해부대', rok: '우리 해군', co: '연합 해군 (EU·일·인)', us: '미 해군', cn: '중국 해군', ccg: '중국 해경', mil: '해상민병', tw: '대만 해군', ph: '필리핀 해경', jcg: '일본 해상보안청', ir: '이란 (IRGCN·해군)', pir: '해적 의심', shd: '그림자선단 의심', mer: '외국 상선' };
 const NAVY = new Set(['chd', 'rok', 'co', 'us', 'cn', 'ccg', 'tw', 'ph', 'jcg', 'ir']);
