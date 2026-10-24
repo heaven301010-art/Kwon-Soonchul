@@ -172,8 +172,8 @@ button { font: inherit; color: inherit; }
 .uxp, .uxp.uav, .uxp.usv { fill: none !important; } .uxp.uav { stroke: #2f9e44; } .uxp.usv { stroke: #0b7285; } .uxr { fill: none; opacity: .5; } .uxr.uav { stroke: #2f9e44; } .uxr.usv { stroke: #0b7285; }
 .bar { display: inline-block; width: 70px; height: 7px; background: var(--panel-2); border-radius: 3px; overflow: hidden; vertical-align: middle; margin-right: 5px; } .bar i { display: block; height: 100%; background: var(--ne); } .bar i.w { background: var(--su); } .bar i.c { background: var(--ho); }
 .ssh { stroke: var(--halo); stroke-width: 1; vector-effect: non-scaling-stroke; }
-.ssh.kr { fill: #1e6bd0; color: #1e6bd0; } .ssh.chd { fill: #0b4fb3; color: #0b4fb3; } .ssh.co { fill: #7048e8; color: #7048e8; } .ssh.us { fill: var(--k-usn); color: var(--k-usn); } .ssh.cn { fill: var(--k-cnn); color: var(--k-cnn); }
-.ssh.ir { fill: var(--ho); color: var(--ho); } .ssh.pir { fill: #b91c1c; color: #b91c1c; } .ssh.shd { fill: var(--k-shadow); color: var(--k-shadow); } .ssh.mer { fill: #9aa7b1; color: #9aa7b1; }
+.ssh.kr { fill: #1e6bd0; color: #1e6bd0; } .ssh.chd { fill: #0b4fb3; color: #0b4fb3; } .ssh.co { fill: #7048e8; color: #7048e8; } .ssh.us { fill: var(--k-usn); color: var(--k-usn); } .ssh.cn { fill: var(--k-cnn); color: var(--k-cnn); } .ssh.ru { fill: var(--k-run); color: var(--k-run); }
+.ssh.ir { fill: var(--ho); color: var(--ho); } .ssh.pir { fill: #b91c1c; color: #b91c1c; } .ssh.shd { fill: var(--k-shadow); color: var(--k-shadow); } .ssh.mer { fill: #6f7f8c; color: #6f7f8c; stroke: var(--halo); stroke-width: .8; vector-effect: non-scaling-stroke; }
 .asea { fill: var(--sea); }
 .aland { fill: var(--land); }
 .aice { fill: #f4f8fb; stroke: #a9c3d3; stroke-width: 1; opacity: .92; }
@@ -184,11 +184,16 @@ button { font: inherit; color: inherit; }
 .aroute { fill: none; stroke-width: 2.4; stroke-linejoin: round; vector-effect: non-scaling-stroke; } .aroute.dim { opacity: .3; }
 .agl, .acirc, .ageo, .aice, .ash { vector-effect: non-scaling-stroke; }
 #arc .atx { stroke-width: var(--hw, 3px); }
+#arcpanel .afac-t td { white-space: normal; } #arcpanel .afac-t td:nth-child(2) { white-space: nowrap; }
 #arcpanel .atab.rtab td, #arcpanel .atab.rdet td { white-space: normal; } #arcpanel .atab.rtab td:first-child { min-width: 8em; } #arcpanel .atab.rtab td:last-child, #arcpanel .atab.rtab th { white-space: nowrap; } #arcpanel .atab.rdet td:first-child { white-space: nowrap; color: var(--muted); width: 4.6em; }
 .aroute.NSR { stroke: #0b7285; } .aroute.NWP { stroke: #5c7cfa; } .aroute.TSR { stroke: #868e96; stroke-dasharray: 8 6; }
 .atx { font-family: var(--font-ui); paint-order: stroke; stroke: var(--halo); stroke-width: 3px; stroke-linejoin: round; }
 .atx.sea { fill: var(--sea-label); font-weight: 700; } .atx.port { fill: var(--muted); } .atx.base { fill: var(--ho); } .atx.st { fill: #0b7285; font-style: italic; }
 .atx.rt { font-weight: 700; } .atx.rt.NSR { fill: #0b7285; } .atx.rt.NWP { fill: #5c7cfa; } .atx.rt.TSR { fill: #868e96; }
+.atx.cty { fill: var(--fg); opacity: .62; font-weight: 800; letter-spacing: .04em; }
+.afac .afg { stroke: var(--halo); stroke-width: 1; vector-effect: non-scaling-stroke; } .afac.ally .afg { fill: var(--fr); } .afac.ru .afg { fill: var(--ho); }
+.afac .afd { fill: var(--halo); } .afac.ally .atx.fac { fill: var(--fr); } .afac.ru .atx.fac { fill: var(--ho); }
+.abounds .lg { width: 12px; height: 12px; }
 .atx.geo { fill: var(--l-space); } .atx.id { font-family: var(--font-data); font-weight: 500; }
 .ash { stroke: var(--halo); stroke-width: 1.2; }
 .ash.kr { fill: #1e6bd0; color: #1e6bd0; } .ash.lng { fill: #2b8a3e; color: #2b8a3e; } .ash.cargo { fill: #5c940d; color: #5c940d; } .ash.ice { fill: #0b7285; color: #0b7285; } .ash.cn { fill: #ef7d00; color: #ef7d00; }
@@ -587,6 +592,14 @@ textarea.report { width: 100%; min-height: 150px; font: 12px/1.5 var(--font-data
       <label id="bdMCAwrap"><input type="checkbox" id="bdMCA" checked><svg width="22" height="6"><line x1="0" y1="3" x2="22" y2="3" class="mca" stroke-dasharray="12 4"/></svg>MCA(KTO)</label>
       <label><input type="checkbox" id="bdNM12" checked><svg width="22" height="8"><rect x="0" y="1" width="22" height="6" class="nm12" stroke-width="0"/></svg>12해리 (육군 내측·해군 외측)</label>
       <label><input type="checkbox" id="bdINFRA" checked><svg width="22" height="6"><line x1="0" y1="3" x2="22" y2="3" class="cable" stroke-dasharray="7 2 1 2"/></svg>해양 기반시설</label>
+    </div>
+    <div class="bounds abounds" id="abounds" hidden>
+      <b>북극권 시설</b>
+      <label><input type="checkbox" data-af="cty" checked>국가</label>
+      <label><input type="checkbox" data-af="mil" checked><svg class="lg" viewBox="-6 -6 12 12"><rect x="-4" y="-4" width="8" height="8" fill="var(--muted)"/></svg>군사기지</label>
+      <label><input type="checkbox" data-af="radar" checked><svg class="lg" viewBox="-6 -6 12 12"><path d="M0,-5L4.5,3.5H-4.5Z" fill="var(--muted)"/></svg>레이더</label>
+      <label><input type="checkbox" data-af="space" checked><svg class="lg" viewBox="-6 -6 12 12"><circle r="4.5" fill="var(--muted)"/><circle r="1.8" fill="var(--halo)"/></svg>우주기지</label>
+      <span><b style="color:var(--fr)">■</b> 미국·나토 <b style="color:var(--ho)">■</b> 러시아 · 공개자료 개략 위치 · 이름은 항로별 보기·정보칸 목록</span>
     </div>
    </div>
     <aside class="srcpanel arcpanel" id="arcpanel" hidden aria-label="북극항로 표적관리 현황">
@@ -2210,6 +2223,17 @@ function fitLeftOfPanel(el, box, panel) {
   el.setAttribute('viewBox', [x, y, W, H].map(f1).join(' '));
   return 1 / s;
 }
+const afOn = { cty: true, mil: true, space: true, radar: true };
+const AFK = { mil: '군사기지', radar: '레이더', space: '우주기지' };
+const AFAC_HTML = `<div class="ahd"><h3>북극권 주요 군사·우주·레이더 기지 (공개자료)</h3><table class="atab afac-t"><thead><tr><th>시설</th><th>종류</th><th>국가·비고</th></tr></thead><tbody>${
+  [...AR.facilities].sort((a, b) => (a[4] === b[4] ? 0 : a[4] === 'ally' ? -1 : 1)).map(([n, , , k, side, note]) => `<tr><td><b style="color:var(${side === 'ru' ? '--ho' : '--fr'})">${n}</b></td><td>${AFK[k]}</td><td>${note}</td></tr>`).join('')}</tbody></table></div>`;
+// 시설 기호: 군사기지 사각형, 레이더 삼각형, 우주기지 겹원
+function facGlyph(k, x, y, z) {
+  const d = 3.4 * z;
+  if (k === 'radar') return `<path class="afg" d="M${f1(x)},${f1(y - d * 1.2)}L${f1(x + d * 1.1)},${f1(y + d * .8)}H${f1(x - d * 1.1)}Z"/>`;
+  if (k === 'space') return `<circle class="afg" cx="${f1(x)}" cy="${f1(y)}" r="${f1(d)}"/><circle class="afd" cx="${f1(x)}" cy="${f1(y)}" r="${f1(d * .4)}"/>`;
+  return `<rect class="afg" x="${f1(x - d * .9)}" y="${f1(y - d * .9)}" width="${f1(d * 1.8)}" height="${f1(d * 1.8)}"/>`;
+}
 function drawArcStatic() {
   // 보기 범위: 전체 또는 항로별(북위 58° 이북 구간의 범위)
   let vb = [0, 0, 1000, 1000];
@@ -2236,7 +2260,14 @@ function drawArcStatic() {
   for (const [n, x, y] of AR.seas) { const v = AP(x, y); h += `<text class="atx sea" x="${f1(v[0])}" y="${f1(v[1])}" font-size="${f1(13 * az)}" text-anchor="middle">${n}</text>`; }
   for (const [n, x, y] of AR.ports) { const v = AP(x, y); h += `<circle cx="${f1(v[0])}" cy="${f1(v[1])}" r="${f1(2.6 * az)}" fill="var(--muted)"/>` + `<text class="atx port" x="${f1(v[0] + 5 * az)}" y="${f1(v[1] + 4 * az)}" font-size="${f1(10 * az)}">${n}</text>`; }
   for (const [n, x, y] of AR.straits) { const v = AP(x, y); h += `<path d="M${f1(v[0])},${f1(v[1] - 4 * az)}l${f1(4 * az)},${f1(4 * az)}l${f1(-4 * az)},${f1(4 * az)}l${f1(-4 * az)},${f1(-4 * az)}Z" fill="#0b7285"/>` + `<text class="atx st" x="${f1(v[0] + 6 * az)}" y="${f1(v[1] + 4 * az)}" font-size="${f1(10 * az)}">${n}</text>`; }
-  for (const [n, x, y] of AR.bases) { const v = AP(x, y); h += `<rect x="${f1(v[0] - 3 * az)}" y="${f1(v[1] - 3 * az)}" width="${f1(6 * az)}" height="${f1(6 * az)}" fill="var(--ho)"/>` + `<text class="atx base" x="${f1(v[0] + 6 * az)}" y="${f1(v[1] + 4 * az)}" font-size="${f1(10 * az)}">${n}</text>`; }
+  // 북극권 국가 이름과 공개된 주요 군사·우주·레이더 기지 (범례에서 종류별로 켜고 끈다)
+  if (afOn.cty) for (const [n, x, y] of AR.countries) { const v = AP(x, y); h += `<text class="atx cty" x="${f1(v[0])}" y="${f1(v[1])}" font-size="${f1(12.5 * az)}" text-anchor="middle">${n}</text>`; }
+  for (const [n, x, y, k, side, note, at] of AR.facilities) {
+    if (!afOn[k]) continue;
+    const v = AP(x, y);
+    // 전체 보기는 기지가 몰려 이름이 겹치므로 기호만 그리고(마우스를 올리면 이름), 항로별 확대 보기에서 이름을 붙인다
+    h += `<g class="afac ${side}"><title>${n} · ${note}</title>${facGlyph(k, v[0], v[1], az)}${arcPre === 'all' ? '' : `<text class="atx fac" x="${f1(v[0] + (at === 'l' ? -6 : at ? 0 : 6) * az)}" y="${f1(v[1] + (at === 'u' ? -7 : at === 'd' ? 13 : 3.5) * az)}" font-size="${f1(9.5 * az)}"${at === 'l' ? ' text-anchor="end"' : at ? ' text-anchor="middle"' : ''}>${n}</text>`}</g>`;
+  }
   $('aStatic').innerHTML = h;
 }
 function drawArc() {
@@ -2303,6 +2334,7 @@ function renderArcPanel() {
     <div class="ahd"><h3>북극 위성 커버리지</h3>극궤도 관측·정찰 위성 북극권 상공 <b>${polar.length}</b>기${polar.length ? ` <small>(${polar.slice(0, 4).map(o => o.name).join(', ')}${polar.length > 4 ? ' 등' : ''})</small>` : ''}<br>
       정지궤도 통신 한계 ${AR.geoLimit}°N 이북 운항 <b>${north}</b>척 → 극궤도 통신(Iridium·OneWeb) 북극권 상공 <b>${polarComm}</b>기</div>
     <div class="ahd"><h3>북극 MDA 협력 기반</h3><span class="empty" style="font-size:11.5px">다산과학기지(니알레순), 쇄빙연구선 아라온, 북극이사회 옵서버(2013~), 러시아 발령 북극 항행경보(NAVAREA XX·XXI)</span></div>
+    ${AFAC_HTML}
     <div class="ahd" style="border:0"><h3>범례</h3><div class="kgrid">${Object.entries(ACLS).map(([k, n]) => `<span><i class="ash ${k}" style="background:currentColor"></i>${n}</span>`).join('')}</div></div>`);
 }
 
@@ -2915,8 +2947,8 @@ const SL = SC.sloc, SLAND = window.MDA_SLOC_LAND || [];
 const SK = 13.5, SCOS = Math.cos(14 * D2R), SVW = (152 - 26) * SK * SCOS, SVH = 60 * SK;
 const SP = (lon, lat) => [(lon - 26) * SK * SCOS, (44 - lat) * SK];
 const spath = (pts, close) => 'M' + pts.map(p => SP(p[0], p[1]).map(f1).join(',')).join('L') + (close ? 'Z' : '');
-const SCLS = { kr: '우리 상선', chd: '청해부대', rok: '우리 해군', co: '연합 해군 (EU·일·인)', us: '미 해군', cn: '중국 해군', ccg: '중국 해경', mil: '해상민병', tw: '대만 해군', ph: '필리핀 해경', jcg: '일본 해상보안청', ir: '이란 (IRGCN·해군)', pir: '해적 의심', shd: '그림자선단 의심', mer: '외국 상선' };
-const NAVY = new Set(['chd', 'rok', 'co', 'us', 'cn', 'ccg', 'tw', 'ph', 'jcg', 'ir']);
+const SCLS = { kr: '우리 상선', chd: '청해부대', rok: '우리 해군', co: '연합·우방 해군', us: '미 해군', cn: '중국 해군', ru: '러시아 해군', ccg: '중국 해경', mil: '해상민병', tw: '대만 해군', ph: '필리핀 해경', jcg: '일본 해상보안청', ir: '이란 (IRGCN·해군)', pir: '해적 의심', shd: '그림자선단 의심', mer: '외국 상선' };
+const NAVY = new Set(['chd', 'rok', 'co', 'us', 'cn', 'ru', 'ccg', 'tw', 'ph', 'jcg', 'ir']);
 // 해도 범위 프리셋: [서경, 북위, 동경, 남위]
 const SPRE = { all: ['전체', 26, 44, 152, -16], hormuz: ['호르무즈', 49.5, 30.5, 61.5, 21.5], aden: ['아덴만·홍해', 31, 31.5, 62, 6], malacca: ['말라카', 93, 10, 111, -3], scs: ['남중국해·대만', 104, 28.5, 128, 2], ecs: ['동중국해·센카쿠', 118, 35.6, 132, 23] };
 let SR = {}, slocShips = [], slocView = false, slocSel = null, slocPre = 'all', slocFx = [];
@@ -2950,7 +2982,7 @@ function buildSloc() {
     sh.spd = sh.kn; slocPlace(sh); slocShips.push(sh);
   }
   for (const sh of slocShips) { sh.rep = { t: 0, pos: sh.pos.slice(), src: sh.ais ? 'S-AIS' : sh.cls === 'chd' ? '전술데이터링크' : '연합해군 공유 (CMF)' }; sh.ph = rnd() * 20; }
-  slocShips.filter(sh => ['cn', 'ir', 'pir', 'shd', 'mil', 'tw'].includes(sh.cls)).forEach(sh => { sh.rep.t = -999; sh.rep.src = '미탐지'; });
+  slocShips.filter(sh => ['cn', 'ru', 'ir', 'pir', 'shd', 'mil', 'tw'].includes(sh.cls)).forEach(sh => { sh.rep.t = -999; sh.rep.src = '미탐지'; });
   slocFx = []; slocSel = null; buildSlUx();
   Object.assign(chdS, { fuel: 58, water: 71, food: 34, st: 'convoy', resupT: null });
 }
@@ -2966,7 +2998,8 @@ function slocStep(t0, dt) {
       if (sh.s >= L) { sh.s = L; sh.dir = -1; } else if (sh.s <= 0) { sh.s = 0; sh.dir = 1; }
       slocPlace(sh);
     } else if (sh.mode === 'station') {
-      sh.ang = (sh.ang + KMMIN(sh.kn) * dt / 15 / D2R) % 360; sh.pos = advance(sh.center, sh.ang, 15); sh.hdg = (sh.ang + 90) % 360; sh.spd = sh.kn;
+      const rr = sh.kn < 1 ? 1.5 : 15;   // 정박지 대기 상선은 제자리에서 천천히 돈다
+      sh.ang = (sh.ang + KMMIN(sh.kn) * dt / rr / D2R) % 360; sh.pos = advance(sh.center, sh.ang, rr); sh.hdg = (sh.ang + 90) % 360; sh.spd = sh.kn;
     } else if (sh.mode === 'goto') {
       const g = sh.goal(); sh.spd = sh.goKn; if (g && (moveToward(sh, g, sh.goKn, dt) || gdist(sh.pos, g) < 2) && sh.onArrive) { const f = sh.onArrive; sh.onArrive = null; f(); }
     } else if (sh.mode === 'escort') {
@@ -3280,7 +3313,7 @@ function drawSloc() {
   for (const sh of slocShips) {
     if (sh.rep.t < -1) continue;
     const q = sh.rep.pos, v = SP(q[0], q[1]), age = T - sh.rep.t, st = slocStatus(sh), op = age > 60 ? ' opacity=".45"' : '';
-    const r = (sh.cls === 'mer' ? 2.6 : sh.cls === 'kr' ? 5 : 5.5) * SYMK * z;
+    const r = (sh.cls === 'mer' ? 4.6 : sh.cls === 'kr' ? 5.4 : 5.5) * SYMK * z;
     if (sh.cls === 'chd' && sh.mode === 'escort') { const w = SP(...sById(sh.goTo).pos); h += `<line x1="${f1(v[0])}" y1="${f1(v[1])}" x2="${f1(w[0])}" y2="${f1(w[1])}" stroke="var(--fr)" stroke-width="${f1(1.5 * z)}"/>`; }
     h += NAVY.has(sh.cls) ? `<path class="ssh ${sh.cls}"${op} d="M${f1(v[0])},${f1(v[1] - r * 1.3)}l${f1(r * 1.3)},${f1(r * 1.3)}l${f1(-r * 1.3)},${f1(r * 1.3)}l${f1(-r * 1.3)},${f1(-r * 1.3)}Z"/>`
       : sh.cls === 'pir' || sh.cls === 'mil' ? `<path class="ssh ${sh.cls}"${op} d="M${f1(v[0])},${f1(v[1] - r * 1.3)}l${f1(r * 1.2)},${f1(r * 2)}h${f1(-r * 2.4)}Z"/>`
@@ -3483,12 +3516,13 @@ $('cdseGo').onclick = () => cdseQuery(cdseA, CDSE_AREA[arcPre], CDSE_NM[arcPre],
 function setView(v) {
   arcView = v === 'arc'; slocView = v === 'sloc'; const kr = v === 'kr';
   $('map').toggleAttribute('hidden', !kr); $('arc').toggleAttribute('hidden', !arcView); $('sloc').toggleAttribute('hidden', !slocView);
-  document.querySelector('.zoom').hidden = !kr; document.querySelector('.bounds').hidden = !kr; $('spre').hidden = !slocView; $('apre').hidden = !arcView; $('kpre').hidden = !kr;
+  document.querySelector('.zoom').hidden = !kr; document.querySelector('.bounds').hidden = !kr; $('abounds').hidden = !arcView; $('spre').hidden = !slocView; $('apre').hidden = !arcView; $('kpre').hidden = !kr;
   $('srcpanel').hidden = !kr; $('arcpanel').hidden = !arcView; $('slocpanel').hidden = !slocView; $('polarSec').hidden = !arcView; $('slocSec').hidden = !slocView;
   document.querySelectorAll('[data-view]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.view === v)));
   if (arcView) { drawArcStatic(); drawArc(); renderArcPanel(); renderPolar(); if (cdseA.st === 'idle') cdseQuery(cdseA, CDSE_AREA[arcPre], CDSE_NM[arcPre], renderPolar); } else if (slocView) { drawSlocStatic(); drawSloc(); renderSlocPanel(); renderSlocInfo(); if (cdseS.st === 'idle') cdseQuery(cdseS, SBOX[slocPre], SNM(), renderSlocInfo); } else { regionView(krPre); }
 }
 document.querySelectorAll('[data-view]').forEach(b => b.onclick = () => setView(b.dataset.view));
+document.querySelectorAll('[data-af]').forEach(c => c.onchange = () => { afOn[c.dataset.af] = c.checked; drawArcStatic(); });
 $('arc').addEventListener('click', e => {
   const q = new DOMPoint(e.clientX, e.clientY).matrixTransform($('arc').getScreenCTM().inverse());
   let best = null, bd = 16 * az;
