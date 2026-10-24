@@ -375,6 +375,11 @@ button { font: inherit; color: inherit; }
 .req { display: flex; justify-content: space-between; gap: 10px; font-size: 12.5px; }
 .req span:first-child { min-width: 0; }
 .sel { background: var(--panel-2); border: 1px solid var(--line); border-radius: 4px; padding: 9px 11px; }
+.selpop { position: absolute; z-index: 6; left: 56px; top: 60px; width: 330px; max-height: calc(100% - 16px); overflow-y: auto; background: var(--panel); border: 1px solid var(--line); border-radius: 6px;
+  box-shadow: 0 8px 26px color-mix(in srgb, var(--fg) 24%, transparent); }
+.selpop > h2 { position: sticky; top: 0; z-index: 1; display: flex; justify-content: space-between; align-items: center; gap: 8px; margin: 0; padding: 7px 10px; font-size: 13.5px; font-weight: 700; background: var(--panel); border-bottom: 1px solid var(--line); }
+.selpop .sel { border: 0; border-radius: 0 0 6px 6px; }
+@media (max-width: 860px) { .selpop { left: 8px !important; right: 8px; top: auto !important; bottom: 8px; width: auto; max-height: 62%; } }
 .sel .hd { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
 .sel .hd b { font-family: var(--font-data); font-size: 15px; font-weight: 500; }
 .sel dl { display: grid; grid-template-columns: auto 1fr; gap: 3px 12px; margin: 6px 0 0; font-size: 12.5px; }
@@ -550,6 +555,7 @@ textarea.report { width: 100%; min-height: 150px; font: 12px/1.5 var(--font-data
 
 <main class="grid">
   <div class="mapwrap" id="mapwrap">
+   <section id="selSec" class="selpop" hidden role="dialog" aria-label="선택 표적 정보"></section>
    <div class="mapview">
     <svg id="map" viewBox="0 0 1058 1025" preserveAspectRatio="xMidYMid meet" role="img" aria-label="한반도 주변 해역 상황도">
       <defs><clipPath id="mclip"><rect id="mrect"></rect></clipPath></defs>
@@ -650,7 +656,6 @@ textarea.report { width: 100%; min-height: 150px; font: 12px/1.5 var(--font-data
       <div class="cycle" id="cycle"></div>
       <div class="icls" id="icls"></div>
     </section>
-    <section id="selSec"></section>
     <section>
       <h2>해양정보 공유상황도</h2>
       <svg class="share" id="shareSvg" viewBox="0 0 320 262" role="img" aria-label="해수부, 해경, 기상청, KIOST·국립해양조사원, 해군, 국가 MDA 플랫폼, 해외 IFC 사이의 정보 흐름"></svg>
@@ -2624,8 +2629,9 @@ function renderPanel() {
   const wrapKey = t && tr ? 'sel-' + sel : 'none';
   if (elCache.get('selwrap') !== wrapKey) {
     elCache.set('selwrap', wrapKey); elCache.delete('selBody'); elCache.delete('selActs');
-    $('selSec').innerHTML = '<h2>선택 표적</h2>' + (t && tr ? '<div class="sel"><div id="selBody"></div><div class="acts" id="selActs"></div></div>'
-      : '<p class="empty">지도에서 표적 기호를 누르면 위치, 탐지 출처, 식별 상태를 보고 수집을 요청할 수 있습니다.</p>');
+    $('selSec').innerHTML = t && tr ? '<h2><span>선택 표적</span><button class="pfold" type="button" data-selclose aria-label="선택 표적 정보 닫기">✕ 닫기</button></h2><div class="sel"><div id="selBody"></div><div class="acts" id="selActs"></div></div>' : '';
+    $('selSec').hidden = !(t && tr);
+    if (t && tr) requestAnimationFrame(placeSel);
   }
   if (t && tr) {
     const recent = Object.entries(tr.by).filter(([, v]) => T - v <= 10).map(([k]) => SN[k]);
@@ -3530,6 +3536,7 @@ $('cdseGo').onclick = () => cdseQuery(cdseA, CDSE_AREA[arcPre], CDSE_NM[arcPre],
 
 function setView(v) {
   arcView = v === 'arc'; slocView = v === 'sloc'; const kr = v === 'kr';
+  if (!kr && sel) { sel = null; selAt = null; elCache.delete('selwrap'); $('selSec').hidden = true; }   // 선택 표적 팝업은 한반도 해역에서만
   $('map').toggleAttribute('hidden', !kr); $('arc').toggleAttribute('hidden', !arcView); $('sloc').toggleAttribute('hidden', !slocView);
   document.querySelector('.zoom').hidden = !kr; document.querySelector('.bounds').hidden = !kr; $('abounds').hidden = !arcView; $('spre').hidden = !slocView; $('apre').hidden = !arcView; $('kpre').hidden = !kr;
   $('srcpanel').hidden = !kr; $('arcpanel').hidden = !arcView; $('slocpanel').hidden = !slocView; $('polarSec').hidden = !arcView; $('slocSec').hidden = !slocView;
@@ -3592,7 +3599,8 @@ document.querySelector('.grid').addEventListener('click', e => {
   }
   const a = e.target.closest('[data-approve]'); if (a) { approve(a.dataset.approve); renderPanel(); drawDyn(); return; }
   const sr = e.target.closest('[data-sel]');
-  if (sr) { sel = sr.dataset.sel; renderPanel(); drawDyn(); return; }
+  if (sr) { sel = sr.dataset.sel; selAt = null; elCache.delete('selwrap'); renderPanel(); drawDyn(); return; }
+  if (e.target.closest('[data-selclose]')) { closeSel(); return; }
   const as = e.target.closest('[data-alsat]');
   if (as) {
     const [id, i] = as.dataset.alsat.split(':'), al = alerts.find(x => x.id === id);
@@ -3677,10 +3685,27 @@ svg.addEventListener('pointerup', e => {
   if (drag && !drag.moved) {
     const p = svgPt(e); let best = null, bd = 14 * vb.w / VW;
     for (const tr of tracks.values()) { const d = Math.hypot(X(tr.pos[0]) - p.x, Y(tr.pos[1]) - p.y); if (d < bd) { bd = d; best = tr.id; } }
-    sel = best; drawDyn(); renderPanel();
+    sel = best; selAt = [e.clientX, e.clientY]; elCache.delete('selwrap'); drawDyn(); renderPanel();
   }
   drag = null; svg.classList.remove('drag');
 });
+// 선택 표적 정보는 지도 위 팝업으로 띄운다: 누른 지점 옆(정보칸과 겹치지 않게), 목록에서 고르면 지도 왼쪽 위
+let selAt = null;
+function placeSel() {
+  const pop = $('selSec'), wr = $('mapwrap').getBoundingClientRect();
+  if (pop.hidden || matchMedia('(max-width: 860px)').matches) { pop.style.left = pop.style.top = ''; return; }
+  const sp = $('srcpanel'), pr = !sp.hidden && !$('mapwrap').classList.contains('nobox') ? sp.getBoundingClientRect() : null;
+  const right = (pr ? pr.left : wr.right) - wr.left - 8, w = pop.offsetWidth, h = pop.offsetHeight;
+  let x = 56, y = 60;
+  if (selAt) {
+    x = selAt[0] - wr.left + 18; if (x + w > right) x = selAt[0] - wr.left - w - 18;
+    y = selAt[1] - wr.top - 30;
+  }
+  pop.style.left = Math.max(8, Math.min(x, right - w)) + 'px';
+  pop.style.top = Math.max(8, Math.min(y, wr.height - h - 8)) + 'px';
+}
+function closeSel() { sel = null; selAt = null; renderPanel(); drawDyn(); }
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && sel) closeSel(); });
 const center = () => [vb.x + vb.w / 2, vb.y + vb.h / 2];
 $('bZin').onclick = () => zoomAt(0.7, ...center());
 $('bZout').onclick = () => zoomAt(1 / 0.7, ...center());
