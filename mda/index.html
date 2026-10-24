@@ -421,6 +421,7 @@ textarea.report { width: 100%; min-height: 150px; font: 12px/1.5 var(--font-data
 .rg { stroke-width: 1; vector-effect: non-scaling-stroke; }
 .rg.ground { stroke: color-mix(in srgb, var(--l-ground) 60%, transparent); fill: color-mix(in srgb, var(--l-ground) 5%, transparent); }
 .rg.ground.wide { fill: none; }
+.cpat { fill: none; stroke: #0b3d91; stroke-width: 1.3; opacity: .5; vector-effect: non-scaling-stroke; }
 .usv { fill: var(--fr); stroke: var(--halo); stroke-width: 1; vector-effect: non-scaling-stroke; } .usvl { fill: none; stroke: var(--fr); stroke-width: 1.4; opacity: .55; vector-effect: non-scaling-stroke; }
 .mumt td:first-child, .mumt td:nth-child(3) { white-space: nowrap; } #mumt td:nth-child(2), #mumt td:nth-child(4) { white-space: normal; } #mumt td:nth-child(2) { width: 50%; }
 .mumt td b.on { color: var(--ne); } .mumt td b.warn { color: var(--su); }
@@ -877,6 +878,12 @@ function init() {
     hdg: 0, spd: 12, ais: true, emitter: EMIT.mil, mode: 'patrol', ph: rnd() * 360, orbitR: 14 + rnd() * 8 });
   SC.friendlies.forEach(friend('아군 함정', 'kn'));
   SC.coastGuard.forEach(friend('해경 경비함', 'kcg'));
+  // 연안 순찰 함정 (OPV·PKX·PKG): 연안 순찰 경로를 왕복하며, 출발 위치는 경로 위 임의 지점
+  for (const [id, type, kn, sr, area, w] of SC.coastal) {
+    const i = 1 + Math.floor(rnd() * (w.length - 1)), f = rnd(), a = w[i - 1], b = w[i];
+    targets.push({ id, cls: 'kn', kind: 'surface', truth: 'F', type, pos: [a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) * f], hdg: 0, spd: kn, ais: true, emitter: EMIT.mil,
+      mode: 'path', wp: w, wi: i, dir: 1, sr, coast: { kn, area } });
+  }
   // 주변국 함정: 해군은 AIS 미송출(레이더·RF·영상으로 식별), 중국 해경은 AIS 송출
   const foreign = (list, cls, type, ais, mid) => list.forEach(([id, x, y, r]) => targets.push({ id, cls, kind: 'surface', truth: 'N', type, pos: [x, y], home: [x, y],
     hdg: 0, spd: 12, ais, mmsi: ais ? mid + String(100000 + Math.floor(rnd() * 899999)) : null, emitter: EMIT.mil, mode: 'patrol', ph: rnd() * 360, orbitR: r }));
@@ -1069,7 +1076,11 @@ function moveTarget(t, dt) {
       t.ph = (t.ph + KMMIN(t.spd) * dt / t.orbitR / D2R) % 360;
       t.pos = advance(t.home, t.ph, t.orbitR); t.hdg = (t.ph + 90) % 360; t.spd = 12; break;
     case 'intercept': { t.spd = 24; const g = t.goal(); if (g) moveToward(t, g, t.spd, dt); break; }
-    case 'return': { t.spd = 18; if (moveToward(t, advance(t.home, t.ph, t.orbitR), t.spd, dt)) t.mode = 'patrol'; break; }
+    case 'return': {
+      t.spd = 18;
+      if (t.coast) { if (moveToward(t, t.wp[t.wi], t.spd, dt)) { t.mode = 'path'; t.spd = t.coast.kn; } break; }   // 연안 순찰 경로로 복귀
+      if (moveToward(t, advance(t.home, t.ph, t.orbitR), t.spd, dt)) t.mode = 'patrol'; break;
+    }
     case 'route': case 'path': {
       if (moveToward(t, t.wp[t.wi], t.spd, dt)) {
         const nx = t.wi + t.dir;
@@ -1457,7 +1468,7 @@ function sense(t, friends, act, t0, taskHit) {
     if (layerOn.ground && near(RADARS)) s.push('radar');
     if (layerOn.surface) {
       if (near(PORTS)) s.push('cctv');
-      if (friends.some(f => f !== t && dist(f.pos, t.pos) <= SHIP_R)) s.push('shipradar');
+      if (friends.some(f => f !== t && dist(f.pos, t.pos) <= (f.sr || SHIP_R))) s.push('shipradar');
       if (usvs.some(u => dist(u.pos, t.pos) <= USV_R)) s.push('usv');
     }
     if (layerOn.air) {
@@ -2131,7 +2142,7 @@ function drawDyn() {
       h += txt('lbl t-surf', x + 7 * z, y - 5 * z, 9.5 * z, r.name);
     }
     // 제주 기지에 대기 중인 기동부대는 탐지권을 그리지 않고, 출항하면 그린다
-    for (const t of targets) if (t.truth === 'F' && !(t.grp === 'kr' && TFG.kr.st === 'base')) h += circ('surf', t.pos, SHIP_R, z);
+    for (const t of targets) if (t.truth === 'F' && !(t.grp === 'kr' && TFG.kr.st === 'base')) h += circ('surf', t.pos, t.sr || SHIP_R, z);
     for (const r of VTS) {
       const x = X(r.pos[0]), y = Y(r.pos[1]);
       h += circ('surf vts', r.pos, r.r, z, true) + `<path class="f-surf" d="M${f1(x - 4 * z)},${f1(y + 3 * z)} L${f1(x)},${f1(y - 4 * z)} L${f1(x + 4 * z)},${f1(y + 3 * z)}Z"/>`;
@@ -2171,6 +2182,8 @@ function drawDyn() {
   }
   if (layerOn.air && mpa.wps && mpa.wps.length) h += `<path class="mpap"${dash(z, 4, 4)} d="${pathD([mpa.pos, ...mpa.wps.slice(0, 14)])}"/>`;
   if (layerOn.air && uav2.wps.length) h += `<path class="mpap uavp"${dash(z, 3, 4)} d="${pathD([uav2.pos, ...uav2.wps.slice(0, 10)])}"/>`;
+  // 연안 순찰 경로 (OPV·PKX·PKG)
+  if (layerOn.surface) for (const t of targets) if (t.coast && active(t)) h += `<path class="cpat"${dash(z, 5, 3)} d="${pathD(t.wp)}"/>`;
   if (layerOn.surface) for (const u of usvs) {
     const x = X(u.pos[0]), y = Y(u.pos[1]), r = 5 * z;
     h += `<path class="usvl"${dash(z, 2, 5)} d="${pathD(u.line)}"/>` + circ('surf usvr', u.pos, USV_R, z, true);
@@ -2381,7 +2394,9 @@ function assets(dom) {
       const held = t => tracks.get(t.id) && !tracks.get(t.id).lost;
       const ais = targets.filter(t => t.ais && held(t)).length, vp = targets.filter(t => t.vpass && held(t)).length;
       const lost = [...tracks.values()].filter(tr => tr.lost && byId.get(tr.id).kind === 'surface').length;
-      return [['해수부 GICOMS · AIS', `${ais}척`], ['해경 V-PASS', `${vp}척`], ['해경 VTS', `${VTS.length}개소`], ['추적 소실', `${lost}척`]];
+      const cst = targets.filter(t => t.coast), cn = k => cst.filter(t => t.id.startsWith(k)).length;
+      return [['해수부 GICOMS · AIS', `${ais}척`], ['해경 V-PASS', `${vp}척`], ['해경 VTS', `${VTS.length}개소`],
+        ['연안 순찰', `OPV ${cn('OPV')} · PKX ${cn('PKX')} · PKG ${cn('PKG')} · 순찰 중 ${cst.filter(t => t.mode === 'path').length}척`], ['추적 소실', `${lost}척`]];
     }
     case 'under': {
       const bs = buoys.filter(b => T < b.until);
