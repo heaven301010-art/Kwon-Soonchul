@@ -606,7 +606,7 @@ textarea.report { width: 100%; min-height: 150px; font: 12px/1.5 var(--font-data
       <label><input type="checkbox" id="bdKADIZ" checked><svg width="22" height="6"><line x1="0" y1="3" x2="22" y2="3" class="kadiz" stroke-dasharray="8 3 2 3"/></svg>KADIZ</label>
       <label><input type="checkbox" id="bdEEZ" checked><svg width="22" height="6"><line x1="0" y1="3" x2="22" y2="3" class="eez" stroke-dasharray="2 3"/></svg>EEZ</label>
       <label id="bdMCAwrap"><input type="checkbox" id="bdMCA" checked><svg width="22" height="6"><line x1="0" y1="3" x2="22" y2="3" class="mca" stroke-dasharray="12 4"/></svg>MCA(KTO)</label>
-      <label><input type="checkbox" id="bdNM12" checked><svg width="22" height="8"><rect x="0" y="1" width="22" height="6" class="nm12" stroke-width="0"/></svg>12해리 (육군 내측·해군 외측)</label>
+      <label><input type="checkbox" id="bdNM12" checked><svg width="22" height="8"><rect x="0" y="1" width="22" height="6" class="nm12" stroke-width="0"/></svg>12마일 (육군 내측·해군 외측)</label>
       <label><input type="checkbox" id="bdINFRA" checked><svg width="22" height="6"><line x1="0" y1="3" x2="22" y2="3" class="cable" stroke-dasharray="7 2 1 2"/></svg>해양 기반시설</label>
       <span class="swlg"><b>위성 관측폭</b> <i class="swk" style="background:#7ccf7c"></i>SAR <i class="swk" style="background:#b99af0"></i>EO/IR <i class="swk" style="background:#7cc4ec"></i>다분광 <i class="swk" style="background:#f0a0c8"></i>초분광 <i class="swk" style="background:#f5b06a"></i>RF</span>
     </div>
@@ -808,8 +808,8 @@ function mulberry32(a) { return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = 
 
 // ── 센서·표적 정의 ──────────────────────────────────────
 const NM = 1.852;
-const RADARS = SC.radars.map(([n, x, y]) => ({ name: n + ' 감시대', pos: [x, y], r: 12 * NM }));      // 육군 해안 감시대 12해리
-const NRADARS = SC.navyRadars.map(([n, x, y]) => ({ name: n + ' R/S', pos: [x, y], r: 40 * NM }));  // 해군 R/S 40해리
+const RADARS = SC.radars.map(([n, x, y]) => ({ name: n + ' 감시대', pos: [x, y], r: 12 * NM }));      // 육군 해안 감시대 12마일
+const NRADARS = SC.navyRadars.map(([n, x, y]) => ({ name: n + ' R/S', pos: [x, y], r: 40 * NM }));  // 해군 R/S 40마일
 const ADRADARS = SC.adRadars.map(([n, x, y]) => ({ name: n, pos: [x, y], r: 300 }));
 const VTS = SC.vts.map(([n, x, y]) => ({ name: n, pos: [x, y], r: 35 }));
 const COOP = new Set(['ais', 'vpass', 'lrit']);
@@ -984,7 +984,7 @@ function orbit(o, dt) {
 const predicted = (t, min) => advance(t.pos, t.hdg, KMMIN(t.spd) * min);
 const active = t => !(t.startAt && T < t.startAt) && !t.gone;
 
-// ── 12해리 책임 구분: 우리 해안선(도서 포함)에서 12해리 안쪽은 육군, 바깥은 해군 R/S가 맡고 경계에서 표적을 인계인수한다 ──
+// ── 12마일 책임 구분: 우리 해안선(도서 포함)에서 12마일 안쪽은 육군, 바깥은 해군 R/S가 맡고 경계에서 표적을 인계인수한다 ──
 const NM12 = 12 * 1.852;
 const ROK_AREA = [[124.0, 37.55], ...SC.nllWest, [127.0, 38.3], [128.37, 38.62], [131.7, 38.62], [131.7, 36.3], [129.45, 35.15], [128.75, 34.25], [127.6, 33.0], [127.6, 32.7], [124.0, 32.7]];
 const inPolyKr = (p, poly) => { let ins = false; for (let j = 0, k = poly.length - 1; j < poly.length; k = j++) { const [xi, yi] = poly[j], [xk, yk] = poly[k]; if ((yi > p[1]) !== (yk > p[1]) && p[0] < (xk - xi) * (p[1] - yi) / (yk - yi) + xi) ins = !ins; } return ins; };
@@ -1007,14 +1007,14 @@ function buildNmGrid() {
     nmGrid[j * NG.nx + i] = Math.sqrt(best) <= NM12 ? 1 : 2;
   }
 }
-// 'A' 육군 책임(12해리 내측), 'N' 해군 책임(외측), null 우리 관할 밖
+// 'A' 육군 책임(12마일 내측), 'N' 해군 책임(외측), null 우리 관할 밖
 function respOf(p) {
   if (!nmGrid) buildNmGrid();
   const i = Math.floor((p[0] - NG.x0) / NG.d), j = Math.floor((p[1] - NG.y0) / NG.d);
   if (i < 0 || j < 0 || i >= NG.nx || j >= NG.ny) return null;
   return [null, 'A', 'N'][nmGrid[j * NG.nx + i]];
 }
-const RESP = { A: '육군 (12해리 내측)', N: '해군 (12해리 외측)' };
+const RESP = { A: '육군 (12마일 내측)', N: '해군 (12마일 외측)' };
 function respStep() {
   for (const tr of tracks.values()) {
     const t = byId.get(tr.id); if (tr.lost || t.kind !== 'surface' || tr.affil === 'F') continue;
@@ -1025,8 +1025,8 @@ function respStep() {
     if (tr.resp && r && r !== tr.resp) {
       handovers.push({ t: T, id: tr.id, from: tr.resp, to: r });
       if (tr.affil !== 'N') {
-        addLog(`${tr.id} 12해리 ${r === 'N' ? '외측 이탈 → 육군 감시대에서 해군 R/S로' : '내측 진입 → 해군 R/S에서 육군 감시대로'} 표적 인계.`);
-        feed('ground', `${tr.id} 인계인수 ${r === 'N' ? '육군→해군' : '해군→육군'} (12해리)`);
+        addLog(`${tr.id} 12마일 ${r === 'N' ? '외측 이탈 → 육군 감시대에서 해군 R/S로' : '내측 진입 → 해군 R/S에서 육군 감시대로'} 표적 인계.`);
+        feed('ground', `${tr.id} 인계인수 ${r === 'N' ? '육군→해군' : '해군→육군'} (12마일)`);
       }
     }
     if (r) tr.resp = r;
@@ -1980,7 +1980,7 @@ function drawStatic() {
   r.setAttribute('x', ML); r.setAttribute('y', MT); r.setAttribute('width', MW); r.setAttribute('height', f1(MH));
   let h = `<rect x="${ML}" y="${MT}" width="${MW}" height="${f1(MH)}" fill="var(--sea)"/>`;
   if (showB.nm12) {
-    // 해안선을 12해리 폭(양쪽)으로 굵게 그려 우리 관할 해역 안만 남기면 12해리 띠가 된다. 바깥 테두리를 한 번 더 그려 경계선을 만든다
+    // 해안선을 12마일 폭(양쪽)으로 굵게 그려 우리 관할 해역 안만 남기면 12마일 띠가 된다. 바깥 테두리를 한 번 더 그려 경계선을 만든다
     const w = 2 * NM12 * PXKM, near = LAND.filter(r => r.some(q => q[0] > 123.8 && q[0] < 131.9 && q[1] > 32.5 && q[1] < 38.8));
     h += `<clipPath id="rokclip"><path d="${pathD(ROK_AREA, true)}"/></clipPath><g clip-path="url(#rokclip)">`
       + near.map(r => `<path class="nm12e" d="${pathD(r, true)}" stroke-width="${f1(w + 3)}"/>`).join('')
@@ -2402,7 +2402,7 @@ function assets(dom) {
     case 'ground': {
       const air = [...tracks.values()].filter(tr => !tr.lost && byId.get(tr.id).kind === 'air').length;
       const rs = [...tracks.values()].filter(tr => !tr.lost && tr.resp && tr.affil !== 'F');
-      return [['해군 R/S', `${NRADARS.length}개소 가동 · 탐지 40해리`], ['육군 해안 감시대', `${RADARS.length}개소 가동 · 탐지 12해리`], ['책임 구분 (12해리)', `육군 내측 ${rs.filter(tr => tr.resp === 'A').length} · 해군 외측 ${rs.filter(tr => tr.resp === 'N').length}`], ['인계인수 (최근 1시간)', `${handovers.length}건 (육→해 ${handovers.filter(x => x.to === 'N').length} · 해→육 ${handovers.filter(x => x.to === 'A').length})`], ['방공 레이더', `${ADRADARS.length}개소 가동`], ['접촉 중 항공 표적', `${air}`]];
+      return [['해군 R/S', `${NRADARS.length}개소 가동 · 탐지 40마일`], ['육군 해안 감시대', `${RADARS.length}개소 가동 · 탐지 12마일`], ['책임 구분 (12마일)', `육군 내측 ${rs.filter(tr => tr.resp === 'A').length} · 해군 외측 ${rs.filter(tr => tr.resp === 'N').length}`], ['인계인수 (최근 1시간)', `${handovers.length}건 (육→해 ${handovers.filter(x => x.to === 'N').length} · 해→육 ${handovers.filter(x => x.to === 'A').length})`], ['방공 레이더', `${ADRADARS.length}개소 가동`], ['접촉 중 항공 표적', `${air}`]];
     }
     case 'surface': {
       const held = t => tracks.get(t.id) && !tracks.get(t.id).lost;
@@ -2877,7 +2877,7 @@ function rqCatalog(a) {
   // 지상·수중: 고정 센서는 탐지 범위 안에 들 때만 상시 감시
   const fixed = (grp, list, kind) => list.forEach(x => {
     const d = dist(x.pos, a.pos), inR = d <= x.r;
-    const r = { grp, name: x.name, sub: `${kind} · 탐지 거리 ${Math.round(x.r / NM)}해리 (${Math.round(x.r)}km)`, res: null, w: 2 * x.r, t: inR ? T : null, now: inR, x };
+    const r = { grp, name: x.name, sub: `${kind} · 탐지 거리 ${Math.round(x.r / NM)}마일 (${Math.round(x.r)}km)`, res: null, w: 2 * x.r, t: inR ? T : null, now: inR, x };
     r.fit = !inR ? 'no' : d + a.w / 2 <= x.r ? 'ok' : 'part';
     r.why = !inR ? `탐지 범위 밖 (${Math.round(d - x.r)}km)` : r.fit === 'part' ? '해역 일부만 탐지 범위' : '상시 감시 중 (탐지·추적)';
     rows.push(r);
@@ -3156,7 +3156,7 @@ function slocScenario(dt) {
     jcgs.forEach((j, i) => { j.mode = 'goto'; j.goKn = 16; j.goal = () => advance(ccgs[i].pos, 90, 1.5); });
   }
   if (flags.skStart && !flags.skIn && ccgs.some(c => gdist(c.pos, SKS.c) <= SKS.ts)) {
-    flags.skIn = T; addLog('중국 해경 함정 2척, 센카쿠 열도 영해(12해리) 진입. 일본 해상보안청 순시선 퇴거 요구 (가상).'); feed('surface', '[원해] 센카쿠 중국 해경 영해 진입 (가상)');
+    flags.skIn = T; addLog('중국 해경 함정 2척, 센카쿠 열도 영해(12마일) 진입. 일본 해상보안청 순시선 퇴거 요구 (가상).'); feed('surface', '[원해] 센카쿠 중국 해경 영해 진입 (가상)');
     raise({ id: 'senkaku', sev: 'warn', title: '[원해] 센카쿠 열도 중국 해경 영해 진입·일 해상보안청 대치 (가상)', tgt: `${ccgs.map(c => c.id).join('·')}·${jcgs.map(j => j.id).join('·')}`,
       rec: '인근 통항 우리 선박 주의 공유, 일본·미국과 해양 정보 공유', approve: () => { flags.skAct = T; addReq('센카쿠 대치 상황 정보 공유 · 우리 선박 주의', '완료'); } });
   }
@@ -3299,7 +3299,7 @@ function drawSlocStatic() {
     h += ln(SL.ecadiz, '#ae3ec9', 1.6, 10, 4, true) + ln(SL.jcMedian, '#5c6b77', 1.4, 3, 4) + ln(SL.okTrough, '#9a3412', 1.4, 8, 3, false);
     const sk = SP(...SL.senkaku.c), r1 = SL.senkaku.ts / 111.2 * SK, r2 = SL.senkaku.cz / 111.2 * SK;
     h += `<circle cx="${f1(sk[0])}" cy="${f1(sk[1])}" r="${f1(r2)}" fill="none" stroke="#e8590c" stroke-width="${fs(1.2)}" stroke-dasharray="${fs(4)} ${fs(3)}"/><circle cx="${f1(sk[0])}" cy="${f1(sk[1])}" r="${f1(r1)}" fill="color-mix(in srgb, #e8590c 10%, transparent)" stroke="#e8590c" stroke-width="${fs(1.4)}"/>`;
-    h += `<text class="atx isl" x="${f1(sk[0])}" y="${f1(sk[1] + r2 + 11 * zz)}" font-size="${fs(9)}" text-anchor="middle">영해 12해리 · 접속수역 24해리</text>`;
+    h += `<text class="atx isl" x="${f1(sk[0])}" y="${f1(sk[1] + r2 + 11 * zz)}" font-size="${fs(9)}" text-anchor="middle">영해 12마일 · 접속수역 24마일</text>`;
     const t = (p, txt, cls = 'port', anchor = 'start') => { const v = SP(...p); return `<text class="atx ${cls}" x="${f1(v[0])}" y="${f1(v[1])}" font-size="${fs(9.5)}" text-anchor="${anchor}">${txt}</text>`; };
     h += t([121.9, 33.45], '중국 동중국해 방공식별구역 (2013, 개략)', 'zadiz') + t([125.55, 30.9], '일·중 중간선 (일본 주장, 개략)') + t([127.0, 28.0], '오키나와 해곡 (중국 주장 대륙붕 한계, 개략)', 'isl');
     const ie = SP(...SL.ieodo); h += `<circle cx="${f1(ie[0])}" cy="${f1(ie[1])}" r="${f1(30 / 111.2 * SK)}" fill="none" stroke="var(--fr)" stroke-width="${fs(1.2)}" stroke-dasharray="${fs(3)} ${fs(3)}"/>`;
