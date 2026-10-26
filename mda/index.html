@@ -610,6 +610,9 @@ textarea.report { width: 100%; min-height: 150px; font: 12px/1.5 var(--font-data
       <label><input type="checkbox" id="bdINFRA" checked><svg width="22" height="6"><line x1="0" y1="3" x2="22" y2="3" class="cable" stroke-dasharray="7 2 1 2"/></svg>해양 기반시설</label>
       <span class="swlg"><b>위성 관측폭</b> <i class="swk" style="background:#7ccf7c"></i>SAR <i class="swk" style="background:#b99af0"></i>EO/IR <i class="swk" style="background:#7cc4ec"></i>다분광 <i class="swk" style="background:#f0a0c8"></i>초분광 <i class="swk" style="background:#f5b06a"></i>RF</span>
     </div>
+    <div class="bounds" id="sbounds" hidden>
+      <span class="swlg"><b>위성 관측폭</b> <i class="swk" style="background:#7ccf7c"></i>SAR <i class="swk" style="background:#b99af0"></i>EO/IR <i class="swk" style="background:#7cc4ec"></i>다분광 <i class="swk" style="background:#f0a0c8"></i>초분광 <i class="swk" style="background:#f5b06a"></i>RF</span>
+    </div>
     <div class="bounds abounds" id="abounds" hidden>
       <b>북극권 시설</b>
       <label><input type="checkbox" data-af="cty" checked>국가</label>
@@ -3326,6 +3329,18 @@ function drawSlocStatic() {
 let slocZ = 1;
 function drawSloc() {
   const z = slocZ; let h = '';
+  const inS = q => q[0] >= 26 && q[0] <= 152 && q[1] >= -16 && q[1] <= 44;
+  // 위성 관측폭: 최근 25분 지상 궤적을 센서별 연한 색으로 (오래된 구간일수록 흐리게)
+  for (const o of SATS) {
+    if (!o.use) continue;
+    const top = o.mis === 'rf' ? .16 : .3, w = f1(2 * o.hw / 111.2 * SK);
+    for (let k = 0; k < 25; k += 5) {
+      const seg = []; for (let m = k; m <= k + 5; m++) { const q = satPos(o, T - m); if (inS(q)) seg.push(SP(q[0], q[1])); }
+      if (seg.length < 2 || seg.some((v, i) => i && Math.abs(v[0] - seg[i - 1][0]) > 200)) continue;
+      h += `<path class="swl m-${o.mis}" stroke-width="${w}" opacity="${f1(top * (1 - k / 25))}" d="M${seg.map(v => f1(v[0]) + ',' + f1(v[1])).join('L')}"/>`;
+    }
+    const q = satPos(o, T); if (o.mis === 'rf' && inS(q)) { const v = SP(q[0], q[1]); h += `<circle class="rffp" cx="${f1(v[0])}" cy="${f1(v[1])}" r="${f1(o.hw / 111.2 * SK)}" stroke-dasharray="${f1(3 * z)} ${f1(3 * z)}"/>`; }
+  }
   // 관측·정찰 위성 (관심해역 상공)
   for (const o of SATS) {
     const q = satPos(o, T); if (q[0] < 26 || q[0] > 152 || q[1] < -16 || q[1] > 44) continue; const v = SP(q[0], q[1]);
@@ -3542,7 +3557,7 @@ function setView(v) {
   arcView = v === 'arc'; slocView = v === 'sloc'; const kr = v === 'kr';
   sel = arcSel = slocSel = null; selAt = null; elCache.set('selwrap', 'none'); $('selSec').hidden = true; $('selSec').innerHTML = '';   // 보기를 바꾸면 선택 팝업을 닫는다
   $('map').toggleAttribute('hidden', !kr); $('arc').toggleAttribute('hidden', !arcView); $('sloc').toggleAttribute('hidden', !slocView);
-  document.querySelector('.zoom').hidden = !kr; document.querySelector('.bounds').hidden = !kr; $('abounds').hidden = !arcView; $('spre').hidden = !slocView; $('apre').hidden = !arcView; $('kpre').hidden = !kr;
+  document.querySelector('.zoom').hidden = !kr; document.querySelector('.bounds').hidden = !kr; $('abounds').hidden = !arcView; $('sbounds').hidden = !slocView; $('spre').hidden = !slocView; $('apre').hidden = !arcView; $('kpre').hidden = !kr;
   $('srcpanel').hidden = !kr; $('arcpanel').hidden = !arcView; $('slocpanel').hidden = !slocView; $('polarSec').hidden = !arcView; $('slocSec').hidden = !slocView;
   document.querySelectorAll('[data-view]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.view === v)));
   if (arcView) { drawArcStatic(); drawArc(); renderArcPanel(); renderPolar(); if (cdseA.st === 'idle') cdseQuery(cdseA, CDSE_AREA[arcPre], CDSE_NM[arcPre], renderPolar); } else if (slocView) { drawSlocStatic(); drawSloc(); renderSlocPanel(); renderSlocInfo(); if (cdseS.st === 'idle') cdseQuery(cdseS, SBOX[slocPre], SNM(), renderSlocInfo); } else { regionView(krPre); }
