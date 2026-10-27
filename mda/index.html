@@ -431,6 +431,8 @@ textarea.report { width: 100%; min-height: 150px; font: 12px/1.5 var(--font-data
 .rg { stroke-width: 1; vector-effect: non-scaling-stroke; }
 .rg.ground { stroke: color-mix(in srgb, var(--l-ground) 60%, transparent); fill: color-mix(in srgb, var(--l-ground) 5%, transparent); }
 .rg.ground.wide { fill: none; }
+.rspl { stroke: #e8590c; stroke-width: 1.6; opacity: .8; vector-effect: non-scaling-stroke; }
+.al .rsp { color: #c2410c; font-weight: 600; }
 .cpat { fill: none; stroke: #0b3d91; stroke-width: 1.3; opacity: .5; vector-effect: non-scaling-stroke; }
 .usv { fill: var(--fr); stroke: var(--halo); stroke-width: 1; vector-effect: non-scaling-stroke; } .usvl { fill: none; stroke: var(--fr); stroke-width: 1.4; opacity: .55; vector-effect: non-scaling-stroke; }
 .mumt td:first-child, .mumt td:nth-child(3) { white-space: nowrap; } #mumt td:nth-child(2), #mumt td:nth-child(4) { white-space: normal; } #mumt td:nth-child(2) { width: 50%; }
@@ -952,6 +954,8 @@ function init() {
   targets.push({ id: 'D302', cls: 'merchant', kind: 'surface', truth: 'N', type: '선박(AIS 미송출)', pos: SC.d302.start.slice(), hdg: 90, spd: 1.5, ais: false, emitter: null, mode: 'd302' });
   targets.push({ id: 'C501', cls: 'fishing', kind: 'surface', truth: 'N', type: '외국 어선', name: SC.c501.name, mmsi: SC.c501.mmsi, pos: SC.c501.start.slice(), hdg: 80, spd: 7, ais: true, emitter: EMIT.vhf, mode: 'c501', st: 'approach' });
   targets.push({ id: 'U402', cls: 'nkn', kind: 'sub', truth: 'H', type: '잠수함', pos: SC.u402.path[0].slice(), hdg: 190, spd: 8, ais: false, emitter: null, mode: 'path', wp: SC.u402.path, wi: 1, dir: 1, endHold: true });
+  for (const [id, type, cls, truth, at, spd, w] of SC.unkContacts) targets.push({ id, cls, kind: 'surface', truth, type, pos: w[0].slice(), hdg: bearing(w[0], w[1]), spd,
+    ais: false, emitter: null, mode: 'path', wp: w, wi: 1, dir: 1, endHold: true, startAt: at });
   targets.push({ id: 'U403', kind: 'air', truth: 'H', type: '외국 군용기', pos: SC.u403.start.slice(), hdg: 60, spd: 330, ais: false, emitter: EMIT.air, mode: 'path', wp: [SC.u403.start].concat(SC.u403.path), wi: 1, dir: 1, endHold: true, startAt: SC.u403.at });
   targets.push({ id: 'L601', cls: 'merchant', kind: 'surface', truth: 'N', type: '화물선', name: SC.l601.name, mmsi: SC.l601.mmsi, pos: SC.l601.start.slice(), hdg: 300, spd: 10,
     ais: true, lrit: true, lritPh: 7, emitter: EMIT.nav, mode: 'l601', st: 'transit' });
@@ -979,6 +983,25 @@ function moveToward(o, dest, kn, dt) {
   o.hdg = bearing(o.pos, dest);
   if (d <= km) { o.pos = dest.slice(); return true; }
   o.pos = advance(o.pos, o.hdg, km); return false;
+}
+// 바다 위로만 이동: 곧장 가면 섬·육지에 걸릴 때 좌우로 침로를 틀어 돌아간다
+function moveSea(o, dest, kn, dt) {
+  const km = KMMIN(kn) * dt, d = dist(o.pos, dest);
+  if (d <= km && !isLand(dest[0], dest[1])) { o.pos = dest.slice(); return true; }
+  const b0 = bearing(o.pos, dest);
+  for (const db of [0, 25, -25, 50, -50, 80, -80, 115, -115]) {
+    const h = (b0 + db + 360) % 360, q = advance(o.pos, h, Math.min(km, d));
+    if (!isLand(q[0], q[1]) && !isLand(...advance(o.pos, h, Math.min(km, d) / 2))) { o.hdg = h; o.pos = q; return false; }
+  }
+  return false;
+}
+// 표적 둘레에서 바다 위 대기 지점을 고른다 (우리 쪽 방향 우선)
+function seaNear(q, from, km) {
+  const b0 = bearing(q, from);
+  for (const r of [km, km * 1.8, km * 3]) for (const db of [0, 30, -30, 60, -60, 90, -90, 135, -135, 180]) {
+    const p = southOfNll(advance(q, (b0 + db + 360) % 360, r)); if (!isLand(p[0], p[1])) return p;
+  }
+  return southOfNll(q);
 }
 function orbit(o, dt) {
   o.ph = (o.ph + KMMIN(o.spd) * dt / o.r / D2R) % 360;
@@ -1093,11 +1116,11 @@ function moveTarget(t, dt) {
     case 'patrol':
       t.ph = (t.ph + KMMIN(t.spd) * dt / t.orbitR / D2R) % 360;
       t.pos = advance(t.home, t.ph, t.orbitR); t.hdg = (t.ph + 90) % 360; t.spd = 12; break;
-    case 'intercept': { t.spd = 24; const g = t.goal(); if (g) moveToward(t, g, t.spd, dt); break; }
+    case 'intercept': { t.spd = 24; const g = t.goal(); if (g) moveSea(t, g, t.spd, dt); break; }
     case 'return': {
       t.spd = 18;
-      if (t.coast) { if (moveToward(t, t.wp[t.wi], t.spd, dt)) { t.mode = 'path'; t.spd = t.coast.kn; } break; }   // 연안 순찰 경로로 복귀
-      if (moveToward(t, advance(t.home, t.ph, t.orbitR), t.spd, dt)) t.mode = 'patrol'; break;
+      if (t.coast) { if (moveSea(t, t.wp[t.wi], t.spd, dt)) { t.mode = 'path'; t.spd = t.coast.kn; } break; }   // 연안 순찰 경로로 복귀
+      if (moveSea(t, advance(t.home, t.ph, t.orbitR), t.spd, dt)) t.mode = 'patrol'; break;
     }
     case 'route': case 'path': {
       if (moveToward(t, t.wp[t.wi], t.spd, dt)) {
@@ -1234,6 +1257,7 @@ function mpaMove(dt) {
 }
 // UAV-2: 남해 상시 초계 (패턴 순환), USV: NLL을 따라 좌우 왕복 경비
 function uav2Step(dt) {
+  if (uav2.respId) { moveAir(uav2, dt); return; }   // 현장 대응 중
   if (!uav2.wps.length) {
     uav2.pk = (uav2.pk + 1) % PATS.length; const t = PATS[uav2.pk], pts = cleanPath(patternPts(MPA_BOX.south, t));
     uav2.wps = [...seaRoute(uav2.pos, pts[0]), ...pts.slice(1)]; uav2.task = `남해 해상 초계 · ${PATNM[t]}`;
@@ -1242,7 +1266,9 @@ function uav2Step(dt) {
 }
 function usvStep(dt) {
   for (const u of usvs) {
-    if (moveToward(u, u.line[u.wi], u.spd, dt)) {
+    if (u.chase) { const g = u.chase(); if (g) moveSea(u, g, 25, dt); }   // 현장 대응: 표적 근접 추적
+    else if (u.back) { if (moveSea(u, u.line[u.wi], 25, dt)) u.back = false; }   // 경비 선으로 복귀
+    else if (moveToward(u, u.line[u.wi], u.spd, dt)) {
       if (u.wi + u.dir < 0 || u.wi + u.dir >= u.line.length) { u.dir *= -1; u.laps++; }
       u.wi += u.dir;
     }
@@ -1252,6 +1278,7 @@ function usvStep(dt) {
 }
 function moveAir(a, dt) {
   if (a === mpa) { mpaMove(dt); return; }
+  if (a.follow) { const g = a.follow(); if (g) { a.dest = g; if (a.mode === 'orbit') a.center = g; } }
   if (a.mode === 'orbit') orbit(a, dt);
   else if (moveToward(a, advance(a.dest, a.ph, a.destR), a.spd, dt)) {
     a.mode = 'orbit'; a.center = a.dest; a.r = a.destR; a.task = a.arriveTask;
@@ -1599,6 +1626,7 @@ function step(dt) {
   }
   if (passes.length > 400) passes = passes.filter(ps => !ps.done || T - ps.end < 180 || ps.rfIds.size);
   scenario(dt);
+  respStep();
 }
 
 function onNew(t, tr, s) {
@@ -1683,11 +1711,14 @@ const CAT = {
   ieodo: ['관할 해역 침해 (조사선)', '국내 한정', ['해경', '해수부']],
   arcais: ['북극항로 위치 보고 공백', '국외 공유 가능', ['해수부', '해경']],
   arcmil: ['북극 군사활동 (항로 인접)', '국내 한정', ['해수부']],
-  survey: ['무단 해양과학조사 의심', '국내 한정', ['해경', '해수부', '외교부']]
+  survey: ['무단 해양과학조사 의심', '국내 한정', ['해경', '해수부', '외교부']],
+  nkn: ['군사 위협 (NLL 근해 북한 함정)', '국내 한정', ['해경']],
+  third: ['주변국 함정 활동 (동·서해)', '국내 한정', ['해경', '해수부']],
+  unk: ['미식별 선박 (현장 식별)', '국내 한정', ['해경']]
 };
 function raise(a) {
   if (alerts.some(x => x.id === a.id)) return;
-  [a.cat, a.share, a.to] = CAT[a.id] || ['기타', '국내 한정', []];
+  [a.cat, a.share, a.to] = CAT[a.id] || CAT[a.id.split(':')[0]] || ['기타', '국내 한정', []];
   shares.unshift({ t: T, text: `${a.tgt} ${a.cat} → ${a.to.length ? a.to.join(' · ') : '군 내부 한정'}`, to: a.to });
   a.t = T; a.status = 'open'; alerts.unshift(a); stats.shared++;
   addLog(`이상징후 공유: ${a.title} ${a.tgt}.`);
@@ -1697,6 +1728,7 @@ function closeAlert(id, result) {
   if (a.status === 'open') stats.decided++;
   a.status = 'done'; a.result = result; stats.evaluated++;
   addLog(`평가: ${a.tgt} ${result}.`);
+  respRelease(a);
 }
 function approve(id) {
   const a = alerts.find(x => x.id === id); if (!a || a.status !== 'open') return;
@@ -1704,6 +1736,131 @@ function approve(id) {
   addLog(`결심: ${a.tgt} ${a.rec}.`);
 }
 function addReq(text, status) { const r = { t: T, text, status }; reqs.unshift(r); return r; }
+
+// ── 현장 대응: NLL 근해 북한 함정, 동·서해 제3국(중·러) 함정, 미식별 선박에 가장 가까운 유인(함정·헬기)·무인(UAV·USV) 전력을 보낸다 ──
+const RESP_NM = { nk: 'NLL 근해 북한 함정 대응', third: '제3국 함정 근접 감시', unk: '미식별 선박 현장 식별' };
+// NLL에서 북쪽으로 떨어진 거리(km, 남쪽이면 음수). NLL 구간 밖이면 null
+function nllGap(p) {
+  if (p[0] >= 124.35 && p[0] <= 126.12) return (p[1] - nllLat(SC.nllWest, p[0])) * 111.2;
+  if (p[0] >= 128.37 && p[0] <= 131.7) return (p[1] - 38.62) * 111.2;
+  return null;
+}
+// 우리 전력은 NLL 남쪽에서만 움직인다
+function southOfNll(p) {
+  const g = nllGap(p); if (g == null || g < -3) return p;
+  return [p[0], p[1] - (g + 3) / 111.2];
+}
+// 제3국 함정 감시 해역: 서해(동경 123° 동쪽, NLL 남쪽), 동해(동경 128.8° 동쪽, 북위 35.3° 북쪽, NLL 남쪽)
+const thirdZone = p => (p[0] >= 123 && p[0] <= 126.3 && p[1] >= 34 && p[1] <= 37.9 && (nllGap(p) ?? -1) < 0) || (p[0] >= 128.8 && p[0] <= 132 && p[1] >= 35.3 && p[1] < 38.6);
+const respFree = a => a && !a.respId;
+function respPick(id, kind) {
+  const tr = tracks.get(id), p = tr.pos;
+  const ships = targets.filter(f => f.truth === 'F' && f.kind === 'surface' && active(f) && respFree(f) && !f.grp && f.id !== 'CVX'
+    && (f.cls === 'kn' || (kind === 'unk' && f.cls === 'kcg')) && ['patrol', 'path', 'return'].includes(f.mode));
+  const near = (list, max) => list.map(a => [a, dist(a.pos, p)]).filter(([, d]) => d <= max).sort((x, y) => x[1] - y[1])[0]?.[0] || null;
+  const ship = near(ships, 1e9);
+  const hs = helis.filter(h => h.st === 'deck' && respFree(h)).map(h => [h, dist(byId.get(h.ship).pos, p)]).filter(([, d]) => d <= 120).sort((x, y) => x[1] - y[1])[0];
+  return { ship, heli: hs ? hs[0] : null, uav: near([uav, uav2].filter(respFree), 320), usv: near(usvs.filter(respFree), 90) };
+}
+const respWho = pk => [pk.ship && `${pk.ship.id}(${pk.ship.type.replace(/ \(.*/, '')})`, pk.heli && `${pk.heli.ship} 헬기`, pk.uav && pk.uav.name, pk.usv && pk.usv.name].filter(Boolean);
+function respDispatch(a, id, kind, pk, extShip) {
+  const r = { id: a.id, kind, tgt: id, ...pk, ext: extShip || null, t0: T, onT: null };
+  const tp = () => { const tr = tracks.get(id); return tr ? tr.pos : null; };
+  const near = (o, km) => () => { const q = tp(); return q ? seaNear(q, o.pos, km) : null; };
+  r.near = near;
+  if (pk.ship) { const f = pk.ship; f.respId = a.id; f.mode = 'intercept'; f.goal = r.goal = near(f, 3); }
+  if (pk.uav) { const u = pk.uav; u.respId = a.id; u.follow = () => { const q = tp(); return q ? southOfNll(q) : null; }; sendAir(u, southOfNll(tp()), 6, `${id} ${RESP_NM[kind]}`); }
+  if (pk.usv) { const u = pk.usv; u.respId = a.id; u.back = false; u.chase = near(u, 1.5); }
+  if (pk.heli) {
+    const h = pk.heli, c = byId.get(h.ship).pos.slice();
+    h.respId = a.id; h.task = `${id} 현장 확인`; h.wps = [{ p: southOfNll(tp()) }, { p: southOfNll(advance(tp(), 90, 4)) }]; h.wi = 0; h.st = 'fly'; h.t0 = T; h.pos = c;
+    feed('air', `${h.ship} ${h.type} 이함 · ${id} 현장 확인`);
+  }
+  const who = respWho(pk);
+  addReq(`현장 대응 · ${id} · ${who.join(', ') || '가용 전력 없음'}`, '수행');
+  feed('surface', `${id} ${RESP_NM[kind]} · ${who.join(', ')} 출동`);
+  return r;
+}
+function respRelease(a) {
+  const r = a.resp; if (!r) return;
+  if (r.ship && r.ship.respId === a.id) { r.ship.respId = null; r.ship.mode = 'return'; r.ship.goal = null; }
+  if (r.usv && r.usv.respId === a.id) { r.usv.respId = null; r.usv.chase = null; r.usv.back = true; }
+  if (r.heli && r.heli.respId === a.id) { r.heli.respId = null; if (r.heli.st !== 'deck') r.heli.st = 'rtb'; }
+  if (r.uav && r.uav.respId === a.id) {
+    const u = r.uav; u.respId = null; u.follow = null;
+    if (u === uav) sendAir(uav, SC.uav.center, SC.uav.r, '서해 정찰 궤도'); else { u.wps = []; u.mode = null; }
+  }
+  a.resp = null; a.respDone = r;
+}
+function respRaise(kind, id, title, sev) {
+  const pk = respPick(id, kind), who = respWho(pk);
+  raise({ id: `${kind === 'nk' ? 'nkn' : kind}:${id}`, sev, title, tgt: id, kind,
+    rec: `현장 유인·무인 전력 대응: ${who.join(' · ') || '가용 전력 없음'}${kind === 'nk' ? ' (근접 감시·경고통신)' : kind === 'third' ? ' (근접 추적·영상 확보)' : ' (근접 식별)'}`,
+    approve: a => { a.resp = respDispatch(a, id, kind, respPick(id, kind)); } });
+}
+function respStep() {
+  // 1분마다 대응 대상 탐색
+  if (Math.floor(T) !== flags.respScan) {
+    flags.respScan = Math.floor(T); flags.respSeen ||= {};
+    const busy = new Set(alerts.filter(a => a.status !== 'done').flatMap(a => String(a.tgt).split('·')));
+    // 동시에 진행하는 대응은 종류별 2건, 시나리오 한 번에 종류별 최대 5건
+    const openN = k => alerts.filter(a => a.id.startsWith(k + ':') && a.status !== 'done').length < 2 && alerts.filter(a => a.id.startsWith(k + ':')).length < 5;
+    for (const tr of tracks.values()) {
+      const t = byId.get(tr.id);
+      if (tr.lost || !t || t.kind !== 'surface' || busy.has(tr.id) || flags.respSeen[tr.id] || T - tr.first < 3) continue;
+      const gap = nllGap(tr.pos);
+      if (t.cls === 'nkn' && tr.affil === 'H' && tr.id !== 'H201' && gap != null && gap <= 22 && openN('nkn')) {
+        flags.respSeen[tr.id] = 1; respRaise('nk', tr.id, `NLL 근해 북한 함정 접근 (${gap < 0 ? 'NLL 이남' : `NLL ${Math.round(gap / 1.852)}NM`})`, 'crit');
+      } else if ((t.cls === 'cnn' || t.cls === 'run') && !t.grp && tr.affil === 'N' && thirdZone(tr.pos) && openN('third')) {
+        flags.respSeen[tr.id] = 1; respRaise('third', tr.id, `${tr.pos[0] < 127 ? '서해' : '동해'} 제3국 함정 활동 (${CLS[t.cls]})`, 'warn');
+      } else if (tr.affil === 'U' && T - tr.first >= 4 && inPolyKr(tr.pos, ROK_AREA) && openN('unk')) {
+        flags.respSeen[tr.id] = 1; respRaise('unk', tr.id, `미식별 선박 (${whereOf(tr.pos)})`, 'warn');
+      }
+    }
+  }
+  // 대응 진행: 현장 도착 → 식별·경고·추적 → 평가 후 복귀
+  for (const a of alerts) {
+    const r = a.resp; if (!r || a.status !== 'act') continue;
+    const t = byId.get(r.tgt), tr = tracks.get(r.tgt);
+    if (!t || !active(t) || !tr) { closeAlert(a.id, '표적 이탈 → 광역 감시로 전환'); continue; }
+    if (tr.lost && T - tr.seen > 40) { closeAlert(a.id, '표적 접촉 소실 40분 → 위성·초계기 광역 재탐색으로 전환'); continue; }
+    // 대응 함정이 다른 임무(시나리오 조치)로 빠지면 다음으로 가까운 함정이 이어받는다
+    if (r.ship && r.ship.goal !== r.goal) {
+      const old = r.ship; if (old.respId === a.id) old.respId = null;
+      const f = respPick(r.tgt, r.kind).ship; r.ship = f;
+      if (f) { f.respId = a.id; f.mode = 'intercept'; f.goal = r.goal = r.near(f, 3); addLog(`${r.tgt} 현장 대응 함정 교대: ${old.id} → ${f.id}.`); feed('surface', `${r.tgt} 대응 함정 교대 ${old.id} → ${f.id}`); }
+    }
+    const ass = [r.ship, r.ext, r.heli, r.uav, r.usv].filter(Boolean), lim = o => o === r.uav ? 10 : o === r.heli ? 6 : 8;
+    const on = ass.filter(o => o.pos && dist(o.pos, tr.pos) <= lim(o)).map(o => o.name || (o.ship ? `${o.ship} 헬기` : o.id));
+    if (on.length && !r.onT) { r.onT = T; addLog(`${r.tgt} 현장 도착: ${on.join('·')}.`); feed('surface', `${r.tgt} 현장 도착 · ${on.join('·')}`); }
+    if (r.ext) continue;   // 시나리오 경보(NLL 침범)에 합류한 무인전력: 평가는 시나리오가 한다
+    if (r.kind === 'unk') {
+      if (tr.affil !== 'U') closeAlert(a.id, `원격 센서로 식별 완료 (${tr.note || AFF[tr.affil]}) → 현장 전력 복귀`);
+      else if (r.onT && T - r.onT >= 3) {
+        tr.affil = t.truth === 'H' ? 'H' : t.truth === 'S' ? 'S' : 'N'; tr.note = `현장 식별 (${on.join('·') || '현장 전력'}): ${t.type}`;
+        closeAlert(a.id, `${on.join('·') || '현장 전력'} 현장 식별 → ${t.type}${t.truth === 'S' ? ' · 해경 인계' : ''}`);
+      } else if (T - r.t0 > 90) closeAlert(a.id, '현장 도착 지연 → 위성·초계기 식별로 전환');
+    } else if (r.kind === 'nk') {
+      const gap = nllGap(tr.pos);
+      if (r.onT && !r.warned && T - r.onT >= 2) { r.warned = T; addLog(`${r.tgt} 경고통신 (현장 ${on.join('·')}).`); feed('surface', `${r.tgt} 경고통신 · 근접 감시`); }
+      if (r.warned && !r.retreat && T - r.warned >= 10 && t.mode === 'patrol') {
+        r.retreat = T; t.mode = 'route'; t.wp = [[t.pos[0], t.pos[1] + 0.35]]; t.wi = 0; t.dir = 1; t.endHold = true; t.spd = 12;
+        addLog(`${r.tgt} 북쪽으로 기수 전환.`);
+      }
+      if (gap != null && gap > 30) closeAlert(a.id, `현장 유인·무인 전력 근접 감시·경고통신 → NLL 이북 ${Math.round(gap / 1.852)}NM 이격 확인`);
+      else if (r.onT && T - r.onT >= 45) closeAlert(a.id, '현장 근접 감시 45분 · 특이 동향 없음 → 정상 경계로 전환');
+    } else if (r.kind === 'third') {
+      if (!thirdZone(tr.pos)) closeAlert(a.id, '감시 해역 이탈 확인 → 정보 공유');
+      else if (r.onT && T - r.onT >= 30) closeAlert(a.id, `${on.join('·') || '현장 전력'} 근접 추적 감시·영상 확보 → 해경·관련기관 공유`);
+    }
+  }
+}
+// 대응 중 전력 현황 (경보 칸 표시용)
+function respLine(r) {
+  const tr = tracks.get(r.tgt); if (!tr) return '';
+  const item = (o, lbl, kind) => o ? `${lbl}(${kind}) ${dist(o.pos, tr.pos) <= 8 ? '현장' : Math.round(dist(o.pos, tr.pos)) + 'km'}` : null;
+  return [item(r.ship || r.ext, (r.ship || r.ext)?.id, '유인'), r.heli && item(r.heli, `${r.heli.ship} 헬기`, '유인'), item(r.uav, r.uav?.name, '무인'), item(r.usv, r.usv?.name, '무인')].filter(Boolean).join(' · ');
+}
 
 // 수집 과업 (조치 승인과 선택 표적 단추가 함께 쓴다)
 function taskSar(id, hw = 50) {
@@ -1731,8 +1888,10 @@ function taskBuoy(id) {
   feed('air', `해상초계기 ${id} 대잠 탐색 출동`);
 }
 
-function approveNll() {
+function approveNll(a) {
   const f = byId.get('F108'); f.mode = 'intercept'; f.goal = () => tracks.get('H201')?.pos; flags.nllAct = true;
+  // F108 차단 기동에 현장 무인전력(UAV·USV)이 합류해 근접 감시한다
+  if (a) { const pk = respPick('H201', 'nk'); a.resp = respDispatch(a, 'H201', 'nk', { ship: null, uav: pk.uav, usv: pk.usv, heli: null }, f); }
 }
 function approveSts() {
   taskUav('D301');
@@ -2202,6 +2361,11 @@ function drawDyn() {
   }
   if (layerOn.air && mpa.wps && mpa.wps.length) h += `<path class="mpap"${dash(z, 4, 4)} d="${pathD([mpa.pos, ...mpa.wps.slice(0, 14)])}"/>`;
   if (layerOn.air && uav2.wps.length) h += `<path class="mpap uavp"${dash(z, 3, 4)} d="${pathD([uav2.pos, ...uav2.wps.slice(0, 10)])}"/>`;
+  // 현장 대응 중인 유인·무인 전력 → 표적 연결선
+  for (const a of alerts) {
+    const r = a.resp, tr = r && tracks.get(r.tgt); if (!tr || a.status !== 'act') continue;
+    for (const o of [r.ship || r.ext, r.heli, r.uav, r.usv]) if (o && o.pos && (o !== r.heli || o.st !== 'deck')) h += `<line class="rspl"${dash(z, 4, 3)} x1="${f1(X(o.pos[0]))}" y1="${f1(Y(o.pos[1]))}" x2="${f1(X(tr.pos[0]))}" y2="${f1(Y(tr.pos[1]))}"/>`;
+  }
   // 연안 순찰 경로 (OPV·PKX·PKG)
   if (layerOn.surface) for (const t of targets) if (t.coast && active(t)) h += `<path class="cpat"${dash(z, 5, 3)} d="${pathD(t.wp)}"/>`;
   if (layerOn.surface) for (const u of usvs) {
@@ -2676,7 +2840,7 @@ function renderPanel() {
   const stName = { open: '결심 대기', act: '조치 중', done: '평가 완료' };
   setHTML($('alerts'), 'alerts', alerts.length ? alerts.map(a => `<div class="al ${a.status === 'done' ? 'done' : a.sev}">
     <div class="t">${esc(a.title)}<span>${esc(a.tgt)}</span></div>
-    <div class="r">${a.status === 'done' ? '평가: ' + esc(a.result) : '→ ' + esc(a.rec)}</div>
+    <div class="r">${a.status === 'done' ? '평가: ' + esc(a.result) : '→ ' + esc(a.rec)}</div>${a.resp ? `<div class="r rsp">현장 대응: ${esc(respLine(a.resp))}</div>` : ''}
     <div class="a"><span class="chip ${a.status}">${stName[a.status]}</span><span class="chip">${esc(a.cat)}</span><span class="chip ${a.share === '국내 한정' ? 'cls' : 'shr'}">${a.share}</span><span class="chip">→ ${a.to.length ? a.to.join('·') : '군 내부'}</span>${a.status === 'open' ? `<button class="btn go" type="button" data-approve="${a.id}">조치 승인</button>` : ''}${a.status !== 'done' && a.sat ? a.sat.map(([lb], i) => a.satReq?.[i] ? `<span class="chip act">${lb.replace(' 요청', '')} 요청됨</span>` : `<button class="btn sat" type="button" data-alsat="${a.id}:${i}">${/^U[AS]V/.test(lb) ? '✈ ' : '🛰 '}${lb}</button>`).join('') : ''}<span class="empty">${clock(a.t).hm}</span></div></div>`).join('')
     : '<p class="empty">현재 이상징후가 없습니다. 시나리오가 진행되면 AIS 신호 소실, EEZ 침범, NLL 침범, 수중 접촉, KADIZ 진입이 차례로 나타납니다.</p>');
   // 전자기스펙트럼 영향성 평가: 대역·체계별 영향 범위, 영향 받는 우군·민간 수, 평가 등급, 대응
