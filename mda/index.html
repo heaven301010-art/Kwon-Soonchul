@@ -1020,7 +1020,7 @@ const active = t => !(t.startAt && T < t.startAt) && !t.gone;
 
 // ── 12NM 책임 구분: 우리 해안선(도서 포함)에서 12NM 안쪽은 육군, 바깥은 해군 R/S가 맡고 경계에서 표적을 인계인수한다 ──
 const NM12 = 12 * 1.852;
-const ROK_AREA = [[124.0, 37.55], ...SC.nllWest, [127.0, 38.3], [128.37, 38.62], [131.7, 38.62], [131.7, 36.3], [129.45, 35.15], [128.75, 34.25], [127.6, 33.0], [127.6, 32.7], [124.0, 32.7]];
+const ROK_AREA = [[123.9, 37.55], ...SC.nllWest, [127.0, 38.3], [128.37, 38.62], [131.7, 38.62], [131.7, 36.3], [129.45, 35.15], [128.75, 34.25], [127.6, 33.0], [127.6, 32.7], [124.0, 32.7]];
 const inPolyKr = (p, poly) => { let ins = false; for (let j = 0, k = poly.length - 1; j < poly.length; k = j++) { const [xi, yi] = poly[j], [xk, yk] = poly[k]; if ((yi > p[1]) !== (yk > p[1]) && p[0] < (xk - xi) * (p[1] - yi) / (yk - yi) + xi) ins = !ins; } return ins; };
 let nmGrid = null;
 const NG = { x0: 124.0, y0: 32.7, d: 0.04, nx: 194, ny: 149 };
@@ -1761,7 +1761,7 @@ function addReq(text, status) { const r = { t: T, text, status }; reqs.unshift(r
 const RESP_NM = { nk: 'NLL 근해 북한 함정 대응', third: '제3국 함정 근접 감시', unk: '미식별 선박 현장 식별' };
 // NLL에서 북쪽으로 떨어진 거리(km, 남쪽이면 음수). NLL 구간 밖이면 null
 function nllGap(p) {
-  if (p[0] >= 124.35 && p[0] <= 126.12) return (p[1] - nllLat(SC.nllWest, p[0])) * 111.2;
+  if (p[0] >= SC.nllWest[0][0] && p[0] <= 126.12) return (p[1] - nllLat(SC.nllWest, p[0])) * 111.2;
   if (p[0] >= 128.37 && p[0] <= 131.7) return (p[1] - 38.62) * 111.2;
   return null;
 }
