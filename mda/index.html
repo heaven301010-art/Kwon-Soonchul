@@ -855,7 +855,7 @@ const EMIT = {
   air: { type: '항공기 탑재 레이더', band: 'X밴드 10.1GHz', mil: true }
 };
 let TFG = {};
-let rnd, T, targets, byId, tracks, alerts, reqs, logs, feeds, passes, buoys, mpa, uav, uav2, usvs = [], sel, stats, flags, nid, shares, jx, helis = [], handovers = [];
+let rnd, T, targets, byId, tracks, alerts, reqs, logs, feeds, passes, buoys, mpa, uav, uav2, nllUavs = [], usvs = [], sel, stats, flags, nid, shares, jx, helis = [], handovers = [];
 
 function routeShip(route, i, o = {}) {
   const w = route.slice(1);
@@ -967,10 +967,18 @@ function init() {
   helis = SC.helis.map(([ship, type, sched]) => ({ ship, type, sched, k: 0, st: 'deck', pos: [0, 0], wps: [], flights: 0 })); handovers = [];
   uav = { id: 'UAV-1', name: 'UAV-1', pos: advance(SC.uav.center, 0, SC.uav.r), center: SC.uav.center.slice(), r: SC.uav.r, spd: 80, ph: 0, mode: 'orbit', hdg: 90, task: '서해 정찰 궤도' };
   uav2 = { id: 'UAV-2', name: 'UAV-2', pos: [128.0, 34.05], spd: 90, hdg: 90, wps: [], pk: -1, task: '' };
+  // NLL 하단 감시 UAV: NLL 남쪽 약 10km 선을 따라 좌우로 왕복 비행
+  nllUavs = [
+    { id: 'UAV-3', name: 'UAV-3', area: '서해 NLL', gcs: 'west', line: SC.nllWest.map(q => [q[0], q[1] - 0.09]).filter(q => q[0] >= 124.45), s0: 4, dir: -1 },
+    { id: 'UAV-4', name: 'UAV-4', area: '동해 NLL', gcs: 'east', line: [[128.62, 38.52], [129.3, 38.52], [130.0, 38.52], [130.7, 38.52], [131.3, 38.52]], s0: 1, dir: 1 }
+  ].map(a => ({ ...a, pos: a.line[a.s0].slice(), wi: a.s0 + a.dir, spd: 80, hdg: 90, laps: 0, task: '' }));
+  // NLL 하단 경비 USV: USV-1·2는 NLL 바로 아래(약 5km), USV-3·4는 그 남쪽(약 13~20km) 선을 왕복
   usvs = [
-    { id: 'USV-1', name: 'USV-1', ctl: 'F108', line: SC.nllWest.map(q => [q[0], q[1] - 0.045]).filter(q => q[0] >= 124.55 && q[0] <= 126.05), area: '서해 NLL' },
-    { id: 'USV-2', name: 'USV-2', ctl: 'F101', line: [[128.5, 38.56], [129.2, 38.56], [129.9, 38.56], [130.6, 38.56]], area: '동해 NLL' }
-  ].map((u, k) => ({ ...u, pos: u.line[k ? 1 : 2].slice(), wi: k ? 2 : 1, dir: k ? 1 : -1, spd: 15, hdg: 90, link: '정상', laps: 0 }));
+    { id: 'USV-1', name: 'USV-1', ctl: 'F108', line: SC.nllWest.map(q => [q[0], q[1] - 0.045]).filter(q => q[0] >= 124.55 && q[0] <= 126.05), area: '서해 NLL', s0: 2, dir: -1 },
+    { id: 'USV-2', name: 'USV-2', ctl: 'F101', line: [[128.5, 38.56], [129.2, 38.56], [129.9, 38.56], [130.6, 38.56]], area: '동해 NLL', s0: 1, dir: 1 },
+    { id: 'USV-3', name: 'USV-3', ctl: 'F103', line: SC.usv3, area: '서해 NLL 하단', s0: 1, dir: 1 },
+    { id: 'USV-4', name: 'USV-4', ctl: 'PKX-5', line: [[128.75, 38.44], [129.4, 38.44], [130.1, 38.44], [130.8, 38.44]], area: '동해 NLL 하단', s0: 2, dir: -1 }
+  ].map(u => ({ ...u, pos: u.line[u.s0].slice(), wi: u.s0 + u.dir, spd: 15, hdg: 90, link: '정상', laps: 0 }));
   passes = []; tasks = []; comm = {}; commAt = -1;
   buildSats(); buildArctic(); arcSel = null; buildSloc();
   addLog('훈련 시나리오 개시. 전 센서 출처 가동.');
@@ -1116,7 +1124,7 @@ function moveTarget(t, dt) {
     case 'patrol':
       t.ph = (t.ph + KMMIN(t.spd) * dt / t.orbitR / D2R) % 360;
       t.pos = advance(t.home, t.ph, t.orbitR); t.hdg = (t.ph + 90) % 360; t.spd = 12; break;
-    case 'intercept': { t.spd = 24; const g = t.goal(); if (g) moveSea(t, g, t.spd, dt); break; }
+    case 'intercept': { t.spd = 24; const g = t.goal(); if (g) moveSea(t, southOfNll(g), t.spd, dt); break; }
     case 'return': {
       t.spd = 18;
       if (t.coast) { if (moveSea(t, t.wp[t.wi], t.spd, dt)) { t.mode = 'path'; t.spd = t.coast.kn; } break; }   // 연안 순찰 경로로 복귀
@@ -1263,6 +1271,15 @@ function uav2Step(dt) {
     uav2.wps = [...seaRoute(uav2.pos, pts[0]), ...pts.slice(1)]; uav2.task = `남해 해상 초계 · ${PATNM[t]}`;
   }
   if (moveToward(uav2, uav2.wps[0], uav2.spd, dt)) uav2.wps.shift();
+}
+function nllUavStep(a, dt) {
+  if (a.respId) { moveAir(a, dt); return; }   // 현장 대응 중
+  if (a.back) { a.task = `${a.area} 하단 감시선 복귀`; if (moveToward(a, a.line[a.wi], a.spd, dt)) a.back = false; return; }
+  if (moveToward(a, a.line[a.wi], a.spd, dt)) {
+    if (a.wi + a.dir < 0 || a.wi + a.dir >= a.line.length) { a.dir *= -1; a.laps++; }
+    a.wi += a.dir;
+  }
+  a.task = `${a.area} 하단 감시 비행 (${a.dir > 0 ? '동' : '서'}진, 왕복 ${a.laps}회)`;
 }
 function usvStep(dt) {
   for (const u of usvs) {
@@ -1518,7 +1535,7 @@ function sense(t, friends, act, t0, taskHit) {
     }
     if (layerOn.air) {
       if (dist(mpa.pos, t.pos) <= MPA_R) s.push('mpa');
-      if (dist(uav.pos, t.pos) <= UAV_R || dist(uav2.pos, t.pos) <= UAV_R) s.push('uav');
+      if (dist(uav.pos, t.pos) <= UAV_R || dist(uav2.pos, t.pos) <= UAV_R || nllUavs.some(a => dist(a.pos, t.pos) <= UAV_R)) s.push('uav');
       if (helis.some(h => h.st !== 'deck' && dist(h.pos, t.pos) <= HELI_R)) s.push('heli');
     }
     if (layerOn.space) spaceSense(t, s, act, taskHit);
@@ -1542,7 +1559,10 @@ function step(dt) {
   else if (jx.st === 'leave') { jx.spd = 16; jx.hdg = 20; jx.pos = advance(jx.pos, jx.hdg, KMMIN(jx.spd) * dt); if (jx.pos[1] > 42.3) jx.gone = true; }
   tfStep(dt);
   for (const t of targets) moveTarget(t, dt);
-  moveAir(mpa, dt); moveAir(uav, dt); uav2Step(dt); usvStep(dt); heliStep(dt);
+  // 우군 함정은 NLL 북쪽으로 넘어가지 않는다 (NLL 남쪽 3km 안쪽까지만)
+  for (const t of targets) if (t.truth === 'F' && t.kind === 'surface' && active(t)) { const q = southOfNll(t.pos); if (q !== t.pos) t.pos = q; }
+  moveAir(mpa, dt); moveAir(uav, dt); uav2Step(dt); for (const a of nllUavs) nllUavStep(a, dt); usvStep(dt); heliStep(dt);
+  for (const a of [uav, uav2, ...nllUavs]) a.pos = southOfNll(a.pos);   // 우군 무인기도 NLL 이남에서만 비행
   const friends = targets.filter(t => t.truth === 'F');
   // 위성: 해도 상공에 들어오면 통과 기록을 열고, 관측 위성은 지나간 구간을 훑어 탐지한다
   const act = [];
@@ -1760,7 +1780,7 @@ function respPick(id, kind) {
   const near = (list, max) => list.map(a => [a, dist(a.pos, p)]).filter(([, d]) => d <= max).sort((x, y) => x[1] - y[1])[0]?.[0] || null;
   const ship = near(ships, 1e9);
   const hs = helis.filter(h => h.st === 'deck' && respFree(h)).map(h => [h, dist(byId.get(h.ship).pos, p)]).filter(([, d]) => d <= 120).sort((x, y) => x[1] - y[1])[0];
-  return { ship, heli: hs ? hs[0] : null, uav: near([uav, uav2].filter(respFree), 320), usv: near(usvs.filter(respFree), 90) };
+  return { ship, heli: hs ? hs[0] : null, uav: near([uav, uav2, ...nllUavs].filter(respFree), 320), usv: near(usvs.filter(respFree), 90) };
 }
 const respWho = pk => [pk.ship && `${pk.ship.id}(${pk.ship.type.replace(/ \(.*/, '')})`, pk.heli && `${pk.heli.ship} 헬기`, pk.uav && pk.uav.name, pk.usv && pk.usv.name].filter(Boolean);
 function respDispatch(a, id, kind, pk, extShip) {
@@ -1788,7 +1808,9 @@ function respRelease(a) {
   if (r.heli && r.heli.respId === a.id) { r.heli.respId = null; if (r.heli.st !== 'deck') r.heli.st = 'rtb'; }
   if (r.uav && r.uav.respId === a.id) {
     const u = r.uav; u.respId = null; u.follow = null;
-    if (u === uav) sendAir(uav, SC.uav.center, SC.uav.r, '서해 정찰 궤도'); else { u.wps = []; u.mode = null; }
+    if (u === uav) sendAir(uav, SC.uav.center, SC.uav.r, '서해 정찰 궤도');
+    else if (nllUavs.includes(u)) { u.mode = null; u.back = true; }
+    else { u.wps = []; u.mode = null; }
   }
   a.resp = null; a.respDone = r;
 }
@@ -2373,7 +2395,7 @@ function drawDyn() {
     h += `<path class="usvl"${dash(z, 2, 5)} d="${pathD(u.line)}"/>` + circ('surf usvr', u.pos, USV_R, z, true);
     h += navyUsv(x, y, z) + txt('tid navyl', x + 10 * z, y + 12 * z, 11 * z, `${u.name}${u.link !== '정상' ? ' ⚠' : ''}`);
   }
-  if (layerOn.air) for (const a of [mpa, uav, uav2]) {
+  if (layerOn.air) for (const a of [mpa, uav, uav2, ...nllUavs]) {
     const x = X(a.pos[0]), y = Y(a.pos[1]);
     h += circ('air', a.pos, a === mpa ? MPA_R : UAV_R, z) + (a === mpa ? `<circle class="nvh" cx="${f1(x)}" cy="${f1(y)}" r="${f1(8 * SYMK * z)}"/>` + sym('A', 'air', x, y, z * 1.1) : navyUav(x, y, z)) + txt('tid navyl', x + 10 * z, y - 6 * z, 11 * z, a.name);
   }
@@ -2685,7 +2707,7 @@ function renderAsw() {
 }
 // 유무인복합전투체계(MUM-T): 유인 함정·항공기와 UAV·USV가 정보를 나눠 탐지 범위를 넓힌다
 // 데이터 전송 상태: [링크 종류, 전송률 Mbps, 지연 ms, 손실 %]. 재밍 영향권 안이면 손실이 커진다
-const GCS = { west: [126.62, 36.95], south: [126.55, 33.5] };
+const GCS = { west: [126.62, 36.95], south: [126.55, 33.5], east: [128.9, 37.75] };
 function mumtLink(kind, pos, ctlPos) {
   const jam = SC.jam && T >= SC.jam.at && !flags.jamDone && dist(pos, SC.jam.center) <= SC.jam.r * 1.3;
   let l;
@@ -2723,11 +2745,12 @@ function renderMumt() {
     ...helis.map(h => { const sh = byId.get(h.ship); return ['유인', `${h.type.replace(/ \(.*|와일드캣/g, '').trim()} (${h.ship})`, h.st === 'deck' ? `${h.ship} 함상` : where(h.pos), h.st === 'deck' ? '함상 대기' : h.st === 'dip' ? '디핑소나 탐색' : h.task, h.st === 'deck' ? 0 : inR(h.pos, HELI_R), h.ship, mumtLink('heli', h.st === 'deck' ? sh.pos : h.pos, sh.pos)]; }),
     ['무인', 'UAV-1', where(uav.pos), uav.task, inR(uav.pos, UAV_R), '지상통제 (서해)', mumtLink('uav', uav.pos, GCS.west)],
     ['무인', 'UAV-2', where(uav2.pos), uav2.task, inR(uav2.pos, UAV_R), '지상통제 (남해)', mumtLink('uav', uav2.pos, GCS.south)],
-    ...usvs.map(u => ['무인', u.name, u.area, `NLL 연한 좌우 경비 (${u.dir > 0 ? '동' : '서'}진, 왕복 ${u.laps}회)`, inR(u.pos, USV_R), `모함 ${u.ctl}`, mumtLink('usv', u.pos, byId.get(u.ctl).pos)])
+    ...nllUavs.map(a => ['무인', a.name, where(a.pos), a.task, inR(a.pos, UAV_R), `지상통제 (${a.gcs === 'west' ? '서해' : '동해'})`, mumtLink('uav', a.pos, GCS[a.gcs])]),
+    ...usvs.map(u => ['무인', u.name, u.area, u.chase ? '현장 대응 근접 추적' : `NLL 하단 좌우 경비 (${u.dir > 0 ? '동' : '서'}진, 왕복 ${u.laps}회)`, inR(u.pos, USV_R), `모함 ${u.ctl}`, mumtLink('usv', u.pos, byId.get(u.ctl).pos)])
   ];
   const nMan = rows.filter(r => r[0].startsWith('유인')).length, nUn = rows.filter(r => r[0].startsWith('무인')).length, det = rows.filter(r => r[0].startsWith('무인')).reduce((a, r) => a + r[4], 0);
   setHTML($('mumt'), 'mumt', `<h3>유무인복합전투체계 운용현황</h3>
-    <div class="phd"><div class="pk" style="--pc: var(--fr)"><b>${nMan}</b>유인 자산<small> · 초계기·헬기</small></div><div class="pk" style="--pc: var(--ne)"><b>${nUn}</b>무인 자산<small> · UAV ${2 + kun.filter(t => t.un === 'uav').length} · USV ${usvs.length + kun.filter(t => t.un === 'usv').length}</small></div><div class="pk" style="--pc: var(--l-air)"><b>${det}</b>무인 자산 탐지 표적</div></div>
+    <div class="phd"><div class="pk" style="--pc: var(--fr)"><b>${nMan}</b>유인 자산<small> · 초계기·헬기</small></div><div class="pk" style="--pc: var(--ne)"><b>${nUn}</b>무인 자산<small> · UAV ${2 + nllUavs.length + kun.filter(t => t.un === 'uav').length} · USV ${usvs.length + kun.filter(t => t.un === 'usv').length}</small></div><div class="pk" style="--pc: var(--l-air)"><b>${det}</b>무인 자산 탐지 표적</div></div>
     ${rows.map(r => `<div class="mrow"><div class="l1"><span class="tag ${r[0].startsWith('무인') ? 'un' : ''}">${r[0].split(' · ')[0]}</span><b>${esc(r[1])}</b><span class="lk ${r[6].st === '정상' ? 'on' : 'warn'}">${esc(r[6].st)}</span></div>
       <div class="l2">${esc(r[2])} · ${esc(r[3])}</div><div class="l2">탐지 ${r[4]} · ${esc(r[5])} · ${esc(r[6].type)} ${r[6].rate}Mbps · ${r[6].lat}ms · 손실 ${r[6].loss}%</div></div>`).join('')}
     <p class="empty" style="font-size:11px;margin:3px 0 0">평균 전송률 <b style="color:var(--fg)">${(rows.reduce((a, r) => a + r[6].rate, 0) / rows.length).toFixed(1)}Mbps</b> · 링크 저하 <b style="color:var(--fg)">${rows.filter(r => r[6].st !== '정상').length}</b>개 자산</p>
