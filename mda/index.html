@@ -944,6 +944,12 @@ function init() {
   const TF = SC.traffic;
   SC.routes.concat(TF.routes).forEach(rt => { for (let k = 0; k < rt[0] * TF.laneFactor; k++) targets.push(routeShip(rt, n++, { bg: true, lrit: rnd() < TF.lritShare })); });
   TF.fishing.forEach(([flag, x, y, c, r]) => { for (let k = 0; k < c; k++) targets.push(fishShip([x, y, c, r], n++, { bg: true, flag })); });
+  // 대화퇴를 오가는 중국 어선 선단: 항로 좌우로 흩어진 띠 모양으로 왕복 항해
+  TF.fishLanes.forEach(([flag, c, ...w]) => { for (let k = 0; k < c; k++) {
+    const sh = routeShip([c, ...w], n++, { bg: true, type: '중국 어선', mid: '412', spd: 7 }), dx = (rnd() - 0.5) * 0.5, dy = (rnd() - 0.5) * 0.4;
+    sh.wp = sh.wp.map(q => [q[0] + dx, q[1] + dy]); sh.pos = [sh.pos[0] + dx, sh.pos[1] + dy]; sh.cls = 'fishing'; sh.emitter = null; sh.lane = flag;
+    targets.push(sh);
+  } });
   // 북측 해역: 어선은 AIS 없이, 화물선은 절반만 AIS를 켠 채로 다닌다
   SC.nkFishing.forEach(cl => { for (let k = 0; k < cl[2]; k++) targets.push(fishShip(cl, n++, { nk: true })); });
   SC.nkRoutes.forEach(rt => { for (let k = 0; k < rt[0]; k++) targets.push(routeShip(rt, n++, { type: '북측 화물선', mid: '445', nk: true, ais: rnd() < 0.5, spd: 8 })); });
