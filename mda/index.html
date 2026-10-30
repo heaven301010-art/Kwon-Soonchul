@@ -738,13 +738,6 @@ textarea.report { width: 100%; min-height: 150px; font: 12px/1.5 var(--font-data
       <svg class="share" id="shareSvg" viewBox="0 0 320 262" role="img" aria-label="해수부, 해경, 기상청, KIOST·국립해양조사원, 해군, 국가 MDA 플랫폼, 해외 IFC 사이의 정보 흐름"></svg>
       <ul class="log" id="shareLog"></ul>
     </section>
-    <section id="krSatSec">
-      <h2>코페르니쿠스 위성영상 연동</h2>
-      <div class="cdse">
-        <div class="row"><b>한반도 해역 Sentinel 영상</b><select id="kcdseMis" aria-label="Sentinel 임무"><option value="SENTINEL-1">Sentinel-1 (SAR)</option><option value="SENTINEL-2">Sentinel-2 (광학)</option><option value="SENTINEL-3">Sentinel-3 (해색)</option></select><button class="btn go" type="button" id="kcdseGo">최신 영상 조회</button></div>
-        <div id="kcdseOut"></div>
-      </div>
-    </section>
     <section>
       <h2>지휘결심 지원체계</h2>
       <div class="alerts" id="alerts"></div>
@@ -764,6 +757,13 @@ textarea.report { width: 100%; min-height: 150px; font: 12px/1.5 var(--font-data
     <section>
       <h2>우주정보지원현황</h2>
       <div class="sattab" id="satInfo"></div>
+    </section>
+    <section id="krSatSec">
+      <h2>코페르니쿠스 위성영상 연동</h2>
+      <div class="cdse">
+        <div class="row"><b>한반도 해역 Sentinel 영상</b><select id="kcdseMis" aria-label="Sentinel 임무"><option value="SENTINEL-1">Sentinel-1 (SAR)</option><option value="SENTINEL-2">Sentinel-2 (광학)</option><option value="SENTINEL-3">Sentinel-3 (해색)</option></select><button class="btn go" type="button" id="kcdseGo">최신 영상 조회</button></div>
+        <div id="kcdseOut"></div>
+      </div>
     </section>
     <section>
       <h2>해양정보수집 지원 체계</h2>
