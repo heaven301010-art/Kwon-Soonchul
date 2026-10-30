@@ -379,6 +379,7 @@ button { font: inherit; color: inherit; }
 .chip.lv1 { color: var(--fr); border-color: color-mix(in srgb, var(--fr) 45%, transparent); }
 .chip.lv2 { color: var(--su); border-color: color-mix(in srgb, var(--su) 45%, transparent); }
 .chip.lv3 { color: var(--ho); border-color: color-mix(in srgb, var(--ho) 55%, transparent); font-weight: 600; }
+.ctab tr.cbad td:first-child { font-weight: 600; } .cmore { display: block; width: 100%; margin-top: 4px; padding: 3px 0; font: inherit; font-size: 11px; border: 1px dashed var(--line); border-radius: 4px; background: none; color: var(--muted); cursor: pointer; } .cmore:hover { color: var(--fg); border-color: var(--muted); }
 .csum { display: flex; flex-wrap: wrap; gap: 3px 10px; font-size: 12px; color: var(--muted); margin-bottom: 6px; }
 .csum b { font-family: var(--font-data); font-weight: 500; color: var(--fg); }
 .chip.warn { color: var(--su); border-color: color-mix(in srgb, var(--su) 45%, transparent); }
@@ -749,6 +750,7 @@ textarea.report { width: 100%; min-height: 150px; font: 12px/1.5 var(--font-data
     <section>
       <h2>우군 함정 위성통신현황</h2>
       <div id="commInfo"></div>
+      <button class="cmore" id="commMore" type="button" hidden></button>
     </section>
     <section>
       <h2>RF신호 수집 정보현황</h2>
@@ -766,7 +768,7 @@ textarea.report { width: 100%; min-height: 150px; font: 12px/1.5 var(--font-data
       </div>
     </section>
     <section>
-      <h2>해양정보수집 지원 체계</h2>
+      <h2>위성 기반 해양정보수집 지원체계</h2>
       <div class="rqform" id="rqForm">
         <label class="w2">관측 해역<select id="rqArea"></select></label>
         <label>위도 (°N)<input id="rqLat" type="number" step="0.01" min="31.5" max="42.2" value="37.70"></label>
@@ -1469,6 +1471,7 @@ const LINKS = {
   hf: { nm: 'HF 무선', sub: '위성 우회', rate: 0.0096, lat: 1200 }
 };
 let comm = {}, commAt = -1;
+let commAll = false;   // 위성통신현황 전체 보기
 function nearestLeo(q, name, pos) {
   let best = null, bd = 1e9;
   COMMS.forEach((c, i) => { if (c.name !== name) return; const d = dist(q, pos[i]); if (d < c.cov && d < bd) { bd = d; best = c; } });
@@ -3056,13 +3059,19 @@ function renderPanel() {
   }
   // 우군 함정 위성통신
   {
-    const rows = targets.filter(t => comm[t.id]).map(t => [t, comm[t.id]]);
+    // 이상(두절 → 저하·우회) 함정을 위로, 이상 함정끼리는 손실이 큰 순(정상은 원래 순서 유지). 평소 10척(이상 함정이 더 많으면 모두)만, 나머지는 '전체 보기'로
+    const SEV = { 두절: 0, 저하: 1, 우회: 2, 정상: 3 };
+    const rows = targets.filter(t => comm[t.id]).map(t => [t, comm[t.id]]).sort((a, b) => SEV[a[1].status] - SEV[b[1].status] || (a[1].status !== '정상' ? b[1].loss - a[1].loss : 0));
+    const bad = rows.filter(([, c]) => c.status !== '정상').length, lim = commAll ? rows.length : Math.max(10, bad);
     const n = st => rows.filter(([, c]) => c.status === st).length, avg = rows.reduce((a2, [, c]) => a2 + c.rate, 0) / (rows.length || 1);
     const chipCls = { 정상: 'done', 저하: 'warn', 우회: 'warn', 두절: 'open' };
     setHTML($('commInfo'), 'comm', `<div class="csum"><span>정상 <b>${n('정상')}</b></span><span>저하 <b>${n('저하')}</b></span><span>우회 <b>${n('우회')}</b></span><span>두절 <b>${n('두절')}</b></span><span>평균 전송 <b>${fmtRate(avg)}</b></span></div>
       <table class="ctab"><thead><tr><th>함정</th><th>링크</th><th class="n">전송</th><th class="n">지연</th><th class="n">손실</th><th>상태</th></tr></thead><tbody>`
-      + rows.map(([t, c]) => `<tr><td>${t.id}</td><td>${LINKS[c.key].nm}</td><td class="n">${fmtRate(c.rate)}</td><td class="n">${Math.round(c.lat)}ms</td><td class="n">${c.loss.toFixed(1)}%</td><td><span class="chip ${chipCls[c.status]}">${c.status}</span></td></tr>`).join('')
+      + rows.slice(0, lim).map(([t, c]) => `<tr${c.status !== '정상' ? ' class="cbad"' : ''}><td>${t.id}</td><td>${LINKS[c.key].nm}</td><td class="n">${fmtRate(c.rate)}</td><td class="n">${Math.round(c.lat)}ms</td><td class="n">${c.loss.toFixed(1)}%</td><td><span class="chip ${chipCls[c.status]}">${c.status}</span></td></tr>`).join('')
       + '</tbody></table>');
+    // 단추는 표 밖에 두어 표가 매번 다시 그려져도 누르는 동안 바뀌지 않게 한다
+    const mb = $('commMore'), mt = commAll ? '접기 ▴' : `전체 ${rows.length}척 보기 ▾ (${rows.length - lim}척 더)`;
+    mb.hidden = rows.length <= Math.max(10, bad); if (mb.textContent !== mt) mb.textContent = mt;
   }
   // 위성 운용현황
   {
@@ -4017,6 +4026,7 @@ function renderSlocInfo() {
   cdseRender(cdseS);
 }
 const SNM = () => ({ all: '인도양 SLOC (전체)', hormuz: '호르무즈 해협', aden: '아덴만·홍해', malacca: '말라카 해협', scs: '남중국해·대만', ecs: '동중국해·센카쿠' })[slocPre];
+$('commMore').onclick = () => { commAll = !commAll; renderPanel(); };
 onVB = () => drawCdseOv(cdseK);
 for (const c of [cdseA, cdseS, cdseK]) {
   const box = $(c.out);
