@@ -147,10 +147,10 @@ button { font: inherit; color: inherit; }
 #srcpanel .bh h2 { font-family: var(--font-head); font-weight: 400; font-size: 14.8px; letter-spacing: .01em; }
 #srcpanel .clsum h3, #srcpanel .box h3 { font-family: var(--font-head); font-weight: 400; font-size: 14.3px; color: var(--fg); letter-spacing: .01em; }
 #srcpanel .prio h4, #srcpanel .tfbox h4 { font-family: var(--font-head); font-weight: 400; font-size: 13.6px; letter-spacing: .01em; }
-#srcpanel .tfbox h4 small, #srcpanel .clsum h3 small { font-family: var(--font-ui); letter-spacing: 0; }
+#srcpanel .tfbox h4 small, #srcpanel .clsum h3 small { font-family: var(--font-legend); letter-spacing: 0; }
 /* 북극항로·원해 SLOC도 같은 방식: 정보칸 제목·소제목, 오른쪽 통합체계 제목·분야 제목 */
 #arcpanel > h2, #slocpanel > h2 { font-family: var(--font-head); font-weight: 400; font-size: 14.8px; letter-spacing: .01em; }
-#slocpanel > h2 .pfold { font-family: var(--font-ui); font-weight: 600; letter-spacing: 0; }
+#slocpanel > h2 .pfold { font-family: var(--font-legend); font-weight: 600; letter-spacing: 0; }
 #arcpanel .ahd h3, #slocpanel .ahd h3 { font-family: var(--font-head); font-weight: 400; font-size: 14.3px; color: var(--fg); letter-spacing: .01em; }
 #arcpanel .ahd b.rnm { font-family: var(--font-head); font-weight: 400; font-size: 13.3px; letter-spacing: .01em; }   /* 항로 상세정보의 항로 이름 */
 /* 지도 위 라벨(한반도 해역·북극항로·원해 SLOC): 모두 헤드라인체. 도현체는 굵기가 하나뿐이라 굵게 지정된 라벨도 보통 굵기로 둔다 */
@@ -433,6 +433,10 @@ textarea.report { width: 100%; min-height: 150px; font: 12px/1.5 var(--font-data
 .legend { display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: 12px; }
 /* 범례 글씨: 그래픽체 (지도 범례 칸, 아래쪽 기호 범례, 북극·원해 정보칸의 범례) */
 .legend, .bounds, #arcpanel .ahd .kgrid, #slocpanel .ahd .kgrid { font-family: var(--font-legend); }
+/* 정보칸(한반도 해역·북극항로·원해 SLOC) 본문 글씨: 그래픽체 (제목은 헤드라인체, 숫자 자료는 고정폭 유지) */
+#srcpanel, #arcpanel, #slocpanel { font-family: var(--font-legend); }
+#srcpanel .ktab td:first-child, #arcpanel .rtab b.atx { font-family: var(--font-legend); }
+#srcpanel button, #arcpanel button, #slocpanel button { font-family: var(--font-legend); }
 /* 상황도 위 보기 전환(한반도 해역·북극항로·원해 SLOC)과 해역·항로 단추도 그래픽체 */
 .viewsw .btn, #kpre .btn, #apre .btn, #spre .btn { font-family: var(--font-legend); }
 .legend span { display: inline-flex; gap: 5px; align-items: center; }
