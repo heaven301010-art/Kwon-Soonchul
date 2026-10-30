@@ -471,7 +471,9 @@ textarea.report { width: 100%; min-height: 150px; font: 12px/1.5 var(--font-data
 .mca { stroke: var(--mca); fill: color-mix(in srgb, var(--mca) 4%, transparent); stroke-width: 2; vector-effect: non-scaling-stroke; }
 .btx { font-weight: 700; font-family: var(--font-data); paint-order: stroke; stroke: var(--halo); stroke-width: 3px; stroke-linejoin: round; }
 .btx.nll { fill: var(--nll); } .btx.kadiz { fill: var(--kadiz); } .btx.cadiz { fill: #c2410c; }
-.cadiz { stroke: #c2410c; fill: none; stroke-width: 1.6; vector-effect: non-scaling-stroke; } .btx.eez { fill: var(--eez); } .btx.mca { fill: var(--mca); }
+.cadiz { stroke: #c2410c; fill: none; stroke-width: 1.6; vector-effect: non-scaling-stroke; }
+/* CADIZ 라벨: 헤드라인체+굵은 테두리로 뭉쳐 보여 보통 굵기 그래픽체·얇은 테두리로 */
+#map text.btx.cadiz { font-family: var(--font-legend) !important; font-weight: 400 !important; stroke-width: 1px; letter-spacing: .02em; } .btx.eez { fill: var(--eez); } .btx.mca { fill: var(--mca); }
 .rg { stroke-width: 1; vector-effect: non-scaling-stroke; }
 .rg.ground { stroke: color-mix(in srgb, var(--l-ground) 60%, transparent); fill: color-mix(in srgb, var(--l-ground) 5%, transparent); }
 .rg.ground.wide { fill: none; }
@@ -2326,7 +2328,7 @@ function drawDyn() {
   }
   if (showB.cadiz && SC.cadiz) {   // 중국 방공식별구역 (KADIZ와 색·선 모양을 달리)
     h += `<path class="cadiz" d="${pathD(SC.cadiz)}"${dash(z, 10, 3, 2, 3, 2, 3)}/>`;
-    h += txt('btx cadiz', X(122.0), Y(33.183) - 6 * z, 11 * z, 'CADIZ (중국)');
+    h += txt('btx cadiz', X(122.0), Y(33.183) - 6 * z, 10 * z, 'CADIZ (중국)');
   }
   if (showB.eez) {
     h += `<path class="eez" d="${pathD(SC.eez.delimited)}"/>`;
