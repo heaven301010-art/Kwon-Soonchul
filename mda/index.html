@@ -691,8 +691,8 @@ textarea.report { width: 100%; min-height: 150px; font: 12px/1.5 var(--font-data
       <h2>북극항로 표적관리현황</h2>
       <div id="arcInfo"></div>
     </aside>
-    <aside class="srcpanel arcpanel" id="slocpanel" hidden aria-label="원해 해상교통로 관심해역현황">
-      <h2 class="fh"><span>원해 해상교통로(SLOC) 관심해역현황</span><button class="pfold" id="slocFold" type="button" aria-expanded="true" aria-controls="slocInfo">접기 ▴</button></h2>
+    <aside class="srcpanel arcpanel" id="slocpanel" hidden aria-label="원해 해상교통로(SLOC) 현황">
+      <h2 class="fh"><span>원해 해상교통로(SLOC) 현황</span><button class="pfold" id="slocFold" type="button" aria-expanded="true" aria-controls="slocInfo">접기 ▴</button></h2>
       <div id="slocInfo"></div>
     </aside>
     <aside class="srcpanel" id="srcpanel" aria-label="해양영역인식 종합 정보현황">
@@ -4080,7 +4080,7 @@ $('spre').addEventListener('click', e => {
 // 전체 보기는 동서로 넓어 정보칸을 접고 지도를 화면 폭 전체에 맞춘다. 해역별 보기는 정보칸을 편다
 function setSlocFold(f) {
   $('slocpanel').classList.toggle('fold', f);
-  $('slocFold').setAttribute('aria-expanded', String(!f)); $('slocFold').textContent = f ? 'SLOC 관심해역현황 펼치기 ▾' : '접기 ▴';
+  $('slocFold').setAttribute('aria-expanded', String(!f)); $('slocFold').textContent = f ? 'SLOC 현황 펼치기 ▾' : '접기 ▴';
   if (slocView) { drawSlocStatic(); drawSloc(); }
 }
 $('slocFold').onclick = () => setSlocFold(!$('slocpanel').classList.contains('fold'));
