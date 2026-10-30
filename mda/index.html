@@ -145,6 +145,12 @@ button { font: inherit; color: inherit; }
 #srcpanel .bh h2 { font-family: var(--font-head); font-weight: 400; font-size: 14.8px; letter-spacing: .01em; }
 #srcpanel .clsum h3, #srcpanel .box h3 { font-family: var(--font-head); font-weight: 400; font-size: 12.3px; color: var(--fg); letter-spacing: .01em; }
 #srcpanel .prio h4, #srcpanel .tfbox h4 { font-family: var(--font-head); font-weight: 400; font-size: 12.3px; letter-spacing: .01em; }
+/* 북극항로·원해 SLOC도 같은 방식: 정보칸 제목·소제목, 오른쪽 통합체계 제목·분야 제목 */
+#arcpanel > h2, #slocpanel > h2 { font-family: var(--font-head); font-weight: 400; font-size: 14.8px; letter-spacing: .01em; }
+#slocpanel > h2 .pfold { font-family: var(--font-ui); font-weight: 600; letter-spacing: 0; }
+#arcpanel .ahd h3, #slocpanel .ahd h3 { font-family: var(--font-head); font-weight: 400; font-size: 12.3px; color: var(--fg); letter-spacing: .01em; }
+#polarSec > h2, #slocSec > h2 { font-family: var(--font-head); font-weight: 400; font-size: 15.3px; letter-spacing: .01em; }
+#polarSec .pdom h4, #slocSec .pdom h4 { font-family: var(--font-head); font-weight: 400; font-size: 12.8px; letter-spacing: .01em; }
 .srcpanel > h2.fh { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .pfold { flex: none; font: inherit; font-size: 11.5px; font-weight: 600; color: var(--fg); background: var(--bg); border: 1px solid var(--line); border-radius: 4px; padding: 2px 7px; cursor: pointer; }
 .srcpanel.fold { width: auto; overflow: hidden; } .srcpanel.fold > :not(h2) { display: none; } .srcpanel.fold > h2 { border-bottom: 0; } .srcpanel.fold > h2 > span { display: none; }
@@ -322,6 +328,10 @@ button { font: inherit; color: inherit; }
 .al { border: 1px solid var(--line); border-left: 4px solid var(--k); background: var(--panel-2); border-radius: 4px; padding: 7px 9px; display: grid; gap: 3px; }
 .al.crit { --k: var(--ho); } .al.warn { --k: var(--su); } .al.done { --k: var(--faint); }
 .al .t { font-weight: 700; display: flex; justify-content: space-between; gap: 8px; }
+/* 적성·북한 관련 경보: 붉은 바탕으로 눈에 띄게, 맨 위에 둔다 */
+.al.hot { background: color-mix(in srgb, var(--ho) 8%, var(--panel-2)); border-color: color-mix(in srgb, var(--ho) 45%, var(--line)); }
+.al .t .hb { flex: none; font-style: normal; font-size: 10.5px; font-weight: 700; color: #fff; background: var(--ho); border-radius: 3px; padding: 1px 5px; margin-right: -2px; align-self: center; }
+.alsum { font-size: 12px; color: var(--muted); margin: 0 0 6px; } .alsum b { color: var(--fg); } .alsum .hot, .alsum .hot b { color: var(--ho); font-weight: 700; }
 .al .t span { font-family: var(--font-data); font-weight: 500; }
 .al .r { color: var(--muted); font-size: 12.5px; }
 .al .a { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
@@ -533,7 +543,7 @@ textarea.report { width: 100%; min-height: 150px; font: 12px/1.5 var(--font-data
   /* 좁은 화면에서도 큰 상자는 해도 오른쪽에 두고, 출처별로 이름과 탐지 수만 보이다가 누르면 펼친다 */
   .mapwrap { height: auto; aspect-ratio: 3 / 4; max-width: 100%; }
   .srcpanel { width: calc(54% - 8px); }
-  .srcpanel > h2 { font-size: 12px; padding: 5px 8px; } #srcpanel > h2 { font-size: 13.3px; }
+  .srcpanel > h2 { font-size: 12px; padding: 5px 8px; } #srcpanel > h2, #arcpanel > h2, #slocpanel > h2 { font-size: 13.3px; }
   .box { padding: 4px 7px 5px; cursor: pointer; }
   .box .bh { margin-bottom: 2px; gap: 4px; }
   .box .bh h2 { font-size: 12px; } #srcpanel .bh h2 { font-size: 13.3px; }
@@ -608,7 +618,7 @@ textarea.report { width: 100%; min-height: 150px; font: 12px/1.5 var(--font-data
       <g id="sStatic"></g><g id="sDyn"></g>
     </svg>
     <div class="spre seg" id="apre" hidden role="group" aria-label="북극항로 보기">
-      <button class="btn" type="button" data-ap="all" aria-pressed="true">전체</button><button class="btn" type="button" data-ap="NSR" aria-pressed="false">북동항로</button><button class="btn" type="button" data-ap="NWP" aria-pressed="false">북서항로</button><button class="btn" type="button" data-ap="TSR" aria-pressed="false">북극횡단항로</button>
+      <button class="btn" type="button" data-ap="all" aria-pressed="true">전체</button><button class="btn" type="button" data-ap="NSR" aria-pressed="false">북극항로(NSR)</button><button class="btn" type="button" data-ap="NWP" aria-pressed="false">북서항로</button><button class="btn" type="button" data-ap="TSR" aria-pressed="false">북극횡단항로</button>
     </div>
     <svg id="arc" viewBox="0 0 1000 1000" preserveAspectRatio="xMinYMid meet" hidden role="img" aria-label="북극 해역 상황도 (북극점 중심 투영)">
       <defs><clipPath id="aclip"><circle cx="500" cy="500" r="482"></circle></clipPath></defs>
@@ -2576,7 +2586,7 @@ function drawArc() {
   }
   $('aDyn').innerHTML = h;
 }
-const ARN = { NSR: '북동항로', NWP: '북서항로', TSR: '북극횡단항로' };
+const ARN = { NSR: '북극항로(NSR)', NWP: '북서항로', TSR: '북극횡단항로' };
 const onRoute = (sh, k) => sh.route === k || (k === 'NSR' && sh.route === 'LNG');
 function arcRouteH() {
   const len = k => { const p = AR.routes[k].pts; let d = 0; for (let i = 1; i < p.length; i++) d += gdist(p[i - 1], p[i]); return d; };
@@ -2924,8 +2934,14 @@ function renderPanel() {
   }
 
   const stName = { open: '결심 대기', act: '조치 중', done: '평가 완료' };
-  setHTML($('alerts'), 'alerts', alerts.length ? alerts.map(a => `<div class="al ${a.status === 'done' ? 'done' : a.sev}">
-    <div class="t">${esc(a.title)}<span>${esc(a.tgt)}</span></div>
+  // 정렬: 결심 대기 → 조치 중 → 평가 완료, 같은 단계에서는 적성·북한 관련을 먼저 (그 안에서는 최신 순)
+  const hostAl = a => a.id === 'nll' || a.id.startsWith('nkn:') || a.id === 'sub' || a.id === 'gnss' || a.id === 'jam'
+    || String(a.tgt).split('·').some(id => { const t = byId.get(id), tr = tracks.get(id); return (tr && tr.affil === 'H') || (t && (t.cls === 'nkn' || t.nk)); });
+  const rank = a => ({ open: 0, act: 2, done: 4 })[a.status] + (a.status !== 'done' && hostAl(a) ? 0 : 1);
+  const alist = alerts.slice().sort((x, y) => rank(x) - rank(y) || y.t - x.t);
+  const nOpen = alerts.filter(a => a.status === 'open').length, nHot = alerts.filter(a => a.status === 'open' && hostAl(a)).length;
+  setHTML($('alerts'), 'alerts', alerts.length ? (nOpen ? `<div class="alsum">결심 대기 <b>${nOpen}</b>건${nHot ? ` · <span class="hot">적성·북한 <b>${nHot}</b>건 우선 처리</span>` : ''}</div>` : '') + alist.map(a => `<div class="al ${a.status === 'done' ? 'done' : a.sev}${a.status !== 'done' && hostAl(a) ? ' hot' : ''}">
+    <div class="t">${a.status !== 'done' && hostAl(a) ? '<em class="hb">적성·북한</em>' : ''}${esc(a.title)}<span>${esc(a.tgt)}</span></div>
     <div class="r">${a.status === 'done' ? '평가: ' + esc(a.result) : '→ ' + esc(a.rec)}</div>${a.resp ? `<div class="r rsp">현장 대응: ${esc(respLine(a.resp))}</div>` : ''}
     <div class="a"><span class="chip ${a.status}">${stName[a.status]}</span><span class="chip">${esc(a.cat)}</span><span class="chip ${a.share === '국내 한정' ? 'cls' : 'shr'}">${a.share}</span><span class="chip">→ ${a.to.length ? a.to.join('·') : '군 내부'}</span>${a.status === 'open' ? `<button class="btn go" type="button" data-approve="${a.id}">조치 승인</button>` : ''}${a.status !== 'done' && a.sat ? a.sat.map(([lb], i) => a.satReq?.[i] ? `<span class="chip act">${lb.replace(' 요청', '')} 요청됨</span>` : `<button class="btn sat" type="button" data-alsat="${a.id}:${i}">${/^U[AS]V/.test(lb) ? '✈ ' : '🛰 '}${lb}</button>`).join('') : ''}<span class="empty">${clock(a.t).hm}</span></div></div>`).join('')
     : '<p class="empty">현재 이상징후가 없습니다. 시나리오가 진행되면 AIS 신호 소실, EEZ 침범, NLL 침범, 수중 접촉, KADIZ 진입이 차례로 나타납니다.</p>');
@@ -3697,7 +3713,7 @@ function renderSlocPanel() {
 // 코페르니쿠스 CDSE 카탈로그(OData, 공개 검색 API)에서 최신 Sentinel 영상 목록을 받아온다. 접속이 막히면 모의 목록으로 대체한다.
 const CDSE_API = 'https://catalogue.dataspace.copernicus.eu/odata/v1/Products';
 const CDSE_AREA = { all: [30, 66, 180, 82], NSR: [30, 66, 180, 82], NWP: [-170, 66, -60, 80], TSR: [-15, 77, 25, 84] };
-const CDSE_NM = { all: '북극 (북동항로 해역)', NSR: '북동항로 해역', NWP: '북서항로 해역', TSR: '북극횡단항로 (프람 해협)' };
+const CDSE_NM = { all: '북극 (북극항로(NSR) 해역)', NSR: '북극항로(NSR) 해역', NWP: '북서항로 해역', TSR: '북극횡단항로 (프람 해협)' };
 // 화면별 조회 상태: 북극항로(cdseA)와 원해 SLOC(cdseS)
 const cdseA = { st: 'idle', items: [], at: null, err: '', mis: 'SENTINEL-1', box: CDSE_AREA.all, nm: CDSE_NM.all, sel: 'cdseMis', out: 'cdseOut', key: 'cdseOut' };
 const cdseS = { st: 'idle', items: [], at: null, err: '', mis: 'SENTINEL-1', box: null, nm: '', sel: 'scdseMis', out: 'scdseOut', key: 'scdseOut' };
