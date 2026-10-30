@@ -331,6 +331,8 @@ button { font: inherit; color: inherit; }
 /* 적성·북한 관련 경보: 붉은 바탕으로 눈에 띄게, 맨 위에 둔다 */
 .al.hot { background: color-mix(in srgb, var(--ho) 8%, var(--panel-2)); border-color: color-mix(in srgb, var(--ho) 45%, var(--line)); }
 .al .t .hb { flex: none; font-style: normal; font-size: 10.5px; font-weight: 700; color: #fff; background: var(--ho); border-radius: 3px; padding: 1px 5px; margin-right: -2px; align-self: center; }
+.aldiv { font-size: 11px; font-weight: 700; color: var(--muted); border-top: 1px dashed var(--line); padding-top: 5px; margin-top: 3px; } .aldiv:empty { display: none; }
+.al .t .hb.dim { background: var(--muted); }
 .alsum { font-size: 12px; color: var(--muted); margin: 0 0 6px; } .alsum b { color: var(--fg); } .alsum .hot, .alsum .hot b { color: var(--ho); font-weight: 700; }
 .al .t span { font-family: var(--font-data); font-weight: 500; }
 .al .r { color: var(--muted); font-size: 12.5px; }
@@ -2934,14 +2936,22 @@ function renderPanel() {
   }
 
   const stName = { open: '결심 대기', act: '조치 중', done: '평가 완료' };
-  // 정렬: 결심 대기 → 조치 중 → 평가 완료, 같은 단계에서는 적성·북한 관련을 먼저 (그 안에서는 최신 순)
+  // 보기별 정렬: 지금 보는 해역(한반도·북극·원해)의 경보를 먼저, 그 안에서 결심 대기 → 조치 중, 같은 단계에서는 해역별 우선 경보를 먼저
+  //  · 한반도: 적성·북한 관련  · 북극: 러시아 군사활동·심각 경보  · 원해: 우리 선박 직접 위협(나포·공격·해적, 심각 경보)  · 평가 완료는 맨 아래
   const hostAl = a => a.id === 'nll' || a.id.startsWith('nkn:') || a.id === 'sub' || a.id === 'gnss' || a.id === 'jam'
     || String(a.tgt).split('·').some(id => { const t = byId.get(id), tr = tracks.get(id); return (tr && tr.affil === 'H') || (t && (t.cls === 'nkn' || t.nk)); });
-  const rank = a => ({ open: 0, act: 2, done: 4 })[a.status] + (a.status !== 'done' && hostAl(a) ? 0 : 1);
-  const alist = alerts.slice().sort((x, y) => rank(x) - rank(y) || y.t - x.t);
-  const nOpen = alerts.filter(a => a.status === 'open').length, nHot = alerts.filter(a => a.status === 'open' && hostAl(a)).length;
-  setHTML($('alerts'), 'alerts', alerts.length ? (nOpen ? `<div class="alsum">결심 대기 <b>${nOpen}</b>건${nHot ? ` · <span class="hot">적성·북한 <b>${nHot}</b>건 우선 처리</span>` : ''}</div>` : '') + alist.map(a => `<div class="al ${a.status === 'done' ? 'done' : a.sev}${a.status !== 'done' && hostAl(a) ? ' hot' : ''}">
-    <div class="t">${a.status !== 'done' && hostAl(a) ? '<em class="hb">적성·북한</em>' : ''}${esc(a.title)}<span>${esc(a.tgt)}</span></div>
+  const regOf = a => a.title.startsWith('[북극]') ? 'arc' : a.title.startsWith('[원해]') ? 'sloc' : 'kr';
+  const REG = { kr: ['한반도', '적성·북한'], arc: ['북극', '북극 우선'], sloc: ['원해', '우리 선박 위협'] };
+  const priAl = a => ({ kr: hostAl, arc: x => x.id === 'arcmil' || x.sev === 'crit', sloc: x => x.sev === 'crit' })[regOf(a)](a);
+  const cur = arcView ? 'arc' : slocView ? 'sloc' : 'kr';
+  const key = a => [a.status === 'done' ? 1 : 0, regOf(a) === cur ? 0 : 1, a.status === 'open' ? 0 : 1, priAl(a) ? 0 : 1, -a.t];
+  const alist = alerts.slice().sort((x, y) => { const p = key(x), q = key(y); for (let i = 0; i < p.length; i++) if (p[i] !== q[i]) return p[i] - q[i]; return 0; });
+  const here = alerts.filter(a => a.status === 'open' && regOf(a) === cur), nHot = here.filter(priAl).length, nElse = alerts.filter(a => a.status === 'open' && regOf(a) !== cur).length;
+  // 구분선: 다른 해역 경보, 평가 완료 경보 앞에 넣는다
+  const divAt = a => { const g = a.status === 'done' ? 'done' : regOf(a) === cur ? 'here' : 'else'; if (g === divAt.g) return ''; const first = divAt.g == null; divAt.g = g; return first && g === 'here' ? '' : `<div class="aldiv">${g === 'else' ? '다른 해역 경보' : g === 'done' ? '평가 완료' : ''}</div>`; };
+  divAt.g = null;
+  setHTML($('alerts'), 'alerts', alerts.length ? `<div class="alsum">${REG[cur][0]} 결심 대기 <b>${here.length}</b>건${nHot ? ` · <span class="hot">${REG[cur][1]} <b>${nHot}</b>건 우선 처리</span>` : ''}${nElse ? ` · 다른 해역 결심 대기 <b>${nElse}</b>건` : ''}</div>` + alist.map(a => divAt(a) + `<div class="al ${a.status === 'done' ? 'done' : a.sev}${a.status !== 'done' && priAl(a) && regOf(a) === cur ? ' hot' : ''}">
+    <div class="t">${a.status !== 'done' && priAl(a) ? `<em class="hb${regOf(a) === cur ? '' : ' dim'}">${REG[regOf(a)][1]}</em>` : ''}${esc(a.title)}<span>${esc(a.tgt)}</span></div>
     <div class="r">${a.status === 'done' ? '평가: ' + esc(a.result) : '→ ' + esc(a.rec)}</div>${a.resp ? `<div class="r rsp">현장 대응: ${esc(respLine(a.resp))}</div>` : ''}
     <div class="a"><span class="chip ${a.status}">${stName[a.status]}</span><span class="chip">${esc(a.cat)}</span><span class="chip ${a.share === '국내 한정' ? 'cls' : 'shr'}">${a.share}</span><span class="chip">→ ${a.to.length ? a.to.join('·') : '군 내부'}</span>${a.status === 'open' ? `<button class="btn go" type="button" data-approve="${a.id}">조치 승인</button>` : ''}${a.status !== 'done' && a.sat ? a.sat.map(([lb], i) => a.satReq?.[i] ? `<span class="chip act">${lb.replace(' 요청', '')} 요청됨</span>` : `<button class="btn sat" type="button" data-alsat="${a.id}:${i}">${/^U[AS]V/.test(lb) ? '✈ ' : '🛰 '}${lb}</button>`).join('') : ''}<span class="empty">${clock(a.t).hm}</span></div></div>`).join('')
     : '<p class="empty">현재 이상징후가 없습니다. 시나리오가 진행되면 AIS 신호 소실, EEZ 침범, NLL 침범, 수중 접촉, KADIZ 진입이 차례로 나타납니다.</p>');
@@ -3828,7 +3838,7 @@ function setView(v) {
   document.querySelectorAll('[data-view]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.view === v)));
   if (arcView) { drawArcStatic(); drawArc(); renderArcPanel(); renderPolar(); if (cdseA.st === 'idle') cdseQuery(cdseA, CDSE_AREA[arcPre], CDSE_NM[arcPre], renderPolar); } else if (slocView) { drawSlocStatic(); drawSloc(); renderSlocPanel(); renderSlocInfo(); if (cdseS.st === 'idle') cdseQuery(cdseS, SBOX[slocPre], SNM(), renderSlocInfo); } else { regionView(krPre); }
 }
-document.querySelectorAll('[data-view]').forEach(b => b.onclick = () => setView(b.dataset.view));
+document.querySelectorAll('[data-view]').forEach(b => b.onclick = () => { setView(b.dataset.view); renderPanel(); });
 document.querySelectorAll('[data-af]').forEach(c => c.onchange = () => { afOn[c.dataset.af] = c.checked; drawArcStatic(); });
 $('arc').addEventListener('click', e => {
   if ($('arc')._dragged) return;   // 끌어서 옮긴 직후의 클릭은 선택으로 보지 않는다
