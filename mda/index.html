@@ -151,6 +151,8 @@ button { font: inherit; color: inherit; }
 #slocpanel > h2 .pfold { font-family: var(--font-ui); font-weight: 600; letter-spacing: 0; }
 #arcpanel .ahd h3, #slocpanel .ahd h3 { font-family: var(--font-head); font-weight: 400; font-size: 14.3px; color: var(--fg); letter-spacing: .01em; }
 #arcpanel .ahd b.rnm { font-family: var(--font-head); font-weight: 400; font-size: 13.3px; letter-spacing: .01em; }   /* 항로 상세정보의 항로 이름 */
+/* 지도 위 라벨(한반도 해역·북극항로·원해 SLOC): 모두 헤드라인체. 도현체는 굵기가 하나뿐이라 굵게 지정된 라벨도 보통 굵기로 둔다 */
+#map text, #arc text, #sloc text { font-family: var(--font-head) !important; font-weight: 400 !important; letter-spacing: .01em; }
 /* 오른쪽 열(통합체계·처리현황·지휘결심 등) 칸 제목 15.3px, 소제목 14.3px — 모두 헤드라인체 */
 .mda section > h2 { font-family: var(--font-head); font-weight: 400; font-size: 15.3px; letter-spacing: .01em; }
 .mda section h3, #polarSec .pdom h4, #slocSec .pdom h4 { font-family: var(--font-head); font-weight: 400; font-size: 14.3px; letter-spacing: .01em; }
