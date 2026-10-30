@@ -238,6 +238,10 @@ button { font: inherit; color: inherit; }
 .mapview { position: absolute; inset: 0; }
 #map { width: 100%; height: 100%; display: block; touch-action: none; cursor: grab; user-select: none; }
 #map.drag, #arc.drag, #sloc.drag { cursor: grabbing; }
+/* 전체화면: 브라우저 전체화면, 막혀 있으면(예: 임베드) 창 안을 꽉 채우는 대체 방식 */
+.mapwrap:fullscreen { width: 100vw; height: 100vh; border: 0; }
+.mapwrap.fs { position: fixed !important; inset: 0; z-index: 1000; width: auto !important; height: auto !important; max-width: none; aspect-ratio: auto; border: 0; }
+#bFull[aria-pressed="true"] { background: var(--fg); color: var(--bg); }
 .zoom { position: absolute; top: 8px; left: 8px; z-index: 3; display: flex; flex-direction: column; gap: 4px; }
 .zoom .btn { width: 30px; height: 30px; padding: 0; font-size: 15px; }
 .bounds { position: absolute; left: 8px; bottom: 8px; z-index: 3; justify-content: flex-start; display: flex; gap: 4px 12px; flex-wrap: wrap; align-items: center; background: color-mix(in srgb, var(--panel) 88%, transparent); border: 1px solid var(--line); border-radius: 5px; padding: 4px 9px; font-size: 12px; max-width: calc(100% - 300px); }
@@ -580,6 +584,7 @@ textarea.report { width: 100%; min-height: 150px; font: 12px/1.5 var(--font-data
       <button class="btn" id="bZin" type="button" aria-label="확대">+</button>
       <button class="btn" id="bZout" type="button" aria-label="축소">−</button>
       <button class="btn" id="bZfit" type="button" aria-label="전체 보기">⤢</button>
+      <button class="btn" id="bFull" type="button" aria-label="전체화면" aria-pressed="false" title="전체화면 (Esc로 나가기)">⛶</button>
     </div>
     <div class="viewsw seg" role="group" aria-label="해도 전환">
       <button class="btn" type="button" data-view="kr" aria-pressed="true">한반도 해역</button>
@@ -3982,6 +3987,22 @@ function popShip(key, d) {
 const center = () => [vb.x + vb.w / 2, vb.y + vb.h / 2];
 $('bZin').onclick = () => arcView ? mapZoom('arc', 1 / 0.7) : slocView ? mapZoom('sloc', 1 / 0.7) : zoomAt(0.7, ...center());
 $('bZout').onclick = () => arcView ? mapZoom('arc', 0.7) : slocView ? mapZoom('sloc', 0.7) : zoomAt(1 / 0.7, ...center());
+// 브라우저 전체화면 (지도 칸만): 지원하지 않거나 막혀 있으면 창 안을 꽉 채운다
+const fsEl = () => document.fullscreenElement || document.webkitFullscreenElement;
+const fsOn = () => !!fsEl() || $('mapwrap').classList.contains('fs');
+function fsSync() { $('bFull').setAttribute('aria-pressed', String(fsOn())); $('bFull').textContent = fsOn() ? '✕' : '⛶'; $('bFull').setAttribute('aria-label', fsOn() ? '전체화면 나가기' : '전체화면'); }
+function toggleFull() {
+  const w = $('mapwrap');
+  if (fsEl()) { (document.exitFullscreen || document.webkitExitFullscreen).call(document); return; }
+  if (w.classList.contains('fs')) { w.classList.remove('fs'); fsSync(); return; }
+  const req = w.requestFullscreen || w.webkitRequestFullscreen;
+  const fallback = () => { w.classList.add('fs'); fsSync(); };
+  if (!req) { fallback(); return; }
+  try { const r = req.call(w); if (r && r.catch) r.catch(fallback); } catch { fallback(); }
+}
+$('bFull').onclick = toggleFull;
+document.addEventListener('fullscreenchange', fsSync); document.addEventListener('webkitfullscreenchange', fsSync);
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && !sel && !arcSel && !slocSel && $('mapwrap').classList.contains('fs')) { $('mapwrap').classList.remove('fs'); fsSync(); } });
 $('bZfit').onclick = () => arcView ? mapReset('arc') : slocView ? mapReset('sloc') : regionView('all');
 // 북극항로·원해 SLOC: 휠로 확대·축소(커서 지점 고정), 끌어서 이동
 for (const view of ['arc', 'sloc']) {
