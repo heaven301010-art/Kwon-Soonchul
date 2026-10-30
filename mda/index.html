@@ -3804,21 +3804,32 @@ function cdseSim(c) {
 }
 async function cdseQuery(c, box, nm, rerender) {
   c.mis = $(c.sel).value; c.box = box; c.nm = nm; c.st = 'loading'; rerender();
-  const [w, s0, e, n] = box, poly = `POLYGON((${w} ${s0},${e} ${s0},${e} ${n},${w} ${n},${w} ${s0}))`;
+  // 넓은 해역은 위아래 변을 10°마다 나눠 측지선이 극 쪽으로 휘지 않게 한다
+  const [w, s0, e, n] = box, k = Math.max(1, Math.ceil((e - w) / 10)), xs = Array.from({ length: k + 1 }, (_, i) => +(w + (e - w) * i / k).toFixed(3));
+  const poly = `POLYGON((${[...xs.map(x => `${x} ${s0}`), ...xs.slice().reverse().map(x => `${x} ${n}`), `${w} ${s0}`].join(',')}))`;
   const since = new Date(Date.now() - 3 * 864e5).toISOString();
   const f = `Collection/Name eq '${c.mis}' and OData.CSC.Intersects(area=geography'SRID=4326;${poly}') and ContentDate/Start gt ${since}`;
-  const url = `${CDSE_API}?$filter=${encodeURIComponent(f)}&$orderby=${encodeURIComponent('ContentDate/Start desc')}&$top=8&$expand=Attributes&$expand=Assets`;
+  const base = `${CDSE_API}?$filter=${encodeURIComponent(f)}&$orderby=${encodeURIComponent('ContentDate/Start desc')}&$top=8`;
+  // 서버가 확장 옵션을 거부(HTTP 4xx)하면 미리보기(Assets) → 속성(Attributes) → 기본 순으로 줄여서 다시 묻는다
+  const tries = [base + '&$expand=Attributes&$expand=Assets', base + '&$expand=Assets', base + '&$expand=Attributes', base];
   try {
-    const ctl = new AbortController(), tm = setTimeout(() => ctl.abort(), 12000);
-    const r = await fetch(url, { signal: ctl.signal }); clearTimeout(tm);
-    if (!r.ok) throw new Error('HTTP ' + r.status);
-    const j = await r.json();
+    let j = null, last = '';
+    for (const url of tries) {
+      const ctl = new AbortController(), tm = setTimeout(() => ctl.abort(), 20000);
+      try {
+        const r = await fetch(url, { signal: ctl.signal });
+        if (r.ok) { j = await r.json(); break; }
+        last = 'HTTP ' + r.status; if (r.status >= 500) break;
+      } finally { clearTimeout(tm); }
+    }
+    if (!j) throw new Error(last);
     c.items = (j.value || []).map(v => ({ name: v.Name, id: v.Id, t: (v.ContentDate && v.ContentDate.Start || '').replace('T', ' ').slice(0, 16) + ' UTC',
       cloud: ((v.Attributes || []).find(a => a.Name === 'cloudCover') || {}).Value,
       ql: ((v.Assets || []).find(a => /quicklook/i.test(a.Type || '')) || {}).DownloadLink || null }));   // 미리보기(퀵룩) 그림 주소
     c.st = 'live';
   } catch (err) {
-    c.st = 'sim'; c.err = err.name === 'AbortError' ? '응답 시간 초과' : (err.message || String(err)); c.items = cdseSim(c);
+    c.st = 'sim'; c.err = err.name === 'AbortError' ? '응답 시간 초과' : /^HTTP/.test(err.message) ? '서버 응답 ' + err.message : '접속 차단 · ' + (err.message || String(err));
+    c.items = cdseSim(c);
   }
   c.at = new Date(); rerender();
 }
@@ -3833,7 +3844,7 @@ function cdseRender(c) {
   const st = c.st === 'idle' ? '<p class="st">조회 단추를 누르면 CDSE 카탈로그에서 선택한 해역의 최근 3일 Sentinel 영상을 찾습니다.</p>'
     : c.st === 'loading' ? '<p class="st">CDSE 카탈로그 조회 중…</p>'
     : c.st === 'live' ? `<p class="st live">● 실시간 연동 · ${esc(c.nm)} · ${c.items.length}건 (${c.at.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })} 조회)</p>`
-    : `<p class="st sim">● 연동 실패 (${esc(c.err)}): 이 환경에서 외부 접속이 막혔습니다. 시뮬레이션 궤도 기반 모의 목록을 표시합니다 (${esc(c.nm)}).</p>`;
+    : `<p class="st sim">● 연동 실패 (${esc(c.err)}): 시뮬레이션 궤도 기반 모의 목록을 표시합니다 (${esc(c.nm)}).</p>`;
   setHTML($(c.out), c.key, st + (c.items.length ? `<ul>${c.items.map(it => `<li class="cql">${cqlThumb(it)}<div>${esc(it.name)}<small>${esc(it.t)}${it.cloud != null ? ` · 구름 ${Math.round(it.cloud)}%` : ''}${it.id ? ` · <a href="${CDSE_API}(${encodeURIComponent(it.id)})" target="_blank" rel="noopener">메타데이터</a>` : ''}</small></div></li>`).join('')}</ul>
     <p class="st"><a href="https://browser.dataspace.copernicus.eu/" target="_blank" rel="noopener">Copernicus Browser에서 영상 보기 ↗</a> <small class="empty">(영상 내려받기는 CDSE 무료 회원 로그인 필요)</small></p>` : c.st === 'live' ? '<p class="st">해당 기간·해역에 영상이 없습니다.</p>' : c.st === 'sim' ? '<p class="st">최근 24시간 모의 궤도에서 해당 해역을 지난 영상이 없습니다.</p>' : ''));
 }
