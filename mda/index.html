@@ -145,6 +145,12 @@ button { font: inherit; color: inherit; }
 #srcpanel .bh h2 { font-family: var(--font-head); font-weight: 400; font-size: 14.8px; letter-spacing: .01em; }
 #srcpanel .clsum h3, #srcpanel .box h3 { font-family: var(--font-head); font-weight: 400; font-size: 12.3px; color: var(--fg); letter-spacing: .01em; }
 #srcpanel .prio h4, #srcpanel .tfbox h4 { font-family: var(--font-head); font-weight: 400; font-size: 12.3px; letter-spacing: .01em; }
+/* 북극항로·원해 SLOC도 같은 방식: 정보칸 제목·소제목, 오른쪽 통합체계 제목·분야 제목 */
+#arcpanel > h2, #slocpanel > h2 { font-family: var(--font-head); font-weight: 400; font-size: 14.8px; letter-spacing: .01em; }
+#slocpanel > h2 .pfold { font-family: var(--font-ui); font-weight: 600; letter-spacing: 0; }
+#arcpanel .ahd h3, #slocpanel .ahd h3 { font-family: var(--font-head); font-weight: 400; font-size: 12.3px; color: var(--fg); letter-spacing: .01em; }
+#polarSec > h2, #slocSec > h2 { font-family: var(--font-head); font-weight: 400; font-size: 15.3px; letter-spacing: .01em; }
+#polarSec .pdom h4, #slocSec .pdom h4 { font-family: var(--font-head); font-weight: 400; font-size: 12.8px; letter-spacing: .01em; }
 .srcpanel > h2.fh { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .pfold { flex: none; font: inherit; font-size: 11.5px; font-weight: 600; color: var(--fg); background: var(--bg); border: 1px solid var(--line); border-radius: 4px; padding: 2px 7px; cursor: pointer; }
 .srcpanel.fold { width: auto; overflow: hidden; } .srcpanel.fold > :not(h2) { display: none; } .srcpanel.fold > h2 { border-bottom: 0; } .srcpanel.fold > h2 > span { display: none; }
@@ -537,7 +543,7 @@ textarea.report { width: 100%; min-height: 150px; font: 12px/1.5 var(--font-data
   /* 좁은 화면에서도 큰 상자는 해도 오른쪽에 두고, 출처별로 이름과 탐지 수만 보이다가 누르면 펼친다 */
   .mapwrap { height: auto; aspect-ratio: 3 / 4; max-width: 100%; }
   .srcpanel { width: calc(54% - 8px); }
-  .srcpanel > h2 { font-size: 12px; padding: 5px 8px; } #srcpanel > h2 { font-size: 13.3px; }
+  .srcpanel > h2 { font-size: 12px; padding: 5px 8px; } #srcpanel > h2, #arcpanel > h2, #slocpanel > h2 { font-size: 13.3px; }
   .box { padding: 4px 7px 5px; cursor: pointer; }
   .box .bh { margin-bottom: 2px; gap: 4px; }
   .box .bh h2 { font-size: 12px; } #srcpanel .bh h2 { font-size: 13.3px; }
