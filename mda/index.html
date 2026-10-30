@@ -215,7 +215,7 @@ button { font: inherit; color: inherit; }
 .atx { font-family: var(--font-ui); paint-order: stroke; stroke: var(--halo); stroke-width: 3px; stroke-linejoin: round; }
 .atx.sea { fill: var(--sea-label); font-weight: 700; } .atx.port { fill: var(--muted); } .atx.base { fill: var(--ho); } .atx.st { fill: #0b7285; font-style: italic; }
 .atx.rt { font-weight: 700; } .atx.rt.NSR { fill: #0b7285; } .atx.rt.NWP { fill: #5c7cfa; } .atx.rt.TSR { fill: #868e96; }
-.atx.cty { fill: var(--fg); opacity: .62; font-weight: 800; letter-spacing: .04em; }
+.atx.cty { fill: var(--fg); opacity: .4; font-weight: 800; letter-spacing: .04em; }
 .afac .afg { stroke: var(--halo); stroke-width: 1; vector-effect: non-scaling-stroke; } .afac.ally .afg { fill: var(--fr); } .afac.ru .afg { fill: var(--ho); }
 .afac .afd { fill: var(--halo); } .afac.ally .atx.fac { fill: var(--fr); } .afac.ru .atx.fac { fill: var(--ho); }
 .abounds .lg { width: 12px; height: 12px; }
@@ -449,6 +449,11 @@ textarea.report { width: 100%; min-height: 150px; font: 12px/1.5 var(--font-data
 .gl { stroke: var(--grid); stroke-width: 1; vector-effect: non-scaling-stroke; }
 .ax { fill: var(--muted); font-family: var(--font-data); }
 .city { fill: var(--muted); }
+/* 육상 국가명(연하게)과 군사기지 */
+.cty { fill: var(--fg); opacity: .26; letter-spacing: .3em; paint-order: stroke; stroke: var(--halo); stroke-width: 2px; }
+.mbase { stroke: var(--halo); stroke-width: 1; vector-effect: non-scaling-stroke; } .mbase.kr { fill: var(--fr); } .mbase.us { fill: var(--k-usn); } .mbase.nk { fill: var(--ho); } .mbase.cn { fill: var(--k-cnn); } .mbase.jp { fill: var(--k-jpn); }
+.lbl.mb.kr { fill: var(--fr); } .lbl.mb.us { fill: var(--k-usn); } .lbl.mb.nk { fill: var(--ho); } .lbl.mb.cn { fill: var(--k-cnn); } .lbl.mb.jp { fill: var(--k-jpn); }
+.atx.scty { fill: var(--fg); opacity: .26; letter-spacing: .3em; }
 .lbl { fill: var(--muted); paint-order: stroke; stroke: var(--halo); stroke-width: 3px; stroke-linejoin: round; }
 .sealbl { fill: var(--sea-label); font-weight: 700; letter-spacing: .12em; }
 .sealbl.big { fill: color-mix(in srgb, var(--sea-label) 70%, var(--fr)); font-weight: 800; letter-spacing: .3em; opacity: .5; pointer-events: none; paint-order: stroke; stroke: var(--halo); stroke-width: 4px; stroke-linejoin: round; }
@@ -649,14 +654,17 @@ textarea.report { width: 100%; min-height: 150px; font: 12px/1.5 var(--font-data
       <label id="bdMCAwrap"><input type="checkbox" id="bdMCA" checked><svg width="22" height="6"><line x1="0" y1="3" x2="22" y2="3" class="mca" stroke-dasharray="12 4"/></svg>MCA(KTO)</label>
       <label><input type="checkbox" id="bdNM12" checked><svg width="22" height="8"><rect x="0" y="1" width="22" height="6" class="nm12" stroke-width="0"/></svg>12NM (육군 내측·해군 외측)</label>
       <label><input type="checkbox" id="bdINFRA" checked><svg width="22" height="6"><line x1="0" y1="3" x2="22" y2="3" class="cable" stroke-dasharray="7 2 1 2"/></svg>해양 기반시설</label>
+      <label><input type="checkbox" id="bdLAND" checked><svg width="14" height="12" viewBox="-7 -6 14 12"><rect x="-4" y="-4" width="8" height="8" fill="var(--fr)"/></svg>국가·도시·군사기지</label>
       <span class="swlg"><b>위성 관측폭</b> <i class="swk" style="background:#7ccf7c"></i>SAR <i class="swk" style="background:#b99af0"></i>EO/IR <i class="swk" style="background:#7cc4ec"></i>다분광 <i class="swk" style="background:#f0a0c8"></i>초분광 <i class="swk" style="background:#f5b06a"></i>RF</span>
     </div>
     <div class="bounds" id="sbounds" hidden>
+      <label><input type="checkbox" id="bdSLAND" checked><svg width="14" height="12" viewBox="-7 -6 14 12"><rect x="-4" y="-4" width="8" height="8" fill="var(--k-usn)"/></svg>국가·도시·군사기지</label>
       <span class="swlg"><b>위성 관측폭</b> <i class="swk" style="background:#7ccf7c"></i>SAR <i class="swk" style="background:#b99af0"></i>EO/IR <i class="swk" style="background:#7cc4ec"></i>다분광 <i class="swk" style="background:#f0a0c8"></i>초분광 <i class="swk" style="background:#f5b06a"></i>RF</span>
     </div>
     <div class="bounds abounds" id="abounds" hidden>
       <b>북극권 시설</b>
       <label><input type="checkbox" data-af="cty" checked>국가</label>
+      <label><input type="checkbox" data-af="city" checked><svg class="lg" viewBox="-6 -6 12 12"><circle r="3" fill="var(--muted)"/></svg>주요 도시</label>
       <label><input type="checkbox" data-af="mil" checked><svg class="lg" viewBox="-6 -6 12 12"><rect x="-4" y="-4" width="8" height="8" fill="var(--muted)"/></svg>군사기지</label>
       <label><input type="checkbox" data-af="radar" checked><svg class="lg" viewBox="-6 -6 12 12"><path d="M0,-5L4.5,3.5H-4.5Z" fill="var(--muted)"/></svg>레이더</label>
       <label><input type="checkbox" data-af="space" checked><svg class="lg" viewBox="-6 -6 12 12"><circle r="4.5" fill="var(--muted)"/><circle r="1.8" fill="var(--halo)"/></svg>우주기지</label>
@@ -883,7 +891,7 @@ const FOREIGN_NAVY = new Set(['cnn', 'jpn', 'run', 'ccg', 'jcg']);
 const clsOf = (t, tr) => t.kind === 'air' ? null : (tr.affil === 'U' ? 'unk' : t.cls);
 const AFF = { F: '아군', H: '적성', S: '의심', U: '미상', N: '중립' };
 const layerOn = { space: true, surface: true, under: true, air: true, ground: true };
-const showB = { nll: true, kadiz: true, eez: true, mca: true, infra: true, nm12: true };
+const showB = { nll: true, kadiz: true, eez: true, mca: true, infra: true, nm12: true, land: true };
 
 // RF 위성이 잡는 방사원 종류
 const EMIT = {
@@ -1296,9 +1304,20 @@ function mpaNext() {
   const b = MPA_BOX[MPA_CYCLE[mpa.ci || 0]]; mpaPattern(b, b[0]);
 }
 function mpaHome() { mpa.datum = false; mpa.ci = 0; mpa.np = 0; mpaPattern(MPA_BOX.east, '동해 NLL'); }
+// 해상초계기는 KADIZ 밖으로 나가지 않는다: KADIZ 밖 지점은 안쪽 중심을 향해 끌어와 경계에서 약 5km 안에 둔다
+const KC = [127.6, 36.2];
+function kadizIn(p) {
+  if (inKadiz(p)) return p;
+  let lo = 0, hi = 1; const at = t => [KC[0] + (p[0] - KC[0]) * t, KC[1] + (p[1] - KC[1]) * t];
+  for (let i = 0; i < 24; i++) { const m = (lo + hi) / 2; if (inKadiz(at(m))) lo = m; else hi = m; }
+  return at(Math.max(0, lo - 5 / Math.max(1, dist(KC, p))));
+}
 function mpaMove(dt) {
   if (!mpa.wps || !mpa.wps.length) mpaNext();
-  if (moveToward(mpa, mpa.wps[0], mpa.spd, dt)) {
+  if (!inKadiz(mpa.wps[0])) mpa.wps[0] = kadizIn(mpa.wps[0]);
+  const arrived = moveToward(mpa, mpa.wps[0], mpa.spd, dt);
+  if (!inKadiz(mpa.pos)) mpa.pos = kadizIn(mpa.pos);
+  if (arrived) {
     mpa.wps.shift();
     if (!mpa.wps.length && mpa.mode === 'transit') {
       // 임무 해역 도착: 기준점 둘레에서 확장 사각 탐색부터 시작
@@ -1348,7 +1367,7 @@ function moveAir(a, dt) {
   }
 }
 function sendAir(a, dest, r, task, onArrive) {
-  if (a === mpa) { dest = dest.slice(); if (dest[0] > 128.3 && dest[0] < 131.7) dest[1] = Math.min(dest[1], 38.5); a.dest = dest; a.mode = 'transit'; a.wps = seaRoute(a.pos, dest); a.onArrive = onArrive; a.task = '이동 중 · ' + task; a.arriveTask = task; return; }
+  if (a === mpa) { dest = kadizIn(dest.slice()); if (dest[0] > 128.3 && dest[0] < 131.7) dest[1] = Math.min(dest[1], 38.5); a.dest = dest; a.mode = 'transit'; a.wps = seaRoute(a.pos, dest); a.onArrive = onArrive; a.task = '이동 중 · ' + task; a.arriveTask = task; return; }
   a.dest = dest.slice(); a.destR = r; a.ph = bearing(dest, a.pos); a.mode = 'transit'; a.onArrive = onArrive;
   a.task = '이동 중 · ' + task; a.arriveTask = task;
 }
@@ -2287,7 +2306,14 @@ function drawDyn() {
   for (let lon = 120; lon <= 133; lon++) h += `<line class="gl" x1="${f1(X(lon))}" y1="${MT}" x2="${f1(X(lon))}" y2="${f1(MT + MH)}"/>`;
   if (z < 0.45) { for (let lon = 120.5; lon < 133; lon++) h += `<line class="gl" opacity=".5" x1="${f1(X(lon))}" y1="${MT}" x2="${f1(X(lon))}" y2="${f1(MT + MH)}"/>`; for (let lat = 32.5; lat < 42; lat++) h += `<line class="gl" opacity=".5" x1="${ML}" y1="${f1(Y(lat))}" x2="${ML + MW}" y2="${f1(Y(lat))}"/>`; }
   for (let lat = 32; lat <= 42; lat++) h += `<line class="gl" x1="${ML}" y1="${f1(Y(lat))}" x2="${ML + MW}" y2="${f1(Y(lat))}"/>`;
+  // 육상: 국가명(연하게)·주요 도시·공개 군사기지
+  if (showB.land) for (const [n, x, y, sz] of SC.countries) h += txt('cty', X(x), Y(y), sz * Math.max(z, .6), n, 'middle');
   for (const [n, x, y] of SC.cities) h += `<circle class="city" cx="${f1(X(x))}" cy="${f1(Y(y))}" r="${f1(2.4 * z)}"/>` + txt('lbl', X(x) + 5 * z, Y(y) + 3.5 * z, 10.5 * z, n);
+  if (showB.land) for (const [n, x, y, side, at] of SC.milBases) {
+    const bx = X(x), by = Y(y), d = 3.3 * z;
+    h += `<rect class="mbase ${side}" x="${f1(bx - d)}" y="${f1(by - d)}" width="${f1(2 * d)}" height="${f1(2 * d)}"/>`
+      + txt('lbl mb ' + side, bx + (at === 'l' ? -6 : at ? 0 : 6) * z, by + (at === 'u' ? -7 : at === 'd' ? 13 : 3.5) * z, 9.5 * z, n, at === 'l' ? 'end' : at ? 'middle' : 'start');
+  }
 
   // 경계선
   if (showB.kadiz) {
@@ -2532,7 +2558,7 @@ function mapReset(view) { Object.assign(MZ[view], { k: 1, dx: 0, dy: 0 }); mapRe
 const mapRedraw = view => {
   if (mapRedraw.p) return; mapRedraw.p = requestAnimationFrame(() => { mapRedraw.p = 0; if (view === 'arc') { drawArcStatic(); drawArc(); } else { drawSlocStatic(); drawSloc(); } });
 };
-const afOn = { cty: true, mil: true, space: true, radar: true };
+const afOn = { cty: true, city: true, mil: true, space: true, radar: true };
 const AFK = { mil: '군사기지', radar: '레이더', space: '우주기지' };
 const AFAC_HTML = `<div class="ahd"><h3>북극권 주요 군사·우주·레이더 기지 (공개자료)</h3><table class="atab afac-t"><thead><tr><th>시설</th><th>종류</th><th>국가·비고</th></tr></thead><tbody>${
   [...AR.facilities].sort((a, b) => (a[4] === b[4] ? 0 : a[4] === 'ally' ? -1 : 1)).map(([n, , , k, side, note]) => `<tr><td><b style="color:var(${side === 'ru' ? '--ho' : '--fr'})">${n}</b></td><td>${AFK[k]}</td><td>${note}</td></tr>`).join('')}</tbody></table></div>`;
@@ -2570,6 +2596,7 @@ function drawArcStatic() {
   for (const [n, x, y] of AR.ports) { const v = AP(x, y); h += `<circle cx="${f1(v[0])}" cy="${f1(v[1])}" r="${f1(2.6 * az)}" fill="var(--muted)"/>` + `<text class="atx port" x="${f1(v[0] + 5 * az)}" y="${f1(v[1] + 4 * az)}" font-size="${f1(10 * az)}">${n}</text>`; }
   for (const [n, x, y] of AR.straits) { const v = AP(x, y); h += `<path d="M${f1(v[0])},${f1(v[1] - 4 * az)}l${f1(4 * az)},${f1(4 * az)}l${f1(-4 * az)},${f1(4 * az)}l${f1(-4 * az)},${f1(-4 * az)}Z" fill="#0b7285"/>` + `<text class="atx st" x="${f1(v[0] + 6 * az)}" y="${f1(v[1] + 4 * az)}" font-size="${f1(10 * az)}">${n}</text>`; }
   // 북극권 국가 이름과 공개된 주요 군사·우주·레이더 기지 (범례에서 종류별로 켜고 끈다)
+  if (afOn.city) for (const [n, x, y] of AR.cities) { const v = AP(x, y); h += `<circle cx="${f1(v[0])}" cy="${f1(v[1])}" r="${f1(2.3 * az)}" fill="var(--muted)"/><text class="atx port" x="${f1(v[0] + 5 * az)}" y="${f1(v[1] + 3.5 * az)}" font-size="${f1(9.5 * az)}">${n}</text>`; }
   if (afOn.cty) for (const [n, x, y] of AR.countries) { const v = AP(x, y); h += `<text class="atx cty" x="${f1(v[0])}" y="${f1(v[1])}" font-size="${f1(12.5 * az)}" text-anchor="middle">${n}</text>`; }
   for (const [n, x, y, k, side, note, at] of AR.facilities) {
     if (!afOn[k]) continue;
@@ -3268,6 +3295,7 @@ $('rqAuto').onclick = rqAuto;
 
 // ── 원해 해상교통로(SLOC) 관심해역: 호르무즈·아덴만·홍해·말라카 ─────────
 const SL = SC.sloc, SLAND = window.MDA_SLOC_LAND || [];
+let slocLand = true;
 const SK = 13.5, SCOS = Math.cos(14 * D2R), SVW = (152 - 26) * SK * SCOS, SVH = 60 * SK;
 const SP = (lon, lat) => [(lon - 26) * SK * SCOS, (44 - lat) * SK];
 const spath = (pts, close) => 'M' + pts.map(p => SP(p[0], p[1]).map(f1).join(',')).join('L') + (close ? 'Z' : '');
@@ -3609,9 +3637,13 @@ function drawSlocStatic() {
   for (const [k, r] of Object.entries(SL.routes)) { const v = SP(...lbl[k]); h += `<text class="atx rt ${k}" x="${f1(v[0])}" y="${f1(v[1])}" font-size="${fs(12)}" text-anchor="middle">${r.nm}</text>`; }
   { const v = SP(49.0, 15.0); h += `<text class="atx st" x="${f1(v[0])}" y="${f1(v[1])}" font-size="${fs(10)}" text-anchor="middle">IRTC 권고 통항 회랑</text>`; }
   for (const [n, x, y, s] of SL.seas) { const v = SP(x, y); h += `<text class="atx sea" x="${f1(v[0])}" y="${f1(v[1])}" font-size="${fs(s)}" text-anchor="middle">${n}</text>`; }
+  if (slocLand) {
+    for (const [n, x, y] of SL.countries) { const v = SP(x, y); h += `<text class="atx scty" x="${f1(v[0])}" y="${f1(v[1])}" font-size="${fs(13)}" text-anchor="middle">${n}</text>`; }
+    for (const [n, x, y] of SL.cities) { const v = SP(x, y); h += `<circle cx="${f1(v[0])}" cy="${f1(v[1])}" r="${fs(2.2)}" fill="var(--muted)"/><text class="atx port" x="${f1(v[0] + 4.5 * zz)}" y="${f1(v[1] + 3.5 * zz)}" font-size="${fs(9.5)}">${n}</text>`; }
+  }
   for (const [n, x, y] of SL.ports) { const v = SP(x, y); h += `<circle cx="${f1(v[0])}" cy="${f1(v[1])}" r="${fs(2.6)}" fill="var(--muted)"/><text class="atx port" x="${f1(v[0] + 5 * zz)}" y="${f1(v[1] + 4 * zz)}" font-size="${fs(10)}">${n}</text>`; }
   for (const [n, x, y] of SL.chokes) { const v = SP(x, y), d = 6 * zz; h += `<path d="M${f1(v[0])},${f1(v[1] - d)}l${f1(d)},${f1(d)}l${f1(-d)},${f1(d)}l${f1(-d)},${f1(-d)}Z" class="choke"/><text class="atx ck" x="${f1(v[0] + d + 3 * zz)}" y="${f1(v[1] - d)}" font-size="${fs(11.5)}">${n}</text>`; }
-  for (const [n, x, y, c] of SL.bases) { const v = SP(x, y), d = 3.2 * zz; h += `<rect class="sbase ${c}" x="${f1(v[0] - d)}" y="${f1(v[1] - d)}" width="${f1(2 * d)}" height="${f1(2 * d)}"/><text class="atx sb ${c}" x="${f1(v[0] + 2 * d)}" y="${f1(v[1] + 2 * d)}" font-size="${fs(9.5)}">${n}</text>`; }
+  if (slocLand) for (const [n, x, y, c] of SL.bases) { const v = SP(x, y), d = 3.2 * zz; h += `<rect class="sbase ${c}" x="${f1(v[0] - d)}" y="${f1(v[1] - d)}" width="${f1(2 * d)}" height="${f1(2 * d)}"/><text class="atx sb ${c}" x="${f1(v[0] + 2 * d)}" y="${f1(v[1] + 2 * d)}" font-size="${fs(9.5)}">${n}</text>`; }
   for (const hb of SL.hubs) { const v = SP(...hb.port), d = 5 * zz; h += `<path class="hub" d="M${f1(v[0])},${f1(v[1] - d)}l${f1(d * .6)},${f1(d * 1.6)}h${f1(-d * 1.2)}Z M${f1(v[0] - d)},${f1(v[1] + d * .2)}h${f1(d * 2)}"/><text class="atx hubt" x="${f1(v[0] - 6 * zz)}" y="${f1(v[1] + 14 * zz)}" font-size="${fs(10.5)}" text-anchor="end">${hb.nm} · UAV·USV</text>`; const [w, s0, e, n] = hb.box; h += `<path class="hubbox" d="${spath([[w, s0], [e, s0], [e, n], [w, n]], true)}" stroke-width="${fs(1.2)}" stroke-dasharray="${fs(5)} ${fs(4)}"/>`; }
   { const v = SP(...SL.supply.pos); h += `<text class="atx hubt" x="${f1(v[0] + 6 * zz)}" y="${f1(v[1] + 14 * zz)}" font-size="${fs(10)}">청해부대 보급항</text>`; }
   { const v = SP(52.5, -15.8); h += `<text class="atx rt CAPE" x="${f1(v[0] - 4)}" y="${f1(v[1] - 6 * zz)}" font-size="${fs(10)}" text-anchor="end">→ 희망봉 (+10~14일)</text>`; }
@@ -3854,6 +3886,7 @@ function setView(v) {
   if (arcView) { drawArcStatic(); drawArc(); renderArcPanel(); renderPolar(); if (cdseA.st === 'idle') cdseQuery(cdseA, CDSE_AREA[arcPre], CDSE_NM[arcPre], renderPolar); } else if (slocView) { drawSlocStatic(); drawSloc(); renderSlocPanel(); renderSlocInfo(); if (cdseS.st === 'idle') cdseQuery(cdseS, SBOX[slocPre], SNM(), renderSlocInfo); } else { regionView(krPre); }
 }
 document.querySelectorAll('[data-view]').forEach(b => b.onclick = () => { setView(b.dataset.view); renderPanel(); });
+$('bdSLAND').onchange = e => { slocLand = e.target.checked; drawSlocStatic(); };
 document.querySelectorAll('[data-af]').forEach(c => c.onchange = () => { afOn[c.dataset.af] = c.checked; drawArcStatic(); });
 $('arc').addEventListener('click', e => {
   if ($('arc')._dragged) return;   // 끌어서 옮긴 직후의 클릭은 선택으로 보지 않는다
@@ -3901,7 +3934,7 @@ $('bCopy').onclick = () => {
   try { navigator.clipboard.writeText(ta.value).then(() => { $('copyMsg').textContent = '복사됨'; }, fallback); } catch (e) { fallback(); }
 };
 if (!SC.mca) { $('bdMCA').disabled = true; $('bdMCA').checked = false; $('bdMCAwrap').classList.add('na'); $('bdMCAwrap').title = 'scenario.js의 mca에 좌표를 넣으면 표시됩니다'; $('bdMCAwrap').lastChild.textContent = 'MCA(KTO) 좌표 미입력'; }
-for (const k of ['nll', 'kadiz', 'eez', 'mca', 'infra', 'nm12']) $('bd' + k.toUpperCase()).onchange = e => { showB[k] = e.target.checked; if (k === 'nm12') drawStatic(); drawDyn(); };
+for (const k of ['nll', 'kadiz', 'eez', 'mca', 'infra', 'nm12', 'land']) $('bd' + k.toUpperCase()).onchange = e => { showB[k] = e.target.checked; if (k === 'nm12') drawStatic(); drawDyn(); };
 document.querySelector('.grid').addEventListener('click', e => {
   const bx = e.target.closest('.box');
   if (bx && !e.target.closest('[data-layer]') && matchMedia('(max-width: 860px)').matches) {
