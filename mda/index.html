@@ -151,6 +151,8 @@ button { font: inherit; color: inherit; }
 #slocpanel > h2 .pfold { font-family: var(--font-ui); font-weight: 600; letter-spacing: 0; }
 #arcpanel .ahd h3, #slocpanel .ahd h3 { font-family: var(--font-head); font-weight: 400; font-size: 14.3px; color: var(--fg); letter-spacing: .01em; }
 #arcpanel .ahd b.rnm { font-family: var(--font-head); font-weight: 400; font-size: 13.3px; letter-spacing: .01em; }   /* 항로 상세정보의 항로 이름 */
+/* 지도 위 라벨(한반도 해역·북극항로·원해 SLOC): 모두 헤드라인체. 도현체는 굵기가 하나뿐이라 굵게 지정된 라벨도 보통 굵기로 둔다 */
+#map text, #arc text, #sloc text { font-family: var(--font-head) !important; font-weight: 400 !important; letter-spacing: .01em; }
 /* 오른쪽 열(통합체계·처리현황·지휘결심 등) 칸 제목 15.3px, 소제목 14.3px — 모두 헤드라인체 */
 .mda section > h2 { font-family: var(--font-head); font-weight: 400; font-size: 15.3px; letter-spacing: .01em; }
 .mda section h3, #polarSec .pdom h4, #slocSec .pdom h4 { font-family: var(--font-head); font-weight: 400; font-size: 14.3px; letter-spacing: .01em; }
@@ -651,16 +653,16 @@ textarea.report { width: 100%; min-height: 150px; font: 12px/1.5 var(--font-data
       <span><b style="color:var(--fr)">■</b> 미국·나토 <b style="color:var(--ho)">■</b> 러시아 · 공개자료 개략 위치 · 이름은 항로별 보기·정보칸 목록</span>
     </div>
    </div>
-    <aside class="srcpanel arcpanel" id="arcpanel" hidden aria-label="북극항로 표적관리 현황">
-      <h2>북극항로 표적관리 현황</h2>
+    <aside class="srcpanel arcpanel" id="arcpanel" hidden aria-label="북극항로 표적관리현황">
+      <h2>북극항로 표적관리현황</h2>
       <div id="arcInfo"></div>
     </aside>
-    <aside class="srcpanel arcpanel" id="slocpanel" hidden aria-label="원해 해상교통로 관심해역 현황">
-      <h2 class="fh"><span>원해 해상교통로(SLOC) 관심해역 현황</span><button class="pfold" id="slocFold" type="button" aria-expanded="true" aria-controls="slocInfo">접기 ▴</button></h2>
+    <aside class="srcpanel arcpanel" id="slocpanel" hidden aria-label="원해 해상교통로 관심해역현황">
+      <h2 class="fh"><span>원해 해상교통로(SLOC) 관심해역현황</span><button class="pfold" id="slocFold" type="button" aria-expanded="true" aria-controls="slocInfo">접기 ▴</button></h2>
       <div id="slocInfo"></div>
     </aside>
-    <aside class="srcpanel" id="srcpanel" aria-label="해양영역인식 종합 정보 현황">
-      <h2>해양영역인식 종합 정보 현황</h2>
+    <aside class="srcpanel" id="srcpanel" aria-label="해양영역인식 종합 정보현황">
+      <h2>해양영역인식 종합 정보현황</h2>
       <div class="clsum rgsum" id="rgsum" hidden></div>
       <div class="clsum" id="clsum"></div>
       <div class="clsum prio" id="prio"></div>
@@ -712,7 +714,7 @@ textarea.report { width: 100%; min-height: 150px; font: 12px/1.5 var(--font-data
       <div id="emsInfo"></div>
     </section>
     <section>
-      <h2>우군 함정 위성통신 현황</h2>
+      <h2>우군 함정 위성통신현황</h2>
       <div id="commInfo"></div>
     </section>
     <section>
@@ -720,7 +722,7 @@ textarea.report { width: 100%; min-height: 150px; font: 12px/1.5 var(--font-data
       <div id="rfInfo"></div>
     </section>
     <section>
-      <h2>우주정보지원 현황</h2>
+      <h2>우주정보지원현황</h2>
       <div class="sattab" id="satInfo"></div>
     </section>
     <section>
@@ -742,7 +744,7 @@ textarea.report { width: 100%; min-height: 150px; font: 12px/1.5 var(--font-data
       </div>
       <p class="empty rqmsg" id="rqMsg"></p>
       <div class="rqcand" id="rqCand"></div>
-      <h3 class="rqh">요청 현황</h3>
+      <h3 class="rqh">요청현황</h3>
       <div class="reqs" id="reqs"></div>
     </section>
     <section>
@@ -767,7 +769,7 @@ textarea.report { width: 100%; min-height: 150px; font: 12px/1.5 var(--font-data
         <span><svg width="18" height="18" viewBox="-9 -9 18 18"><circle class="nvh" r="8"/><circle class="sy F k-kn" r="5"/></svg>해군 함정·항공기</span>
         <span><svg width="18" height="18" viewBox="-9 -9 18 18"><circle class="nvh un" r="8"/><path class="nvu" d="M0,-4.5L6,2.5L0,0.5L-6,2.5Z"/></svg>UAV</span>
         <span><svg width="18" height="18" viewBox="-9 -9 18 18"><circle class="nvh un" r="8"/><path class="nvu" d="M-5,-2.5H5L3,3H-3Z"/></svg>USV</span>
-        <b class="lgh">색 = 선종 (오른쪽 종합 현황 참고)</b>
+        <b class="lgh">색 = 선종 (오른쪽 종합현황 참고)</b>
       </div>
       <p class="notes">기호 모양은 식별 상태, 색은 선종입니다. 의심 표적은 주황 테두리를 두릅니다. 아래 반쪽 기호는 수중, 위 반쪽은 항공 표적입니다. 흐린 기호와 점선 원은 추적 소실 표적과 추정 위치 오차이고, 선은 30분 뒤 예상 위치입니다. 각 센서 칸의 가동 단추로 출처를 끄면 그 탐지가 융합에서 빠집니다.<br>해안선, NLL, KADIZ, EEZ는 개략이며 MCA(KTO)는 좌표가 입력된 경우에만 표시합니다. EEZ는 한·일 대륙붕 북부 경계 외에는 미획정 구간입니다. 표적과 센서 배치는 모두 가상입니다.<br>참고: 오경원·임경한·이숙연·김재호(2024), 「인도-태평양 전략 추진을 위한 한국형 해양영역인식 발전 방안」, 『한국해군과학기술학회지』 7(3), 327–334 · <a href="https://kims.or.kr/issubrief/kims-periscope/peri363/" target="_blank" rel="noopener">KIMS Periscope 363</a> · <a href="https://opendata.mofa.go.kr/mofapub/resource/Publication/14315.page" target="_blank" rel="noopener">외교부 발간자료</a></p>
     </footer>
@@ -1929,7 +1931,7 @@ function respStep() {
     }
   }
 }
-// 대응 중 전력 현황 (경보 칸 표시용)
+// 대응 중 전력현황 (경보 칸 표시용)
 function respLine(r) {
   const tr = tracks.get(r.tgt); if (!tr) return '';
   const ref = southOfNll(tr.pos), item = (o, lbl, kind) => o ? `${lbl}(${kind}) ${dist(o.pos, ref) <= 8 ? '현장' : Math.round(dist(o.pos, ref)) + 'km'}` : null;
@@ -2617,7 +2619,7 @@ function renderArcPanel() {
       <dt>선종</dt><dd>${ss.type} · 빙급 ${ss.ice}</dd><dt>항로</dt><dd>${ss.route ? AR.routes[ss.route === 'LNG' ? 'NSR' : ss.route].nm : '해역 체류'}</dd><dt>해역</dt><dd>${arcSea(ss.pos)}</dd>
       <dt>위치</dt><dd>${fmtPos(ss.rep.pos)}</dd><dt>속력</dt><dd>${f1(ss.spd)}kn</dd><dt>최종 보고</dt><dd>${clock(ss.rep.t).hm} · ${esc(ss.rep.src)}</dd>
       ${ss.escort ? `<dt>호송</dt><dd>${ss.escort}</dd>` : ''}${ss.heavy ? `<dt>해빙</dt><dd class="warn">해빙 가장자리 ${f1(iceLat(ss.pos[0]))}°N</dd>` : ''}`]; })());
-  setHTML($('arcInfo'), 'arc', `<div class="ahd"><h3>항로·선박 현황</h3>
+  setHTML($('arcInfo'), 'arc', `<div class="ahd"><h3>항로·선박현황</h3>
       <div class="csum"><span>NSR <b>${onR('NSR')}</b></span><span>NWP <b>${onR('NWP')}</b></span><span>해역 체류 <b>${arcShips.filter(sh => !sh.route).length}</b></span><span>한국 관련 <b>${arcShips.filter(sh => sh.kr).length}</b></span>
       <span>호송 <b>${nSt('호송 중')}</b></span><span>결빙 정체 <b>${nSt('결빙 정체')}</b></span><span>AIS 공백 <b>${nSt('AIS 공백')}</b></span><span>러시아 군함 <b>${arcShips.filter(sh => sh.cls === 'run').length}</b></span></div></div>
     ${arcRouteH()}
@@ -2690,7 +2692,7 @@ function kgrid(cnt, hideZero) {
   return keys.length ? `<div class="kgrid">${keys.map(k => `<span class="${cnt[k] ? '' : 'z'}" style="--kc: var(--k-${k})"><i></i>${CLS[k]}<b>${cnt[k] || 0}</b></span>`).join('')}</div>`
     : '<p class="empty" style="font-size:11.5px">최근 10분 탐지 없음</p>';
 }
-// 출처별·선종별 추적 관리 현황: 탐지(최근 10분), 추적(이 출처가 기여한 추적 중 표적), 소실, 관리(적성·의심·이상징후 대응 표적)
+// 출처별·선종별 추적 관리현황: 탐지(최근 10분), 추적(이 출처가 기여한 추적 중 표적), 소실, 관리(적성·의심·이상징후 대응 표적)
 function domainClsCounts() {
   const managed = new Set();
   for (const a of alerts) if (a.status !== 'done') a.tgt.split('·').forEach(id => managed.add(id));
@@ -2752,7 +2754,7 @@ function prioTable(rows, urgent) {
 function renderPrio() {
   const H = prioRows(a => a === 'H'), U = prioRows(a => a === 'U' || a === 'S');
   const live = r => r.filter(x => !x.tr.lost).length;
-  setHTML($('prio'), 'prio', `<h3>긴급대응표적 · 관심표적 현황</h3>
+  setHTML($('prio'), 'prio', `<h3>긴급대응표적 · 관심표적현황</h3>
     <div class="phd"><div class="pk h"><b>${live(H)}</b>긴급대응표적 (적성)<small> · 소실 ${H.length - live(H)}</small></div><div class="pk u"><b>${live(U)}</b>관심표적 (미식별·의심)<small> · 소실 ${U.length - live(U)}</small></div></div>
     <h4 class="h">긴급대응표적 · 적성</h4>${prioTable(H, true)}
     <h4 class="u">관심표적 · 미식별·의심</h4>${prioTable(U, false)}`);
@@ -2773,7 +2775,7 @@ function renderAsw() {
       + `<span class="l2">${rec.length ? rec.join('·') : '음향 접촉 없음'} · 최초 ${clock(tr.first).hm}</span></button>`;
   }).join('');
   const hrow = helis.map(h => `<tr><td>${h.ship} ${esc(h.type.replace(/ \(.*|와일드캣/g, '').trim())}</td><td>${h.st === 'deck' ? `함상 대기${h.k < h.sched.length ? ` · 이함 ${clock(h.sched[h.k]).hm}` : ''}` : h.st === 'dip' ? '디핑소나 탐색 중' : `${esc(h.task)} (${Math.round(T - h.t0)}분)`}</td><td>${h.flights}회</td></tr>`).join('');
-  setHTML($('asw'), 'asw', `<h3>대잠 정보 현황</h3>
+  setHTML($('asw'), 'asw', `<h3>대잠 정보현황</h3>
     <div class="phd"><div class="pk h"><b>${subs.filter(t => !tracks.get(t.id).lost).length}</b>수중 접촉<small> · 소실 ${subs.filter(t => tracks.get(t.id).lost).length}</small></div><div class="pk u"><b>${bs.length + dips}</b>음향 탐색 중<small> · 소노부이 ${bs.length} · 디핑 ${dips}</small></div></div>
     ${rows || '<p class="empty" style="font-size:11px;margin:2px 0">현재 수중 접촉 없음</p>'}
     <h4 class="u" style="--pc: var(--l-under)">대잠전력현황</h4>
@@ -2796,7 +2798,7 @@ function mumtLink(kind, pos, ctlPos) {
   if (jam) l = [l[0], +(l[1] * 0.15).toFixed(2), l[2] * 3, +(l[3] + 30).toFixed(1)];
   return { type: l[0], rate: l[1], lat: l[2], loss: l[3], st: jam ? '저하 (재밍)' : l[3] > 2 ? '주의' : '정상' };
 }
-// 기동부대 현황: 부대 상태·위치·대치 상대와 함정·전력별 역할·상태
+// 기동부대현황: 부대 상태·위치·대치 상대와 함정·전력별 역할·상태
 const TF_ROLE = { CVX: '지휘·유무인 통제', DDG1: '대공·탄도탄 방어', DDG2: '대공 방어', FFG1: '대잠 초계', FFG2: '대잠·근접 방어', AOE1: '해상 보급', KUSV1: '전방 수상 감시', KUSV2: '전방 수상 감시', KUAV1: '전방 공중 감시', KUAV2: '전방 공중 감시' };
 function tfPanel() {
   const K = TFG.kr, cvx = byId.get('CVX'), cn = byId.get('CV16'), cnOn = TFG.cn && T >= TFG.cn.at;
@@ -2804,7 +2806,7 @@ function tfPanel() {
   const st = K.wps.length ? `제주 출동 · 서해 전개 이동 중 (도착 예정 ${eta})` : K.st === 'station' ? '서해 대치 감시' : '제주 해군기지 대기 (즉응 태세)';
   const mem = targets.filter(t => t.grp === 'kr');
   const fwd = mem.filter(t => t.un).map(t => dist(t.pos, cvx.pos));
-  return `<div class="tfbox"><h4>기동부대 현황 <small>· 한국형 유무인전력항모 기동부대</small></h4>
+  return `<div class="tfbox"><h4>기동부대현황 <small>· 한국형 유무인전력항모 기동부대</small></h4>
     <div class="csum"><span>상태 <b>${st}</b></span><span>위치 <b>${esc(whereOf(cvx.pos))}</b></span><span>속력 <b>${f1(K.wps.length ? K.spd : 2)}kn</b></span><span>정면 <b>${Math.round(K.face)}°</b></span>
     <span>전력 <b>유인 ${mem.filter(t => !t.un).length} · 무인 ${mem.filter(t => t.un).length}</b></span><span>무인 전방 감시 거리 <b>${fwd.length ? Math.round(Math.max(...fwd)) : 0}km</b></span>
     ${cnOn && cn ? `<span>랴오닝함까지 <b>${Math.round(dist(cvx.pos, cn.pos))}km</b></span>` : ''}</div>
@@ -2848,7 +2850,7 @@ function renderBoxes(det) {
     box.classList.toggle('off', !layerOn[dom]);
     const head = `<div class="bh"><h2>${d.nm}</h2><small>${d.sub}</small><button class="sw" type="button" data-layer="${dom}" aria-pressed="${layerOn[dom]}">${layerOn[dom] ? '가동' : '중지'}</button></div>`;
     const st = `<div class="stats">${d.types.map(([k, n]) => `<div><b>${det[k]}</b><span>${n}</span></div>`).join('')}</div>`
-      + `<div class="kbox"><h3>선종별 추적·관리 현황</h3>${ktab(domCls[dom])}</div>`;
+      + `<div class="kbox"><h3>선종별 추적·관리현황</h3>${ktab(domCls[dom])}</div>`;
     const as = `<ul class="assets">${assets(dom).map(([a, b]) => `<li><span>${a}</span><span>${esc(b)}</span></li>`).join('')}</ul>`;
     const fd = feeds[dom].slice(0, 2);
     const fh = `<ul class="feed">${fd.length ? fd.map(f => `<li><time>${clock(f.t).hm}</time><span>${esc(f.text)}</span></li>`).join('') : '<li class="none">최근 탐지 사건 없음</li>'}</ul>`;
@@ -2995,7 +2997,7 @@ function renderPanel() {
       + rows.map(([t, c]) => `<tr><td>${t.id}</td><td>${LINKS[c.key].nm}</td><td class="n">${fmtRate(c.rate)}</td><td class="n">${Math.round(c.lat)}ms</td><td class="n">${c.loss.toFixed(1)}%</td><td><span class="chip ${chipCls[c.status]}">${c.status}</span></td></tr>`).join('')
       + '</tbody></table>');
   }
-  // 위성 운용 현황
+  // 위성 운용현황
   {
     const st = o => inView(satPos(o, T)) ? '<span class="chip done">상공</span>' : (nextPass(o) != null ? `<small>다음 ${clock(nextPass(o)).hm}</small>` : '<small>–</small>');
     const row = o => `<tr><td>${o.name}</td><td><small>${o.cc}</small></td><td><small>${SAT_MIS[o.mis]}</small></td><td class="st">${st(o)}</td></tr>`;
@@ -3662,7 +3664,7 @@ function chdPanel() {
   const c = sById('CH2'), c1 = sById('CH1'); if (!c) return '';
   const stNm = { convoy: '임무 수행', toSupply: '보급 이동', resupply: '보급 중' }[chdS.st];
   const fuelH = Math.max(0, chdS.fuel - 10) / (0.002 + ((c.kn || 14) / 20) ** 2 * 0.006) / 60;
-  return `<div class="ahd"><h3>청해부대 현황 (아덴만)</h3>
+  return `<div class="ahd"><h3>청해부대현황 (아덴만)</h3>
     <b>CH2</b> ${esc(c.name)} <span class="chip ${chdS.st === 'convoy' ? 'act' : 'warn'}">${stNm}</span>
     <div class="empty" style="font-size:11.5px;margin:3px 0">${esc(c.task || '')} · ${slocWhere(c.pos)} · ${f1(c.spd || 0)}kn</div>
     <table class="atab kv"><tbody>
@@ -3707,11 +3709,11 @@ function renderSlocPanel() {
       <div class="empty" style="font-size:11.5px;margin-top:4px">청해부대 CH1 · ${slocWhere(chd.pos)} · ${chdTask} · ${f1(chd.spd)}kn</div></div>
     ${chdPanel()}
     ${uxPanel()}
-    <div class="ahd"><h3>초크포인트 현황</h3><table class="atab"><thead><tr><th>해협</th><th>우리 선박 (400km)</th><th>위협</th></tr></thead><tbody>${ck}</tbody></table></div>
+    <div class="ahd"><h3>초크포인트현황</h3><table class="atab"><thead><tr><th>해협</th><th>우리 선박 (400km)</th><th>위협</th></tr></thead><tbody>${ck}</tbody></table></div>
     <div class="ahd"><h3>우리 선박 추적</h3><table class="atab stab"><thead><tr><th>선박</th><th>선명·선종·해역</th><th>상태·속력</th><th>보고</th></tr></thead><tbody>`
     + rows.map(([sh, st]) => `<tr data-sloc="${sh.id}" class="${slocSel === sh.id ? 'on' : ''}"><td><i class="ssh kr" style="background:currentColor"></i>${sh.id}</td><td>${esc(sh.name)}<small>${sh.type} · ${slocWhere(sh.pos)}</small></td><td><span class="chip ${lv[st[1]]}">${st[0]}</span><small>${f1(sh.spd)}kn</small></td><td>${clock(sh.rep.t).hm}<small>${esc(sh.rep.src.replace(/ \(.*/, ''))}</small></td></tr>`).join('')
     + `</tbody></table></div>
-    <div class="ahd"><h3>위협 현황</h3><table class="atab"><tbody>${thr.map(([n, k, l]) => `<tr><td>${n}<small>${SL.zones[k].nm}</small></td><td><span class="chip ${lv[l]}">${['정상', '주의', '경계', '심각'][l]}</span></td><td>${kr.filter(sh => inZone(sh, k)).length}척</td></tr>`).join('')}</tbody></table></div>
+    <div class="ahd"><h3>위협현황</h3><table class="atab"><tbody>${thr.map(([n, k, l]) => `<tr><td>${n}<small>${SL.zones[k].nm}</small></td><td><span class="chip ${lv[l]}">${['정상', '주의', '경계', '심각'][l]}</span></td><td>${kr.filter(sh => inZone(sh, k)).length}척</td></tr>`).join('')}</tbody></table></div>
     <div class="ahd"><h3>남중국해·대만해협</h3><div class="csum"><span>중국 해군 <b>${slocShips.filter(sh => sh.cls === 'cn' && sh.pos[0] > 104).length}</b></span><span>중국 해경 <b>${slocShips.filter(sh => sh.cls === 'ccg').length}</b></span><span>해상민병 <b>${slocShips.filter(sh => sh.cls === 'mil').length}</b></span><span>대만해협 통항 우리 선박 <b>${kr.filter(sh => inZone(sh, 'taiwan')).length}</b></span><span>훈련구역 <b>${flags.twStart && !flags.twDone ? '선포 중' : '없음'}</b></span></div>
       <span class="empty" style="font-size:11.5px">분쟁 도서: 서사·남사군도, 스카버러·세컨드 토마스 암초. 중국 인공섬(미스치프·피어리크로스·수비) 군사화. 대만 유사시 바시 해협·필리핀해 우회로 검토.</span></div>
     <div class="ahd"><h3>동중국해·센카쿠</h3><div class="csum"><span>센카쿠 영해 내 중국 해경 <b>${slocShips.filter(sh => sh.cls === 'ccg' && gdist(sh.pos, SL.senkaku.c) <= SL.senkaku.ts).length}</b></span><span>접속수역 내 <b>${slocShips.filter(sh => sh.cls === 'ccg' && gdist(sh.pos, SL.senkaku.c) <= SL.senkaku.cz).length}</b></span><span>일본 해상보안청 <b>${slocShips.filter(sh => sh.cls === 'jcg').length}</b></span><span>이어도 30km 내 중국 선박 <b>${slocShips.filter(sh => (sh.cls === 'cn' || sh.cls === 'ccg') && gdist(sh.pos, SL.ieodo) <= 30).length}</b></span><span>우리 해군 KN1 <b>${(() => { const k = sById('KN1'); return k.mode === 'goto' ? '근접 감시 이동' : slocWhere(k.pos); })()}</b></span></div>
@@ -3866,7 +3868,7 @@ $('spre').addEventListener('click', e => {
 // 전체 보기는 동서로 넓어 정보칸을 접고 지도를 화면 폭 전체에 맞춘다. 해역별 보기는 정보칸을 편다
 function setSlocFold(f) {
   $('slocpanel').classList.toggle('fold', f);
-  $('slocFold').setAttribute('aria-expanded', String(!f)); $('slocFold').textContent = f ? 'SLOC 관심해역 현황 펼치기 ▾' : '접기 ▴';
+  $('slocFold').setAttribute('aria-expanded', String(!f)); $('slocFold').textContent = f ? 'SLOC 관심해역현황 펼치기 ▾' : '접기 ▴';
   if (slocView) { drawSlocStatic(); drawSloc(); }
 }
 $('slocFold').onclick = () => setSlocFold(!$('slocpanel').classList.contains('fold'));
@@ -3950,7 +3952,7 @@ function renderRegion() {
   const rs = NRADARS.filter(x => inRegion(x.pos, k)).map(x => x.name.replace(' R/S', '')), gs = RADARS.filter(x => inRegion(x.pos, k)).map(x => x.name.replace(' 감시대', ''));
   const als = alerts.filter(a => a.status !== 'done' && String(a.tgt).split('·').some(id => { const tr = tracks.get(id); return tr && inRegion(tr.pos, k); }));
   const resp = trs.filter(tr => tr.resp === 'A').length;
-  setHTML(el, 'rgsum', `<h3>${nm} 해역 현황 <small style="font-weight:400">· ${KPRE[k][5]}</small></h3>
+  setHTML(el, 'rgsum', `<h3>${nm} 해역현황 <small style="font-weight:400">· ${KPRE[k][5]}</small></h3>
     <div class="csum"><span>추적 <b>${trs.length}</b></span><span>적성 <b style="color:var(--ho)">${hot.length}</b></span><span>미식별·의심 <b style="color:var(--un)">${unk.length}</b></span><span>육군 책임 <b>${resp}</b> · 해군 책임 <b>${trs.length - resp}</b></span></div>
     ${kgrid(cnt, true)}
     <p class="empty" style="font-size:11px;margin:4px 0 1px">아군 함정 <b style="color:var(--fg)">${fr.length ? fr.join(' · ') : '없음'}</b></p>
