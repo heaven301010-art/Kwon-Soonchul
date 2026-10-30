@@ -470,7 +470,8 @@ textarea.report { width: 100%; min-height: 150px; font: 12px/1.5 var(--font-data
 .btx.infra { fill: var(--infra); font-weight: 600; font-family: var(--font-ui); }
 .mca { stroke: var(--mca); fill: color-mix(in srgb, var(--mca) 4%, transparent); stroke-width: 2; vector-effect: non-scaling-stroke; }
 .btx { font-weight: 700; font-family: var(--font-data); paint-order: stroke; stroke: var(--halo); stroke-width: 3px; stroke-linejoin: round; }
-.btx.nll { fill: var(--nll); } .btx.kadiz { fill: var(--kadiz); } .btx.eez { fill: var(--eez); } .btx.mca { fill: var(--mca); }
+.btx.nll { fill: var(--nll); } .btx.kadiz { fill: var(--kadiz); } .btx.cadiz { fill: #c2410c; }
+.cadiz { stroke: #c2410c; fill: none; stroke-width: 1.6; vector-effect: non-scaling-stroke; } .btx.eez { fill: var(--eez); } .btx.mca { fill: var(--mca); }
 .rg { stroke-width: 1; vector-effect: non-scaling-stroke; }
 .rg.ground { stroke: color-mix(in srgb, var(--l-ground) 60%, transparent); fill: color-mix(in srgb, var(--l-ground) 5%, transparent); }
 .rg.ground.wide { fill: none; }
@@ -650,6 +651,7 @@ textarea.report { width: 100%; min-height: 150px; font: 12px/1.5 var(--font-data
       <b>경계선</b>
       <label><input type="checkbox" id="bdNLL" checked><svg width="22" height="6"><line x1="0" y1="3" x2="22" y2="3" class="nll" stroke-dasharray="6 3"/></svg>NLL·MDL</label>
       <label><input type="checkbox" id="bdKADIZ" checked><svg width="22" height="6"><line x1="0" y1="3" x2="22" y2="3" class="kadiz" stroke-dasharray="8 3 2 3"/></svg>KADIZ</label>
+      <label><input type="checkbox" id="bdCADIZ" checked><svg width="22" height="6"><line x1="0" y1="3" x2="22" y2="3" class="cadiz" stroke-dasharray="10 3 2 3 2 3"/></svg>CADIZ (중국)</label>
       <label><input type="checkbox" id="bdEEZ" checked><svg width="22" height="6"><line x1="0" y1="3" x2="22" y2="3" class="eez" stroke-dasharray="2 3"/></svg>EEZ</label>
       <label id="bdMCAwrap"><input type="checkbox" id="bdMCA" checked><svg width="22" height="6"><line x1="0" y1="3" x2="22" y2="3" class="mca" stroke-dasharray="12 4"/></svg>MCA(KTO)</label>
       <label><input type="checkbox" id="bdNM12" checked><svg width="22" height="8"><rect x="0" y="1" width="22" height="6" class="nm12" stroke-width="0"/></svg>12NM (육군 내측·해군 외측)</label>
@@ -891,7 +893,7 @@ const FOREIGN_NAVY = new Set(['cnn', 'jpn', 'run', 'ccg', 'jcg']);
 const clsOf = (t, tr) => t.kind === 'air' ? null : (tr.affil === 'U' ? 'unk' : t.cls);
 const AFF = { F: '아군', H: '적성', S: '의심', U: '미상', N: '중립' };
 const layerOn = { space: true, surface: true, under: true, air: true, ground: true };
-const showB = { nll: true, kadiz: true, eez: true, mca: true, infra: true, nm12: true, land: true };
+const showB = { nll: true, kadiz: true, cadiz: true, eez: true, mca: true, infra: true, nm12: true, land: true };
 
 // RF 위성이 잡는 방사원 종류
 const EMIT = {
@@ -1359,7 +1361,7 @@ function usvStep(dt) {
 }
 function moveAir(a, dt) {
   if (a === mpa) { mpaMove(dt); return; }
-  if (a.follow) { const g = a.follow(); if (g) { a.dest = g; if (a.mode === 'orbit') a.center = g; } }
+  if (a.follow) { let g = a.follow(); if (g) { g = kadizIn(g); a.dest = g; if (a.mode === 'orbit') a.center = g; } }
   if (a.mode === 'orbit') orbit(a, dt);
   else if (moveToward(a, advance(a.dest, a.ph, a.destR), a.spd, dt)) {
     a.mode = 'orbit'; a.center = a.dest; a.r = a.destR; a.task = a.arriveTask;
@@ -1368,7 +1370,7 @@ function moveAir(a, dt) {
 }
 function sendAir(a, dest, r, task, onArrive) {
   if (a === mpa) { dest = kadizIn(dest.slice()); if (dest[0] > 128.3 && dest[0] < 131.7) dest[1] = Math.min(dest[1], 38.5); a.dest = dest; a.mode = 'transit'; a.wps = seaRoute(a.pos, dest); a.onArrive = onArrive; a.task = '이동 중 · ' + task; a.arriveTask = task; return; }
-  a.dest = dest.slice(); a.destR = r; a.ph = bearing(dest, a.pos); a.mode = 'transit'; a.onArrive = onArrive;
+  dest = kadizIn(dest); a.dest = dest.slice(); a.destR = r; a.ph = bearing(dest, a.pos); a.mode = 'transit'; a.onArrive = onArrive;
   a.task = '이동 중 · ' + task; a.arriveTask = task;
 }
 
@@ -1626,7 +1628,9 @@ function step(dt) {
   // 우군 함정은 NLL 북쪽으로 넘어가지 않는다 (NLL 남쪽 3km 안쪽까지만)
   for (const t of targets) if (t.truth === 'F' && t.kind === 'surface' && active(t)) { const q = southOfNll(t.pos); if (q !== t.pos) t.pos = q; }
   moveAir(mpa, dt); moveAir(uav, dt); uav2Step(dt); for (const a of nllUavs) nllUavStep(a, dt); usvStep(dt); heliStep(dt);
-  for (const a of [uav, uav2, ...nllUavs]) a.pos = southOfNll(a.pos);   // 우군 무인기도 NLL 이남에서만 비행
+  // 우군 무인기(UAV-1~4, CVX 함재 UAV)는 NLL 이남·KADIZ 안에서만 비행
+  for (const a of [uav, uav2, ...nllUavs]) a.pos = kadizIn(southOfNll(a.pos));
+  for (const t of targets) if (t.un === 'uav' && t.truth === 'F' && active(t)) t.pos = kadizIn(t.pos);
   const friends = targets.filter(t => t.truth === 'F');
   // 위성: 해도 상공에 들어오면 통과 기록을 열고, 관측 위성은 지나간 구간을 훑어 탐지한다
   const act = [];
@@ -2319,6 +2323,10 @@ function drawDyn() {
   if (showB.kadiz) {
     h += `<path class="kadiz" d="${pathD(SC.kadiz, true)}"${dash(z, 10, 4, 2, 4)}/>`;
     h += txt('btx kadiz', X(123.08), Y(38.88), 11 * z, 'KADIZ') + txt('btx kadiz', X(132.92), Y(38.88), 11 * z, 'KADIZ', 'end');
+  }
+  if (showB.cadiz && SC.cadiz) {   // 중국 방공식별구역 (KADIZ와 색·선 모양을 달리)
+    h += `<path class="cadiz" d="${pathD(SC.cadiz)}"${dash(z, 10, 3, 2, 3, 2, 3)}/>`;
+    h += txt('btx cadiz', X(122.0), Y(33.183) - 6 * z, 11 * z, 'CADIZ (중국)');
   }
   if (showB.eez) {
     h += `<path class="eez" d="${pathD(SC.eez.delimited)}"/>`;
@@ -3934,7 +3942,7 @@ $('bCopy').onclick = () => {
   try { navigator.clipboard.writeText(ta.value).then(() => { $('copyMsg').textContent = '복사됨'; }, fallback); } catch (e) { fallback(); }
 };
 if (!SC.mca) { $('bdMCA').disabled = true; $('bdMCA').checked = false; $('bdMCAwrap').classList.add('na'); $('bdMCAwrap').title = 'scenario.js의 mca에 좌표를 넣으면 표시됩니다'; $('bdMCAwrap').lastChild.textContent = 'MCA(KTO) 좌표 미입력'; }
-for (const k of ['nll', 'kadiz', 'eez', 'mca', 'infra', 'nm12', 'land']) $('bd' + k.toUpperCase()).onchange = e => { showB[k] = e.target.checked; if (k === 'nm12') drawStatic(); drawDyn(); };
+for (const k of ['nll', 'kadiz', 'cadiz', 'eez', 'mca', 'infra', 'nm12', 'land']) $('bd' + k.toUpperCase()).onchange = e => { showB[k] = e.target.checked; if (k === 'nm12') drawStatic(); drawDyn(); };
 document.querySelector('.grid').addEventListener('click', e => {
   const bx = e.target.closest('.box');
   if (bx && !e.target.closest('[data-layer]') && matchMedia('(max-width: 860px)').matches) {
