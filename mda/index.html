@@ -149,6 +149,7 @@ button { font: inherit; color: inherit; }
 #arcpanel > h2, #slocpanel > h2 { font-family: var(--font-head); font-weight: 400; font-size: 14.8px; letter-spacing: .01em; }
 #slocpanel > h2 .pfold { font-family: var(--font-ui); font-weight: 600; letter-spacing: 0; }
 #arcpanel .ahd h3, #slocpanel .ahd h3 { font-family: var(--font-head); font-weight: 400; font-size: 12.3px; color: var(--fg); letter-spacing: .01em; }
+#arcpanel .ahd b.rnm { font-family: var(--font-head); font-weight: 400; font-size: 13.3px; letter-spacing: .01em; }   /* 항로 상세정보의 항로 이름 */
 #polarSec > h2, #slocSec > h2 { font-family: var(--font-head); font-weight: 400; font-size: 15.3px; letter-spacing: .01em; }
 #polarSec .pdom h4, #slocSec .pdom h4 { font-family: var(--font-head); font-weight: 400; font-size: 12.8px; letter-spacing: .01em; }
 .srcpanel > h2.fh { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
@@ -2596,7 +2597,7 @@ function arcRouteH() {
     + Object.keys(ARN).map(k => `<tr data-route="${k}"><td><b class="atx rt ${k}" style="stroke:none">${({ NSR: '북동항로', NWP: '북서항로', TSR: '북극횡단항로' })[k]}</b><small>${k === 'NSR' ? '북동항로(NSR)' : esc(AR.routes[k].nm)} · 약 ${Math.round(len(k) / 100) * 100}km</small></td><td><small>${esc(AR.routeInfo[k].season)}</small></td><td>${arcShips.filter(sh => onRoute(sh, k)).length}척</td></tr>`).join('') + '</tbody></table></div>';
   const k = arcPre, ri = AR.routeInfo[k], ships = arcShips.filter(sh => onRoute(sh, k));
   const near = arcShips.filter(sh => !onRoute(sh, k) && AR.routes[k].pts.some(q => q[1] >= 58 && gdist(q, sh.pos) < 300));
-  return `<div class="ahd"><h3>${ARN[k]} 상세정보</h3><b>${k === 'NSR' ? '북동항로(NSR)' : esc(AR.routes[k].nm)}</b> <small class="empty">약 ${Math.round(len(k) / 100) * 100}km (표시 구간)</small>
+  return `<div class="ahd"><h3>${ARN[k]} 상세정보</h3><b class="rnm">${k === 'NSR' ? '북동항로(NSR)' : esc(AR.routes[k].nm)}</b> <small class="empty">약 ${Math.round(len(k) / 100) * 100}km (표시 구간)</small>
     <table class="atab rdet" style="margin-top:4px"><tbody><tr><td>구간</td><td>${esc(ri.sec)}</td></tr><tr><td>관문 해협</td><td>${esc(ri.gates)}</td></tr>
     <tr><td>통항 시기</td><td>${esc(ri.season)}</td></tr><tr><td>관할·규제</td><td>${esc(ri.gov)}</td></tr><tr><td>단축 효과</td><td>${esc(ri.gain)}</td></tr><tr><td>위험 요소</td><td>${esc(ri.risk)}</td></tr>
     <tr><td>운항 선박</td><td>${ships.length ? ships.map(sh => `${sh.id} ${esc(sh.name)}`).join(', ') : '현재 정기 운항 선박 없음'}</td></tr><tr><td>항로 인근</td><td>${near.length ? near.map(sh => `${sh.id} ${esc(sh.type)}`).join(', ') : '–'}</td></tr></tbody></table></div>`;
