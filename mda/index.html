@@ -328,6 +328,11 @@ button { font: inherit; color: inherit; }
 .cdse li.cql { display: grid; grid-template-columns: 58px 1fr; gap: 6px; align-items: center; }
 .cdse .cqi { display: grid; place-items: center; width: 58px; height: 58px; border-radius: 4px; overflow: hidden; border: 1px solid var(--line); background: var(--panel-2); font-size: 9.5px; line-height: 1.2; text-align: center; color: var(--muted); }
 .cdse .cqi img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.cdse .cov { gap: 4px 10px; font-size: 11px; } .cdse .cov label { display: inline-flex; align-items: center; gap: 4px; } .cdse .cov input[type=range] { width: 80px; } .cdse .cov small { flex-basis: 100%; }
+.cdse .cgo { font: 600 10.5px var(--mono, monospace); min-width: 18px; padding: 0 4px; border: 1px solid #e8590c; border-radius: 9px; background: color-mix(in srgb, #e8590c 12%, transparent); color: #e8590c; cursor: pointer; }
+.cdse li.cql.on { background: color-mix(in srgb, #e8590c 8%, transparent); }
+.cfp { fill: none; stroke: #f08c00; } .cfp.hi { stroke: #e8590c; fill: color-mix(in srgb, #e8590c 8%, transparent); }
+#arc text.cfn, #sloc text.cfn { fill: #e8590c; }
 .cdse .cqs.sar { background: repeating-linear-gradient(135deg, #6b7c86 0 3px, #8796a0 3px 6px); color: #fff; } .cdse .cqs.opt { background: linear-gradient(160deg, #2f6f8f, #6fa86a 60%, #c9b98a); color: #fff; }
 @media (max-width: 860px) { .pdom { grid-template-columns: 1fr; } }
 .share .el { font: 500 10px var(--font-data); fill: var(--fg); paint-order: stroke; stroke: var(--panel); stroke-width: 3px; }
@@ -644,14 +649,14 @@ textarea.report { width: 100%; min-height: 150px; font: 12px/1.5 var(--font-data
       <button class="btn" type="button" data-sp="all" aria-pressed="true">전체</button><button class="btn" type="button" data-sp="hormuz" aria-pressed="false">호르무즈</button><button class="btn" type="button" data-sp="aden" aria-pressed="false">아덴만·홍해</button><button class="btn" type="button" data-sp="malacca" aria-pressed="false">말라카</button><button class="btn" type="button" data-sp="scs" aria-pressed="false">남중국해·대만</button><button class="btn" type="button" data-sp="ecs" aria-pressed="false">동중국해·센카쿠</button>
     </div>
     <svg id="sloc" viewBox="0 0 1414 810" preserveAspectRatio="xMinYMid meet" hidden role="img" aria-label="원해 해상교통로 관심해역 상황도 (호르무즈·아덴만·홍해·말라카)">
-      <g id="sStatic"></g><g id="sDyn"></g>
+      <g id="sStatic"></g><g id="sImg"></g><g id="sDyn"></g>
     </svg>
     <div class="spre seg" id="apre" hidden role="group" aria-label="북극항로 보기">
       <button class="btn" type="button" data-ap="all" aria-pressed="true">전체</button><button class="btn" type="button" data-ap="NSR" aria-pressed="false">북동항로</button><button class="btn" type="button" data-ap="NWP" aria-pressed="false">북서항로</button><button class="btn" type="button" data-ap="TSR" aria-pressed="false">북극횡단항로</button>
     </div>
     <svg id="arc" viewBox="0 0 1000 1000" preserveAspectRatio="xMinYMid meet" hidden role="img" aria-label="북극 해역 상황도 (북극점 중심 투영)">
       <defs><clipPath id="aclip"><circle cx="500" cy="500" r="482"></circle></clipPath></defs>
-      <g clip-path="url(#aclip)"><g id="aStatic"></g><g id="aDyn"></g></g>
+      <g clip-path="url(#aclip)"><g id="aStatic"></g><g id="aImg"></g><g id="aDyn"></g></g>
     </svg>
     <div class="bounds">
       <b>경계선</b>
@@ -2545,7 +2550,7 @@ function fitLeftOfPanel(el, box, panel, V) {
   const aw = pr ? Math.max(rc.width * 0.45, pr.left - rc.left - 12) : rc.width, ah = rc.height - 70;   // 위쪽 단추 줄 높이만큼 비운다
   const s = Math.min(aw / box[2], ah / box[3]), W = rc.width / s, H = rc.height / s;
   const x = box[0] - (aw / s - box[2]) / 2, y = box[1] - (ah / s - box[3]) / 2 - 60 / s;
-  el._fit = { x, y, W, H };
+  el._fit = { x, y, W, H, ox: x + W / 2 - box[0] - box[2] / 2, oy: y + H / 2 - box[1] - box[3] / 2 };   // ox·oy: 화면 중심과 보이는 영역(정보칸 왼쪽) 중심의 차이
   if (!V || V.k === 1 && !V.dx && !V.dy) { el.setAttribute('viewBox', [x, y, W, H].map(f1).join(' ')); return 1 / s; }
   // 확대·이동: 기본 화면 중심에서 (dx, dy)만큼 옮긴 점을 중심으로 1/k 크기만 보여 준다 (글자·기호는 화면 픽셀 기준 크기 유지)
   const w = W / V.k, h = H / V.k, cx = x + W / 2 + V.dx, cy = y + H / 2 + V.dy;
@@ -2618,7 +2623,7 @@ function drawArcStatic() {
     // 전체 보기는 기지가 몰려 이름이 겹치므로 기호만 그리고(마우스를 올리면 이름), 항로별 확대 보기에서 이름을 붙인다
     h += `<g class="afac ${side}"><title>${n} · ${note}</title>${facGlyph(k, v[0], v[1], az)}${arcPre === 'all' ? '' : `<text class="atx fac" x="${f1(v[0] + (at === 'l' ? -6 : at ? 0 : 6) * az)}" y="${f1(v[1] + (at === 'u' ? -7 : at === 'd' ? 13 : 3.5) * az)}" font-size="${f1(9.5 * az)}"${at === 'l' ? ' text-anchor="end"' : at ? ' text-anchor="middle"' : ''}>${n}</text>`}</g>`;
   }
-  $('aStatic').innerHTML = h;
+  $('aStatic').innerHTML = h; drawCdseOv(cdseA);
 }
 function drawArc() {
   let h = '';
@@ -3661,7 +3666,7 @@ function drawSlocStatic() {
   for (const hb of SL.hubs) { const v = SP(...hb.port), d = 5 * zz; h += `<path class="hub" d="M${f1(v[0])},${f1(v[1] - d)}l${f1(d * .6)},${f1(d * 1.6)}h${f1(-d * 1.2)}Z M${f1(v[0] - d)},${f1(v[1] + d * .2)}h${f1(d * 2)}"/><text class="atx hubt" x="${f1(v[0] - 6 * zz)}" y="${f1(v[1] + 14 * zz)}" font-size="${fs(10.5)}" text-anchor="end">${hb.nm} · UAV·USV</text>`; const [w, s0, e, n] = hb.box; h += `<path class="hubbox" d="${spath([[w, s0], [e, s0], [e, n], [w, n]], true)}" stroke-width="${fs(1.2)}" stroke-dasharray="${fs(5)} ${fs(4)}"/>`; }
   { const v = SP(...SL.supply.pos); h += `<text class="atx hubt" x="${f1(v[0] + 6 * zz)}" y="${f1(v[1] + 14 * zz)}" font-size="${fs(10)}">청해부대 보급항</text>`; }
   { const v = SP(52.5, -15.8); h += `<text class="atx rt CAPE" x="${f1(v[0] - 4)}" y="${f1(v[1] - 6 * zz)}" font-size="${fs(10)}" text-anchor="end">→ 희망봉 (+10~14일)</text>`; }
-  $('sStatic').innerHTML = h; slocZ = zz; $('sloc').style.setProperty('--hw', f1(3 * zz) + 'px');
+  $('sStatic').innerHTML = h; slocZ = zz; drawCdseOv(cdseS); $('sloc').style.setProperty('--hw', f1(3 * zz) + 'px');
 }
 let slocZ = 1;
 function drawSloc() {
@@ -3786,8 +3791,8 @@ const CDSE_API = 'https://catalogue.dataspace.copernicus.eu/odata/v1/Products';
 const CDSE_AREA = { all: [30, 66, 180, 82], NSR: [30, 66, 180, 82], NWP: [-170, 66, -60, 80], TSR: [-15, 77, 25, 84] };
 const CDSE_NM = { all: '북극 (북동항로 해역)', NSR: '북동항로 해역', NWP: '북서항로 해역', TSR: '북극횡단항로 (프람 해협)' };
 // 화면별 조회 상태: 북극항로(cdseA)와 원해 SLOC(cdseS)
-const cdseA = { st: 'idle', items: [], at: null, err: '', mis: 'SENTINEL-1', box: CDSE_AREA.all, nm: CDSE_NM.all, sel: 'cdseMis', out: 'cdseOut', key: 'cdseOut' };
-const cdseS = { st: 'idle', items: [], at: null, err: '', mis: 'SENTINEL-1', box: null, nm: '', sel: 'scdseMis', out: 'scdseOut', key: 'scdseOut' };
+const cdseA = { st: 'idle', items: [], at: null, err: '', mis: 'SENTINEL-1', box: CDSE_AREA.all, nm: CDSE_NM.all, sel: 'cdseMis', out: 'cdseOut', key: 'cdseOut', view: 'arc', g: 'aImg', ov: true, op: 0.8, hi: -1 };
+const cdseS = { st: 'idle', items: [], at: null, err: '', mis: 'SENTINEL-1', box: null, nm: '', sel: 'scdseMis', out: 'scdseOut', key: 'scdseOut', view: 'sloc', g: 'sImg', ov: true, op: 0.8, hi: -1 };
 function cdseSim(c) {
   // 모의 목록: 시뮬레이션 위성 궤도에서 최근 24시간 동안 대상 해역 위를 지난 Sentinel 통과를 영상으로 본다
   const [w, s0, e, n] = c.box, key = { 'SENTINEL-1': 'Sentinel-1', 'SENTINEL-2': 'Sentinel-2', 'SENTINEL-3': 'Sentinel-3' }[c.mis];
@@ -3825,13 +3830,18 @@ async function cdseQuery(c, box, nm, rerender) {
     if (!j) throw new Error(last);
     c.items = (j.value || []).map(v => ({ name: v.Name, id: v.Id, t: (v.ContentDate && v.ContentDate.Start || '').replace('T', ' ').slice(0, 16) + ' UTC',
       cloud: ((v.Attributes || []).find(a => a.Name === 'cloudCover') || {}).Value,
-      ql: ((v.Assets || []).find(a => /quicklook/i.test(a.Type || '')) || {}).DownloadLink || null }));   // 미리보기(퀵룩) 그림 주소
+      ql: ((v.Assets || []).find(a => /quicklook/i.test(a.Type || '')) || {}).DownloadLink || null,   // 미리보기(퀵룩) 그림 주소
+      t0: v.ContentDate && v.ContentDate.Start, od: ((v.Attributes || []).find(a => a.Name === 'orbitDirection') || {}).Value, fp: cdseFp(v) }));
+    for (const it of c.items) it.cn = it.fp ? cdseCorners(it, c.mis) : null;
+    c.hi = -1;
     c.st = 'live';
   } catch (err) {
     c.st = 'sim'; c.err = err.name === 'AbortError' ? '응답 시간 초과' : /^HTTP/.test(err.message) ? '서버 응답 ' + err.message : '접속 차단 · ' + (err.message || String(err));
+    // Claude 아티팩트 화면 등은 보안 정책으로 외부 서버 호출을 막는다: GitHub Pages 사이트 안내
+    c.blk = !/^HTTP/.test(err.message || '') && err.name !== 'AbortError' && location.protocol !== 'file:' && !/github\.io$/.test(location.hostname);
     c.items = cdseSim(c);
   }
-  c.at = new Date(); rerender();
+  c.at = new Date(); rerender(); drawCdseOv(c);
 }
 const cdseCount = c => (c.st === 'live' || c.st === 'sim' ? c.items.length : '–');
 // 영상 미리보기(퀵룩): 실제 조회는 CDSE 퀵룩 그림(누르면 크게 보기), 불러오지 못하면 안내 문구, 모의 목록은 모의 미리보기 칸
@@ -3840,12 +3850,94 @@ function cqlThumb(it) {
   if (it.sim) return `<span class="cqi cqs ${it.sim === 'Sentinel-1' ? 'sar' : 'opt'}">모의<br>미리보기</span>`;
   return '<span class="cqi cqn">미리보기<br>없음</span>';
 }
+// ── CDSE 영상 지도 겹쳐 보기: 영상 촬영 범위(footprint)에 퀵룩 그림을 맞춰 깐다 (위치·방향은 근사) ──
+function cdseFp(v) {
+  const g = v.GeoFootprint; if (!g || !g.coordinates) return null;
+  const r = g.type === 'Polygon' ? g.coordinates[0] : g.type === 'MultiPolygon' ? g.coordinates.map(q => q[0]).sort((a, b) => b.length - a.length)[0] : null;
+  return r && r.length >= 4 ? r.map(q => [+q[0], +q[1]]) : null;
+}
+// UTM 정·역변환 (WGS84, 북반구·남반구 모두 부호 있는 북거로 다룬다): Sentinel-2 타일 모서리 계산용
+const UE2 = 0.00669437999014, UEP = UE2 / (1 - UE2), UA = 6378137, UK0 = 0.9996;
+const UM = ph => UA * ((1 - UE2 / 4 - 3 * UE2 ** 2 / 64 - 5 * UE2 ** 3 / 256) * ph - (3 * UE2 / 8 + 3 * UE2 ** 2 / 32 + 45 * UE2 ** 3 / 1024) * Math.sin(2 * ph) + (15 * UE2 ** 2 / 256 + 45 * UE2 ** 3 / 1024) * Math.sin(4 * ph) - 35 * UE2 ** 3 / 3072 * Math.sin(6 * ph));
+function utmFwd(zn, lon, lat) {
+  const ph = lat * D2R, l0 = (zn * 6 - 183) * D2R, N = UA / Math.sqrt(1 - UE2 * Math.sin(ph) ** 2), T = Math.tan(ph) ** 2, C = UEP * Math.cos(ph) ** 2;
+  let dl = lon * D2R - l0; dl -= 2 * Math.PI * Math.round(dl / (2 * Math.PI)); const A = Math.cos(ph) * dl;
+  return [500000 + UK0 * N * (A + (1 - T + C) * A ** 3 / 6 + (5 - 18 * T + T * T + 72 * C - 58 * UEP) * A ** 5 / 120),
+    UK0 * (UM(ph) + N * Math.tan(ph) * (A * A / 2 + (5 - T + 9 * C + 4 * C * C) * A ** 4 / 24 + (61 - 58 * T + T * T + 600 * C - 330 * UEP) * A ** 6 / 720))];
+}
+function utmInv(zn, E, Nn) {
+  const mu = Nn / UK0 / (UA * (1 - UE2 / 4 - 3 * UE2 ** 2 / 64 - 5 * UE2 ** 3 / 256)), e1 = (1 - Math.sqrt(1 - UE2)) / (1 + Math.sqrt(1 - UE2));
+  const p1 = mu + (3 * e1 / 2 - 27 * e1 ** 3 / 32) * Math.sin(2 * mu) + (21 * e1 ** 2 / 16 - 55 * e1 ** 4 / 32) * Math.sin(4 * mu) + 151 * e1 ** 3 / 96 * Math.sin(6 * mu) + 1097 * e1 ** 4 / 512 * Math.sin(8 * mu);
+  const C = UEP * Math.cos(p1) ** 2, T = Math.tan(p1) ** 2, s2 = 1 - UE2 * Math.sin(p1) ** 2, N = UA / Math.sqrt(s2), R = UA * (1 - UE2) / s2 ** 1.5, D = (E - 500000) / (N * UK0);
+  const ph = p1 - N * Math.tan(p1) / R * (D * D / 2 - (5 + 3 * T + 10 * C - 4 * C * C - 9 * UEP) * D ** 4 / 24 + (61 + 90 * T + 298 * C + 45 * T * T - 252 * UEP - 3 * C * C) * D ** 6 / 720);
+  const dl = (D - (1 + 2 * T + C) * D ** 3 / 6 + (5 - 2 * C + 28 * T - 3 * C * C + 8 * UEP + 24 * T * T) * D ** 5 / 120) / Math.cos(p1);
+  return [zn * 6 - 183 + dl / D2R, ph / D2R];
+}
+// 퀵룩 그림의 왼쪽 위·오른쪽 위·왼쪽 아래가 닿는 지점 (경도, 위도)
+function cdseCorners(it, mis) {
+  const fp = it.fp;
+  // Sentinel-2: 퀵룩은 UTM 타일 전체(109.8 km 정사각형, 북쪽이 위). 타일 왼쪽·위 경계는 100 km 격자에 놓인다
+  const m = /_T(\d{2})[C-X][A-Z]{2}_/.exec(it.name || '');
+  if (mis === 'SENTINEL-2' && m) {
+    const zn = +m[1], u = fp.map(q => utmFwd(zn, q[0], q[1])), e0 = Math.floor(Math.min(...u.map(q => q[0])) / 1e5) * 1e5, n0 = Math.ceil(Math.max(...u.map(q => q[1])) / 1e5) * 1e5;
+    return [utmInv(zn, e0, n0), utmInv(zn, e0 + 109800, n0), utmInv(zn, e0, n0 - 109800)];
+  }
+  // Sentinel-1·3: 궤도 진행 방향으로 그림 축을 정한다. 궤도 방향 속성이 없으면 촬영 지방시로 추정
+  // (Sentinel-1 상승 18시·하강 06시, Sentinel-3 하강 10시·상승 22시)
+  const la0 = fp.reduce((a, q) => a + q[1], 0) / fp.length, lo0 = fp[0][0], cl = Math.cos(Math.min(85, Math.abs(la0)) * D2R);
+  const lst = it.t0 ? ((new Date(it.t0).getUTCHours() + new Date(it.t0).getUTCMinutes() / 60 + lo0 / 15) % 24 + 24) % 24 : 6;
+  const asc = it.od ? /^ASC/i.test(it.od) : mis === 'SENTINEL-1' ? lst >= 12 : lst >= 16 || lst < 4;
+  const b = Math.asin(Math.min(1, 0.143 / cl)), a = asc ? [-Math.sin(b), Math.cos(b)] : [-Math.sin(b), -Math.cos(b)];   // 진행 방향 (궤도경사 98°)
+  // Sentinel-1(오른쪽 관측 SAR): 위쪽 = 촬영 시작, 왼쪽 = 근거리(궤도 쪽). Sentinel-3: 북쪽이 위, 서쪽이 왼쪽인 보통 방향
+  const iy = mis === 'SENTINEL-1' ? a : (a[1] < 0 ? a : [-a[0], -a[1]]), ix = mis === 'SENTINEL-1' ? [a[1], -a[0]] : [-iy[1], iy[0]];
+  const en = fp.map(q => { let dl = q[0] - lo0; dl -= 360 * Math.round(dl / 360); return [dl * cl * 111.2, (q[1] - la0) * 111.2]; });
+  const pick = (sx, sy) => fp[en.reduce((bi, q, i) => { const v = sx * (q[0] * ix[0] + q[1] * ix[1]) + sy * (q[0] * iy[0] + q[1] * iy[1]), w = en[bi]; return v < sx * (w[0] * ix[0] + w[1] * ix[1]) + sy * (w[0] * iy[0] + w[1] * iy[1]) ? i : bi; }, 0)];
+  return [pick(1, 1), pick(-1, 1), pick(1, -1)];
+}
+// 촬영 범위 테두리: 변을 잘게 나눠 투영한다 (극 투영에서 휘는 변)
+function cdseRing(fp, P) {
+  const out = [];
+  for (let i = 0; i < fp.length - 1; i++) {
+    const [x0, y0] = fp[i]; let dx = fp[i + 1][0] - x0; dx -= 360 * Math.round(dx / 360); const dy = fp[i + 1][1] - y0;
+    for (let k = 0; k < 6; k++) out.push(P(x0 + dx * k / 6, y0 + dy * k / 6));
+  }
+  return 'M' + out.map(v => f1(v[0]) + ',' + f1(v[1])).join('L') + 'Z';
+}
+function drawCdseOv(c) {
+  const el = $(c.g); if (!el) return;
+  const arc = c.view === 'arc', P = arc ? AP : SP, z = arc ? az : slocZ;
+  let h = '';
+  if (c.ov && c.st === 'live') c.items.forEach((it, i) => {
+    if (!it.fp) return;
+    const d = cdseRing(it.fp, P);
+    if (it.ql && it.cn) {
+      const [p0, p1, p2] = it.cn.map(q => P(q[0], q[1])), id = c.g + 'c' + i;
+      h += `<clipPath id="${id}"><path d="${d}"/></clipPath><g clip-path="url(#${id})"><image href="${esc(it.ql)}" width="1" height="1" preserveAspectRatio="none" opacity="${c.op}" transform="matrix(${[p1[0] - p0[0], p1[1] - p0[1], p2[0] - p0[0], p2[1] - p0[1], p0[0], p0[1]].map(v => v.toFixed(3)).join(' ')})"/></g>`;
+    }
+    const lb = it.fp.reduce((m, q) => (q[1] > m[1] ? q : m)), v = P(lb[0], lb[1]);
+    h += `<path class="cfp${c.hi === i ? ' hi' : ''}" d="${d}" stroke-width="${f1((c.hi === i ? 2.6 : 1.3) * z)}" stroke-dasharray="${f1(5 * z)} ${f1(3 * z)}"><title>${esc(it.name)}</title></path><text class="atx cfn" x="${f1(v[0])}" y="${f1(v[1] - 4 * z)}" font-size="${f1(10.5 * z)}" text-anchor="middle">${i + 1}</text>`;
+  });
+  el.innerHTML = h;
+}
+// 선택한 영상 범위로 지도를 옮기고 확대한다
+function cdseGoto(c, i) {
+  const it = c.items[i], el = $(c.view); if (!it || !it.fp || !el._fit) return;
+  const P = c.view === 'arc' ? AP : SP, ps = it.fp.map(q => P(q[0], q[1])), xs = ps.map(q => q[0]), ys = ps.map(q => q[1]), F = el._fit, V = MZ[c.view];
+  const bw = Math.max(...xs) - Math.min(...xs), bh = Math.max(...ys) - Math.min(...ys), cx = (Math.max(...xs) + Math.min(...xs)) / 2, cy = (Math.max(...ys) + Math.min(...ys)) / 2;
+  const base = F.W - 2 * F.ox, baseH = F.H - 2 * F.oy;   // 기본 화면에서 정보칸 왼쪽에 보이는 폭·높이
+  V.k = Math.min(16, Math.max(1, Math.min(base / (bw * 2.2), baseH / (bh * 2.2))));
+  V.dx = cx + F.ox / V.k - (F.x + F.W / 2); V.dy = cy + F.oy / V.k - (F.y + F.H / 2);
+  c.hi = i; mapRedraw(c.view);
+}
 function cdseRender(c) {
   const st = c.st === 'idle' ? '<p class="st">조회 단추를 누르면 CDSE 카탈로그에서 선택한 해역의 최근 3일 Sentinel 영상을 찾습니다.</p>'
     : c.st === 'loading' ? '<p class="st">CDSE 카탈로그 조회 중…</p>'
     : c.st === 'live' ? `<p class="st live">● 실시간 연동 · ${esc(c.nm)} · ${c.items.length}건 (${c.at.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })} 조회)</p>`
     : `<p class="st sim">● 연동 실패 (${esc(c.err)}): 시뮬레이션 궤도 기반 모의 목록을 표시합니다 (${esc(c.nm)}).</p>`;
-  setHTML($(c.out), c.key, st + (c.items.length ? `<ul>${c.items.map(it => `<li class="cql">${cqlThumb(it)}<div>${esc(it.name)}<small>${esc(it.t)}${it.cloud != null ? ` · 구름 ${Math.round(it.cloud)}%` : ''}${it.id ? ` · <a href="${CDSE_API}(${encodeURIComponent(it.id)})" target="_blank" rel="noopener">메타데이터</a>` : ''}</small></div></li>`).join('')}</ul>
+  const ovn = c.st === 'live' ? c.items.filter(it => it.fp).length : 0;
+  const ctl = ovn ? `<div class="row cov"><label><input type="checkbox" data-cov${c.ov ? ' checked' : ''}> 지도에 영상 겹쳐 보기</label><label>불투명도 <input type="range" data-cop min="0.2" max="1" step="0.1" value="${c.op}" aria-label="영상 불투명도"></label><small class="empty">번호를 누르면 지도가 그 영상으로 이동합니다 · 위치·방향은 촬영 범위에 맞춘 근사 배치</small></div>` : '';
+  const blk = c.st === 'sim' && c.blk ? `<p class="st sim">이 화면(Claude 아티팩트 등)은 보안 정책으로 외부 서버 접속이 막혀 있습니다. 실시간 영상은 <a href="https://heaven301010-art.github.io/Kwon-Soonchul/mda/" target="_blank" rel="noopener">GitHub Pages 사이트</a>에서 조회하세요.</p>` : '';
+  setHTML($(c.out), c.key, st + blk + ctl + (c.items.length ? `<ul>${c.items.map((it, i) => `<li class="cql" data-ci="${i}">${cqlThumb(it)}<div>${it.fp && c.st === 'live' ? `<button class="cgo" type="button" data-cgo="${i}" title="지도에서 이 영상 보기">${i + 1}</button> ` : ''}${esc(it.name)}<small>${esc(it.t)}${it.cloud != null ? ` · 구름 ${Math.round(it.cloud)}%` : ''}${it.id ? ` · <a href="${CDSE_API}(${encodeURIComponent(it.id)})" target="_blank" rel="noopener">메타데이터</a>` : ''}</small></div></li>`).join('')}</ul>
     <p class="st"><a href="https://browser.dataspace.copernicus.eu/" target="_blank" rel="noopener">Copernicus Browser에서 영상 보기 ↗</a> <small class="empty">(영상 내려받기는 CDSE 무료 회원 로그인 필요)</small></p>` : c.st === 'live' ? '<p class="st">해당 기간·해역에 영상이 없습니다.</p>' : c.st === 'sim' ? '<p class="st">최근 24시간 모의 궤도에서 해당 해역을 지난 영상이 없습니다.</p>' : ''));
 }
 function renderPolar() {
@@ -3905,6 +3997,16 @@ function renderSlocInfo() {
   cdseRender(cdseS);
 }
 const SNM = () => ({ all: '인도양 SLOC (전체)', hormuz: '호르무즈 해협', aden: '아덴만·홍해', malacca: '말라카 해협', scs: '남중국해·대만', ecs: '동중국해·센카쿠' })[slocPre];
+for (const c of [cdseA, cdseS]) {
+  const box = $(c.out);
+  box.addEventListener('click', e => { const b = e.target.closest('[data-cgo]'); if (b) cdseGoto(c, +b.dataset.cgo); });
+  box.addEventListener('change', e => {
+    if (e.target.matches('[data-cov]')) { c.ov = e.target.checked; drawCdseOv(c); }
+    if (e.target.matches('[data-cop]')) { c.op = +e.target.value; drawCdseOv(c); }
+  });
+  box.addEventListener('mouseover', e => { const li = e.target.closest('li[data-ci]'), i = li ? +li.dataset.ci : -1; if (i !== c.hi) { c.hi = i; drawCdseOv(c); } });
+  box.addEventListener('mouseleave', () => { if (c.hi !== -1) { c.hi = -1; drawCdseOv(c); } });
+}
 $('scdseGo').onclick = () => cdseQuery(cdseS, SBOX[slocPre], SNM(), renderSlocInfo);
 $('cdseGo').onclick = () => cdseQuery(cdseA, CDSE_AREA[arcPre], CDSE_NM[arcPre], renderPolar);
 
