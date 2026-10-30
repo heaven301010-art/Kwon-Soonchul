@@ -146,7 +146,7 @@ button { font: inherit; color: inherit; }
 .viewsw { position: absolute; top: 8px; left: 50%; transform: translateX(-50%); z-index: 3; }
 .viewsw .btn { padding: 4px 10px; }
 @media (max-width: 860px) { .viewsw { left: 8px; transform: none; } #spre, #apre { left: 8px; transform: none; top: auto; bottom: 8px; } #kpre { left: 8px; transform: none; } .mapview .zoom { top: 82px; } #spre .btn, #apre .btn, #kpre .btn { padding: 3px 6px; font-size: 10.5px; } }
-#arc, #sloc { width: 100%; height: 100%; display: block; background: var(--bg); }
+#arc, #sloc { width: 100%; height: 100%; display: block; background: var(--bg); touch-action: none; cursor: grab; user-select: none; }
 .spre { position: absolute; top: 44px; left: 50%; transform: translateX(-50%); z-index: 3; }
 .spre .btn { padding: 3px 9px; font-size: 11.5px; white-space: nowrap; }
 #sloc .atx { stroke-width: var(--hw, 3px); }
@@ -237,7 +237,7 @@ button { font: inherit; color: inherit; }
 .mapwrap { grid-area: map; position: relative; min-width: 0; min-height: 0; background: var(--sea); border: 1px solid var(--line); }
 .mapview { position: absolute; inset: 0; }
 #map { width: 100%; height: 100%; display: block; touch-action: none; cursor: grab; user-select: none; }
-#map.drag { cursor: grabbing; }
+#map.drag, #arc.drag, #sloc.drag { cursor: grabbing; }
 .zoom { position: absolute; top: 8px; left: 8px; z-index: 3; display: flex; flex-direction: column; gap: 4px; }
 .zoom .btn { width: 30px; height: 30px; padding: 0; font-size: 15px; }
 .bounds { position: absolute; left: 8px; bottom: 8px; z-index: 3; justify-content: flex-start; display: flex; gap: 4px 12px; flex-wrap: wrap; align-items: center; background: color-mix(in srgb, var(--panel) 88%, transparent); border: 1px solid var(--line); border-radius: 5px; padding: 4px 9px; font-size: 12px; max-width: calc(100% - 300px); }
@@ -2457,16 +2457,42 @@ function drawDyn() {
 
 // ── 북극 해도 ───────────────────────────────────────
 // 보여 줄 범위 [x, y, w, h]가 오른쪽 정보칸 왼쪽 빈 곳에 다 들어가도록 viewBox를 잡고, 사용자 단위/픽셀을 돌려준다
-function fitLeftOfPanel(el, box, panel) {
+// 북극항로·원해 SLOC 확대 상태: k 배율, (dx, dy) 기본 화면 중심에서 옮긴 거리 (사용자 단위)
+const MZ = { arc: { k: 1, dx: 0, dy: 0 }, sloc: { k: 1, dx: 0, dy: 0 } };
+function fitLeftOfPanel(el, box, panel, V) {
   const rc = el.getBoundingClientRect();
   if (!rc.width || !rc.height) { el.setAttribute('viewBox', box.map(f1).join(' ')); return box[2] / 900; }
   const pr = panel && !panel.hidden && !panel.classList.contains('fold') && !$('mapwrap').classList.contains('nobox') && rc.width > 860 ? panel.getBoundingClientRect() : null;
   const aw = pr ? Math.max(rc.width * 0.45, pr.left - rc.left - 12) : rc.width, ah = rc.height - 70;   // 위쪽 단추 줄 높이만큼 비운다
   const s = Math.min(aw / box[2], ah / box[3]), W = rc.width / s, H = rc.height / s;
   const x = box[0] - (aw / s - box[2]) / 2, y = box[1] - (ah / s - box[3]) / 2 - 60 / s;
-  el.setAttribute('viewBox', [x, y, W, H].map(f1).join(' '));
-  return 1 / s;
+  el._fit = { x, y, W, H };
+  if (!V || V.k === 1 && !V.dx && !V.dy) { el.setAttribute('viewBox', [x, y, W, H].map(f1).join(' ')); return 1 / s; }
+  // 확대·이동: 기본 화면 중심에서 (dx, dy)만큼 옮긴 점을 중심으로 1/k 크기만 보여 준다 (글자·기호는 화면 픽셀 기준 크기 유지)
+  const w = W / V.k, h = H / V.k, cx = x + W / 2 + V.dx, cy = y + H / 2 + V.dy;
+  el.setAttribute('viewBox', [cx - w / 2, cy - h / 2, w, h].map(f1).join(' '));
+  return 1 / (s * V.k);
 }
+// 확대·축소: f > 1 확대. (px, py)는 고정할 지점 (사용자 단위, 없으면 화면 중심)
+function mapZoom(view, f, px, py) {
+  const el = $(view), V = MZ[view], b = el.viewBox.baseVal, F = el._fit; if (!F) return;
+  const k2 = Math.min(16, Math.max(1, V.k * f)), r = V.k / k2;
+  if (px == null) { px = b.x + b.width / 2; py = b.y + b.height / 2; }
+  const nx = px - (px - b.x) * r, ny = py - (py - b.y) * r, nw = b.width * r, nh = b.height * r;
+  V.k = k2; V.dx = nx + nw / 2 - (F.x + F.W / 2); V.dy = ny + nh / 2 - (F.y + F.H / 2);
+  if (k2 === 1) V.dx = V.dy = 0;
+  mapRedraw(view);
+}
+function mapPan(view, dxUnits, dyUnits) {
+  const V = MZ[view], F = $(view)._fit; if (!F) return;
+  V.dx = Math.max(-F.W / 2, Math.min(F.W / 2, V.dx + dxUnits)); V.dy = Math.max(-F.H / 2, Math.min(F.H / 2, V.dy + dyUnits));
+  mapRedraw(view);
+}
+function mapReset(view) { Object.assign(MZ[view], { k: 1, dx: 0, dy: 0 }); mapRedraw(view); }
+// 확대·이동 중 다시 그리기는 화면 갱신 주기에 한 번만
+const mapRedraw = view => {
+  if (mapRedraw.p) return; mapRedraw.p = requestAnimationFrame(() => { mapRedraw.p = 0; if (view === 'arc') { drawArcStatic(); drawArc(); } else { drawSlocStatic(); drawSloc(); } });
+};
 const afOn = { cty: true, mil: true, space: true, radar: true };
 const AFK = { mil: '군사기지', radar: '레이더', space: '우주기지' };
 const AFAC_HTML = `<div class="ahd"><h3>북극권 주요 군사·우주·레이더 기지 (공개자료)</h3><table class="atab afac-t"><thead><tr><th>시설</th><th>종류</th><th>국가·비고</th></tr></thead><tbody>${
@@ -2486,7 +2512,7 @@ function drawArcStatic() {
     const xs = ps.map(q => q[0]), ys = ps.map(q => q[1]), pad = 45;
     vb = [Math.min(...xs) - pad, Math.min(...ys) - pad, Math.max(...xs) - Math.min(...xs) + 2 * pad, Math.max(...ys) - Math.min(...ys) + 2 * pad];
   }
-  az = fitLeftOfPanel($('arc'), vb, $('arcpanel'));
+  az = fitLeftOfPanel($('arc'), vb, $('arcpanel'), MZ.arc);
   $('arc').style.setProperty('--hw', f1(3 * az) + 'px');
   let h = '<circle class="asea" cx="500" cy="500" r="482"/>';
   const ice = [], ice2 = []; for (let lon = 0; lon <= 360; lon += 4) { ice.push([lon, iceLat(lon)]); ice2.push([lon, iceLat(lon) - 1.2]); }
@@ -3501,7 +3527,7 @@ function slocWhere(p) {
 function drawSlocStatic() {
   const [, w0, n0, e0, s0] = SPRE[slocPre], a = SP(w0, n0), b = SP(e0, s0);
   // 글자·기호 크기를 화면 픽셀 기준으로 맞춘다 (사용자 단위/픽셀). 오른쪽 정보칸에 가리지 않게 칸 왼쪽에 맞춘다
-  const zz = fitLeftOfPanel($('sloc'), [a[0], a[1], b[0] - a[0], b[1] - a[1]], $('slocpanel')), fs = v => (v * zz).toFixed(2);
+  const zz = fitLeftOfPanel($('sloc'), [a[0], a[1], b[0] - a[0], b[1] - a[1]], $('slocpanel'), MZ.sloc), fs = v => (v * zz).toFixed(2);
   let h = `<rect class="asea" x="${f1(-SVW)}" y="${f1(-SVH)}" width="${f1(3 * SVW)}" height="${f1(3 * SVH)}"/>`;
   for (let lon = 30; lon <= 150; lon += 10) h += `<line class="agl" x1="${f1(SP(lon, 0)[0])}" y1="0" x2="${f1(SP(lon, 0)[0])}" y2="${f1(SVH)}" stroke-width="${fs(1)}"/>`;
   for (let lat = -10; lat <= 40; lat += 10) h += `<line class="agl" x1="0" y1="${f1(SP(26, lat)[1])}" x2="${f1(SVW)}" y2="${f1(SP(26, lat)[1])}" stroke-width="${fs(1)}"/>`;
@@ -3769,7 +3795,7 @@ function setView(v) {
   arcView = v === 'arc'; slocView = v === 'sloc'; const kr = v === 'kr';
   sel = arcSel = slocSel = null; selAt = null; elCache.set('selwrap', 'none'); $('selSec').hidden = true; $('selSec').innerHTML = '';   // 보기를 바꾸면 선택 팝업을 닫는다
   $('map').toggleAttribute('hidden', !kr); $('arc').toggleAttribute('hidden', !arcView); $('sloc').toggleAttribute('hidden', !slocView);
-  document.querySelector('.zoom').hidden = !kr; document.querySelector('.bounds').hidden = !kr; $('abounds').hidden = !arcView; $('sbounds').hidden = !slocView; $('spre').hidden = !slocView; $('apre').hidden = !arcView; $('kpre').hidden = !kr;
+   document.querySelector('.bounds').hidden = !kr; $('abounds').hidden = !arcView; $('sbounds').hidden = !slocView; $('spre').hidden = !slocView; $('apre').hidden = !arcView; $('kpre').hidden = !kr;
   $('srcpanel').hidden = !kr; $('arcpanel').hidden = !arcView; $('slocpanel').hidden = !slocView; $('polarSec').hidden = !arcView; $('slocSec').hidden = !slocView;
   document.querySelectorAll('[data-view]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.view === v)));
   if (arcView) { drawArcStatic(); drawArc(); renderArcPanel(); renderPolar(); if (cdseA.st === 'idle') cdseQuery(cdseA, CDSE_AREA[arcPre], CDSE_NM[arcPre], renderPolar); } else if (slocView) { drawSlocStatic(); drawSloc(); renderSlocPanel(); renderSlocInfo(); if (cdseS.st === 'idle') cdseQuery(cdseS, SBOX[slocPre], SNM(), renderSlocInfo); } else { regionView(krPre); }
@@ -3777,12 +3803,14 @@ function setView(v) {
 document.querySelectorAll('[data-view]').forEach(b => b.onclick = () => setView(b.dataset.view));
 document.querySelectorAll('[data-af]').forEach(c => c.onchange = () => { afOn[c.dataset.af] = c.checked; drawArcStatic(); });
 $('arc').addEventListener('click', e => {
+  if ($('arc')._dragged) return;   // 끌어서 옮긴 직후의 클릭은 선택으로 보지 않는다
   const q = new DOMPoint(e.clientX, e.clientY).matrixTransform($('arc').getScreenCTM().inverse());
   let best = null, bd = 16 * az;
   for (const sh of arcShips) { const v = AP(sh.rep.pos[0], sh.rep.pos[1]), d = Math.hypot(v[0] - q.x, v[1] - q.y); if (d < bd) { bd = d; best = sh.id; } }
   arcSel = best; selAt = [e.clientX, e.clientY]; elCache.delete('selwrap'); drawArc(); renderArcPanel();
 });
 $('sloc').addEventListener('click', e => {
+  if ($('sloc')._dragged) return;
   const q = new DOMPoint(e.clientX, e.clientY).matrixTransform($('sloc').getScreenCTM().inverse());
   let best = null, bd = 16 * slocZ;
   for (const sh of slocShips) { if (sh.rep.t < -1) continue; const v = SP(sh.rep.pos[0], sh.rep.pos[1]), d = Math.hypot(v[0] - q.x, v[1] - q.y); if (d < bd) { bd = d; best = sh.id; } }
@@ -3791,7 +3819,7 @@ $('sloc').addEventListener('click', e => {
 $('slocpanel').addEventListener('click', e => { const ux = e.target.closest('[data-uxs]'); if (ux) { slUx.filter(u => u.hub.id === ux.dataset.uxs && u.st === 'base').forEach(u => { uxSearch(u); addLog(`${u.id} 기동탐색 출동 (운용자 지시).`); }); renderSlocPanel(); drawSloc(); return; } const r = e.target.closest('[data-sloc]'); if (r) { slocSel = r.dataset.sloc; selAt = null; elCache.delete('selwrap'); drawSloc(); renderSlocPanel(); } });
 $('spre').addEventListener('click', e => {
   const b = e.target.closest('[data-sp]'); if (!b) return;
-  slocPre = b.dataset.sp; document.querySelectorAll('[data-sp]').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
+  slocPre = b.dataset.sp; Object.assign(MZ.sloc, { k: 1, dx: 0, dy: 0 }); document.querySelectorAll('[data-sp]').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
   setSlocFold(slocPre === 'all');
 });
 // 전체 보기는 동서로 넓어 정보칸을 접고 지도를 화면 폭 전체에 맞춘다. 해역별 보기는 정보칸을 편다
@@ -3804,7 +3832,7 @@ $('slocFold').onclick = () => setSlocFold(!$('slocpanel').classList.contains('fo
 setSlocFold(true);
 $('apre').addEventListener('click', e => {
   const b = e.target.closest('[data-ap]'); if (!b) return;
-  arcPre = b.dataset.ap; document.querySelectorAll('[data-ap]').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
+  arcPre = b.dataset.ap; Object.assign(MZ.arc, { k: 1, dx: 0, dy: 0 }); document.querySelectorAll('[data-ap]').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
   drawArcStatic(); drawArc(); renderArcPanel();
 });
 $('arcpanel').addEventListener('click', e => { const rt = e.target.closest('[data-route]'); if (rt) { document.querySelector(`[data-ap="${rt.dataset.route}"]`).click(); return; } const r = e.target.closest('[data-arc]'); if (r) { arcSel = r.dataset.arc; selAt = null; elCache.delete('selwrap'); drawArc(); renderArcPanel(); } });
@@ -3952,9 +3980,24 @@ function popShip(key, d) {
   setHTML($('selBody'), 'selBody', `<div class="hd"><b>${esc(d[0])}</b><span class="chip ${d[1]}">${d[2]}</span></div><dl>${d[3]}</dl>`);
 }
 const center = () => [vb.x + vb.w / 2, vb.y + vb.h / 2];
-$('bZin').onclick = () => zoomAt(0.7, ...center());
-$('bZout').onclick = () => zoomAt(1 / 0.7, ...center());
-$('bZfit').onclick = () => regionView('all');
+$('bZin').onclick = () => arcView ? mapZoom('arc', 1 / 0.7) : slocView ? mapZoom('sloc', 1 / 0.7) : zoomAt(0.7, ...center());
+$('bZout').onclick = () => arcView ? mapZoom('arc', 0.7) : slocView ? mapZoom('sloc', 0.7) : zoomAt(1 / 0.7, ...center());
+$('bZfit').onclick = () => arcView ? mapReset('arc') : slocView ? mapReset('sloc') : regionView('all');
+// 북극항로·원해 SLOC: 휠로 확대·축소(커서 지점 고정), 끌어서 이동
+for (const view of ['arc', 'sloc']) {
+  const el = $(view); let dg = null;
+  const pt = e => new DOMPoint(e.clientX, e.clientY).matrixTransform(el.getScreenCTM().inverse());
+  el.addEventListener('wheel', e => { e.preventDefault(); const p = pt(e); mapZoom(view, Math.exp(-e.deltaY * 0.0015), p.x, p.y); }, { passive: false });
+  el.addEventListener('pointerdown', e => { dg = { x: e.clientX, y: e.clientY, moved: false }; el._dragged = false; el.setPointerCapture(e.pointerId); });
+  el.addEventListener('pointermove', e => {
+    if (!dg) return;
+    const dx = e.clientX - dg.x, dy = e.clientY - dg.y;
+    if (!dg.moved && Math.hypot(dx, dy) > 4) { dg.moved = true; el._dragged = true; el.classList.add('drag'); }
+    if (dg.moved) { const u = view === 'arc' ? az : slocZ; mapPan(view, -dx * u, -dy * u); dg.x = e.clientX; dg.y = e.clientY; }
+  });
+  const end = () => { dg = null; el.classList.remove('drag'); };
+  el.addEventListener('pointerup', end); el.addEventListener('pointercancel', end);
+}
 document.getElementById('kpre').addEventListener('click', e => { const b = e.target.closest('[data-kp]'); if (b) regionView(b.dataset.kp); });
 
 // 표적이 천 개 가까이 되므로 해도는 초당 10번까지만 다시 그린다
