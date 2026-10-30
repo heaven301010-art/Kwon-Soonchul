@@ -331,6 +331,7 @@ button { font: inherit; color: inherit; }
 .cdse .cov { gap: 4px 10px; font-size: 11px; } .cdse .cov label { display: inline-flex; align-items: center; gap: 4px; } .cdse .cov input[type=range] { width: 80px; } .cdse .cov small { flex-basis: 100%; }
 .cdse .cgo { font: 600 10.5px var(--mono, monospace); min-width: 18px; padding: 0 4px; border: 1px solid #e8590c; border-radius: 9px; background: color-mix(in srgb, #e8590c 12%, transparent); color: #e8590c; cursor: pointer; }
 .cdse li.cql.on { background: color-mix(in srgb, #e8590c 8%, transparent); }
+.sbrd { fill: none; stroke: var(--muted); opacity: .7; stroke-linejoin: round; }
 .cfp { fill: none; stroke: #f08c00; } .cfp.hi { stroke: #e8590c; fill: color-mix(in srgb, #e8590c 8%, transparent); }
 #arc text.cfn, #sloc text.cfn { fill: #e8590c; }
 .cdse .cqs.sar { background: repeating-linear-gradient(135deg, #6b7c86 0 3px, #8796a0 3px 6px); color: #fff; } .cdse .cqs.opt { background: linear-gradient(160deg, #2f6f8f, #6fa86a 60%, #c9b98a); color: #fff; }
@@ -627,6 +628,7 @@ textarea.report { width: 100%; min-height: 150px; font: 12px/1.5 var(--font-data
       <defs><clipPath id="mclip"><rect id="mrect"></rect></clipPath></defs>
       <g clip-path="url(#mclip)">
         <g id="gStatic"></g>
+        <g id="gImg"></g>
         <g id="gDyn"></g>
       </g>
       <g id="gAxis"></g>
@@ -671,7 +673,7 @@ textarea.report { width: 100%; min-height: 150px; font: 12px/1.5 var(--font-data
       <span class="swlg"><b>위성 관측폭</b> <i class="swk" style="background:#7ccf7c"></i>SAR <i class="swk" style="background:#b99af0"></i>EO/IR <i class="swk" style="background:#7cc4ec"></i>다분광 <i class="swk" style="background:#f0a0c8"></i>초분광 <i class="swk" style="background:#f5b06a"></i>RF</span>
     </div>
     <div class="bounds" id="sbounds" hidden>
-      <label><input type="checkbox" id="bdSLAND" checked><svg width="14" height="12" viewBox="-7 -6 14 12"><rect x="-4" y="-4" width="8" height="8" fill="var(--k-usn)"/></svg>국가·도시·군사기지</label>
+      <label><input type="checkbox" id="bdSLAND" checked><svg width="14" height="12" viewBox="-7 -6 14 12"><rect x="-4" y="-4" width="8" height="8" fill="var(--k-usn)"/></svg>국가·국경·도시·군사기지</label>
       <span class="swlg"><b>위성 관측폭</b> <i class="swk" style="background:#7ccf7c"></i>SAR <i class="swk" style="background:#b99af0"></i>EO/IR <i class="swk" style="background:#7cc4ec"></i>다분광 <i class="swk" style="background:#f0a0c8"></i>초분광 <i class="swk" style="background:#f5b06a"></i>RF</span>
     </div>
     <div class="bounds abounds" id="abounds" hidden>
@@ -735,6 +737,13 @@ textarea.report { width: 100%; min-height: 150px; font: 12px/1.5 var(--font-data
       <h2>해양정보 공유상황도</h2>
       <svg class="share" id="shareSvg" viewBox="0 0 320 262" role="img" aria-label="해수부, 해경, 기상청, KIOST·국립해양조사원, 해군, 국가 MDA 플랫폼, 해외 IFC 사이의 정보 흐름"></svg>
       <ul class="log" id="shareLog"></ul>
+    </section>
+    <section id="krSatSec">
+      <h2>코페르니쿠스 위성영상 연동</h2>
+      <div class="cdse">
+        <div class="row"><b>한반도 해역 Sentinel 영상</b><select id="kcdseMis" aria-label="Sentinel 임무"><option value="SENTINEL-1">Sentinel-1 (SAR)</option><option value="SENTINEL-2">Sentinel-2 (광학)</option><option value="SENTINEL-3">Sentinel-3 (해색)</option></select><button class="btn go" type="button" id="kcdseGo">최신 영상 조회</button></div>
+        <div id="kcdseOut"></div>
+      </div>
     </section>
     <section>
       <h2>지휘결심 지원체계</h2>
@@ -810,6 +819,7 @@ textarea.report { width: 100%; min-height: 150px; font: 12px/1.5 var(--font-data
 <script src="land.js"></script>
 <script src="arcticland.js"></script>
 <script src="slocland.js"></script>
+<script src="slocborders.js"></script>
 <script src="scenario.js"></script>
 <script>
 (() => {
@@ -2254,7 +2264,8 @@ function fmtPos(p) {
 const svg = document.getElementById('map');
 const gDyn = document.getElementById('gDyn'), gAxis = document.getElementById('gAxis');
 let vb = { x: 0, y: 0, w: VW, h: VH };
-const setVB = () => svg.setAttribute('viewBox', `${f1(vb.x)} ${f1(vb.y)} ${f1(vb.w)} ${f1(vb.h)}`);
+let onVB = null;   // 보기 범위가 바뀔 때 함께 다시 그릴 것 (위성영상 겹쳐 보기)
+const setVB = () => { svg.setAttribute('viewBox', `${f1(vb.x)} ${f1(vb.y)} ${f1(vb.w)} ${f1(vb.h)}`); if (onVB) onVB(); };
 
 function drawStatic() {
   setVB();
@@ -3313,7 +3324,7 @@ $('rqPick').onclick = () => { rq.pick = !rq.pick; $('rqPick').setAttribute('aria
 $('rqAuto').onclick = rqAuto;
 
 // ── 원해 해상교통로(SLOC) 관심해역: 호르무즈·아덴만·홍해·말라카 ─────────
-const SL = SC.sloc, SLAND = window.MDA_SLOC_LAND || [];
+const SL = SC.sloc, SLAND = window.MDA_SLOC_LAND || [], SBRD = window.MDA_SLOC_BORDERS || [];
 let slocLand = true;
 const SK = 13.5, SCOS = Math.cos(14 * D2R), SVW = (152 - 26) * SK * SCOS, SVH = 60 * SK;
 const SP = (lon, lat) => [(lon - 26) * SK * SCOS, (44 - lat) * SK];
@@ -3634,6 +3645,8 @@ function drawSlocStatic() {
   const zp = (k, cls) => { const zz = SL.zones[k]; if (zz.poly) return `<path class="${cls}" d="${spath(zz.poly, true)}" stroke-width="${fs(1.4)}"/>`; const c = SP(...zz.c); return `<circle class="${cls}" cx="${f1(c[0])}" cy="${f1(c[1])}" r="${f1(zz.r / 111.2 * SK)}" stroke-width="${fs(1.4)}"/>`; };
   h += zp('hra', 'sz hra') + zp('cheonghae', 'sz chd') + zp('piracy', 'sz pir') + zp('houthi', 'sz hou') + zp('irgcn', 'sz irg') + zp('recaap', 'sz rec') + zp('sts', 'sz sts') + zp('scs', 'sz scs') + zp('taiwan', 'sz twn') + zp('ecs', 'sz ecs') + zp('senkaku', 'sz twn');
   for (const ring of SLAND) h += `<path class="aland" d="${spath(ring, true)}" stroke="var(--land-edge)" stroke-width="${fs(0.6)}"/>`;
+  // 육상 국경선: 나라가 구분되도록 연하게 (국가·국경·도시·군사기지 범례로 켜고 끈다)
+  if (slocLand && SBRD.length) h += `<path class="sbrd" d="${SBRD.map(ln => spath(ln)).join('')}" stroke-width="${fs(0.9)}" stroke-dasharray="${fs(4)} ${fs(2)}"/>`;
   h += `<path d="${spath(SL.nineDash)}" fill="none" stroke="#9a3412" stroke-width="${fs(2.2)}" stroke-dasharray="${fs(14)} ${fs(9)}"/>`;
  {
     const ln = (pts, col, w, d1, d2, close) => `<path d="${spath(pts, close)}" fill="none" stroke="${col}" stroke-width="${fs(w)}" stroke-dasharray="${fs(d1)} ${fs(d2)}"/>`;
@@ -3792,6 +3805,7 @@ const CDSE_AREA = { all: [30, 66, 180, 82], NSR: [30, 66, 180, 82], NWP: [-170, 
 const CDSE_NM = { all: '북극 (북동항로 해역)', NSR: '북동항로 해역', NWP: '북서항로 해역', TSR: '북극횡단항로 (프람 해협)' };
 // 화면별 조회 상태: 북극항로(cdseA)와 원해 SLOC(cdseS)
 const cdseA = { st: 'idle', items: [], at: null, err: '', mis: 'SENTINEL-1', box: CDSE_AREA.all, nm: CDSE_NM.all, sel: 'cdseMis', out: 'cdseOut', key: 'cdseOut', view: 'arc', g: 'aImg', ov: true, op: 0.8, hi: -1 };
+const cdseK = { st: 'idle', items: [], at: null, err: '', mis: 'SENTINEL-1', box: null, nm: '', sel: 'kcdseMis', out: 'kcdseOut', key: 'kcdseOut', view: 'kr', g: 'gImg', ov: true, op: 0.8, hi: -1 };
 const cdseS = { st: 'idle', items: [], at: null, err: '', mis: 'SENTINEL-1', box: null, nm: '', sel: 'scdseMis', out: 'scdseOut', key: 'scdseOut', view: 'sloc', g: 'sImg', ov: true, op: 0.8, hi: -1 };
 function cdseSim(c) {
   // 모의 목록: 시뮬레이션 위성 궤도에서 최근 24시간 동안 대상 해역 위를 지난 Sentinel 통과를 영상으로 본다
@@ -3905,7 +3919,7 @@ function cdseRing(fp, P) {
 }
 function drawCdseOv(c) {
   const el = $(c.g); if (!el) return;
-  const arc = c.view === 'arc', P = arc ? AP : SP, z = arc ? az : slocZ;
+  const P = CDSE_P[c.view], z = c.view === 'arc' ? az : c.view === 'sloc' ? slocZ : vb.w / VW;
   let h = '';
   if (c.ov && c.st === 'live') c.items.forEach((it, i) => {
     if (!it.fp) return;
@@ -3919,10 +3933,16 @@ function drawCdseOv(c) {
   });
   el.innerHTML = h;
 }
+const CDSE_P = { arc: AP, sloc: SP, kr: (lon, lat) => [X(lon), Y(lat)] };
 // 선택한 영상 범위로 지도를 옮기고 확대한다
 function cdseGoto(c, i) {
-  const it = c.items[i], el = $(c.view); if (!it || !it.fp || !el._fit) return;
-  const P = c.view === 'arc' ? AP : SP, ps = it.fp.map(q => P(q[0], q[1])), xs = ps.map(q => q[0]), ys = ps.map(q => q[1]), F = el._fit, V = MZ[c.view];
+  const it = c.items[i]; if (!it || !it.fp) return;
+  if (c.view === 'kr') {
+    const xs = it.fp.map(q => q[0]), ys = it.fp.map(q => q[1]), mx = (Math.max(...xs) - Math.min(...xs)) * 0.6, my = (Math.max(...ys) - Math.min(...ys)) * 0.6;
+    c.hi = i; krFit(Math.min(...xs) - mx, Math.max(...ys) + my, Math.max(...xs) + mx, Math.min(...ys) - my); return;
+  }
+  const el = $(c.view); if (!el._fit) return;
+  const P = CDSE_P[c.view], ps = it.fp.map(q => P(q[0], q[1])), xs = ps.map(q => q[0]), ys = ps.map(q => q[1]), F = el._fit, V = MZ[c.view];
   const bw = Math.max(...xs) - Math.min(...xs), bh = Math.max(...ys) - Math.min(...ys), cx = (Math.max(...xs) + Math.min(...xs)) / 2, cy = (Math.max(...ys) + Math.min(...ys)) / 2;
   const base = F.W - 2 * F.ox, baseH = F.H - 2 * F.oy;   // 기본 화면에서 정보칸 왼쪽에 보이는 폭·높이
   V.k = Math.min(16, Math.max(1, Math.min(base / (bw * 2.2), baseH / (bh * 2.2))));
@@ -3997,7 +4017,8 @@ function renderSlocInfo() {
   cdseRender(cdseS);
 }
 const SNM = () => ({ all: '인도양 SLOC (전체)', hormuz: '호르무즈 해협', aden: '아덴만·홍해', malacca: '말라카 해협', scs: '남중국해·대만', ecs: '동중국해·센카쿠' })[slocPre];
-for (const c of [cdseA, cdseS]) {
+onVB = () => drawCdseOv(cdseK);
+for (const c of [cdseA, cdseS, cdseK]) {
   const box = $(c.out);
   box.addEventListener('click', e => { const b = e.target.closest('[data-cgo]'); if (b) cdseGoto(c, +b.dataset.cgo); });
   box.addEventListener('change', e => {
@@ -4007,6 +4028,10 @@ for (const c of [cdseA, cdseS]) {
   box.addEventListener('mouseover', e => { const li = e.target.closest('li[data-ci]'), i = li ? +li.dataset.ci : -1; if (i !== c.hi) { c.hi = i; drawCdseOv(c); } });
   box.addEventListener('mouseleave', () => { if (c.hi !== -1) { c.hi = -1; drawCdseOv(c); } });
 }
+// 한반도 해역: 해역 확대 단추(동해·서해·남해)에 맞춘 범위, 전체는 한반도 주변 해역
+const KCDSE = { all: [123.0, 33.0, 131.9, 39.0] };
+$('kcdseGo').onclick = () => { const b = krPre === 'all' ? KCDSE.all : [KPRE[krPre][1], KPRE[krPre][4], KPRE[krPre][3], KPRE[krPre][2]]; cdseQuery(cdseK, b, krPre === 'all' ? '한반도 주변 해역' : KPRE[krPre][0] + ' 해역', () => cdseRender(cdseK)); };
+cdseRender(cdseK);
 $('scdseGo').onclick = () => cdseQuery(cdseS, SBOX[slocPre], SNM(), renderSlocInfo);
 $('cdseGo').onclick = () => cdseQuery(cdseA, CDSE_AREA[arcPre], CDSE_NM[arcPre], renderPolar);
 
@@ -4015,7 +4040,7 @@ function setView(v) {
   sel = arcSel = slocSel = null; selAt = null; elCache.set('selwrap', 'none'); $('selSec').hidden = true; $('selSec').innerHTML = '';   // 보기를 바꾸면 선택 팝업을 닫는다
   $('map').toggleAttribute('hidden', !kr); $('arc').toggleAttribute('hidden', !arcView); $('sloc').toggleAttribute('hidden', !slocView);
    document.querySelector('.bounds').hidden = !kr; $('abounds').hidden = !arcView; $('sbounds').hidden = !slocView; $('spre').hidden = !slocView; $('apre').hidden = !arcView; $('kpre').hidden = !kr;
-  $('srcpanel').hidden = !kr; $('arcpanel').hidden = !arcView; $('slocpanel').hidden = !slocView; $('polarSec').hidden = !arcView; $('slocSec').hidden = !slocView;
+  $('srcpanel').hidden = !kr; $('arcpanel').hidden = !arcView; $('slocpanel').hidden = !slocView; $('polarSec').hidden = !arcView; $('slocSec').hidden = !slocView; $('krSatSec').hidden = !kr;
   document.querySelectorAll('[data-view]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.view === v)));
   if (arcView) { drawArcStatic(); drawArc(); renderArcPanel(); renderPolar(); if (cdseA.st === 'idle') cdseQuery(cdseA, CDSE_AREA[arcPre], CDSE_NM[arcPre], renderPolar); } else if (slocView) { drawSlocStatic(); drawSloc(); renderSlocPanel(); renderSlocInfo(); if (cdseS.st === 'idle') cdseQuery(cdseS, SBOX[slocPre], SNM(), renderSlocInfo); } else { regionView(krPre); }
 }
@@ -4107,14 +4132,19 @@ let krPre = 'all';
 function regionView(k) {
   krPre = k; document.querySelectorAll('[data-kp]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.kp === k)));
   if (k === 'all') { fitView(); renderPanel(); return; }
-  const [, w, n, e, s0] = KPRE[k], r = svg.getBoundingClientRect(), ar = r.width && r.height ? r.width / r.height : VW / VH;
+  krFit(...KPRE[k].slice(1, 5)); renderPanel();
+}
+// 경위도 범위(서·북·동·남)가 정보칸 왼쪽에 꽉 차게 보이도록 보기 범위를 맞춘다
+function krFit(w, n, e, s0) {
+  const r = svg.getBoundingClientRect(), ar = r.width && r.height ? r.width / r.height : VW / VH;
   // 오른쪽 정보칸에 가리는 폭만큼 보기 범위를 넓혀 해역 전체가 칸 왼쪽에 보이게 한다
   const pan = $('srcpanel'), pw = !pan.hidden && !$('mapwrap').classList.contains('nobox') && r.width > 860 ? pan.getBoundingClientRect().width + 16 : 0;
   const frac = r.width ? Math.min(0.45, pw / r.width) : 0, bw = X(e) - X(w), bh = Y(s0) - Y(n);
   let vw = bw / (1 - frac), vh = vw / ar;
   if (vh < bh) { vh = bh; vw = vh * ar; }
+  if (vw > VW) { vh *= VW / vw; vw = VW; } if (vh > VH) { vw *= VH / vh; vh = VH; }
   vb = { x: X(w) - (vw * (1 - frac) - bw) / 2, y: Y(n) - (vh - bh) / 2, w: vw, h: vh };
-  clampVB(); setVB(); drawDyn(); renderPanel();
+  clampVB(); setVB(); drawDyn();
 }
 const inRegion = (p, k) => { const b = KPRE[k]; return p[0] >= b[1] && p[0] <= b[3] && p[1] <= b[2] && p[1] >= b[4]; };
 function renderRegion() {

@@ -49,6 +49,6 @@ GitHub Pages 주소: https://heaven301010-art.github.io/Kwon-Soonchul/ (저장�
 - **범례·보기 단추 글꼴**: 범례(지도 왼쪽 아래 범례 칸, 한반도 해역 아래쪽 기호 범례, 북극·원해 정보칸의 범례)와 상황도 위의 보기 전환(한반도 해역·북극항로·원해 SLOC)·해역·항로 단추, 세 정보칸의 본문 글씨는 그래픽체로 표시합니다(숫자 자료는 자릿수 정렬용 고정폭 글꼴 유지)(PC에 HY그래픽M이 있으면 그 글꼴, 없으면 웹 글꼴 나눔고딕).
 - **조작**: 센서 레이어를 눌러 끄고 켜기(끄면 해당 탐지가 융합에서 빠짐), 표적 클릭으로 상세 보기와 수집 요청(SAR 긴급 촬영·UAV·소노부이), 휠·드래그로 확대·이동(한반도 해역·북극항로·원해 SLOC 모두, 왼쪽 위 + · − · ⤢ 단추로 확대·축소·전체 보기, ⛶ 단추로 지도 칸 브라우저 전체화면 · ✕ 또는 Esc로 나가기), ×10/×30/×60/×180/×600 모의 속도.
 
-파일 구성: `index.html`(화면·모의 로직), `scenario.js`(센서·표적·항로 배치), `land.js`(Natural Earth 1:10m 해안선 발췌, 퍼블릭 도메인), `arcticland.js`(북위 27° 이북 Natural Earth 해안선 단순화본), `slocland.js`(26~152°E, 16°S~44°N Natural Earth 해안선 단순화본).
+파일 구성: `index.html`(화면·모의 로직), `scenario.js`(센서·표적·항로 배치), `land.js`(Natural Earth 1:10m 해안선 발췌, 퍼블릭 도메인), `arcticland.js`(북위 27° 이북 Natural Earth 해안선 단순화본), `slocland.js`(26~152°E, 16°S~44°N Natural Earth 해안선 단순화본), `slocborders.js`(같은 범위 Natural Earth 1:50m 육상 국경선 단순화본, 퍼블릭 도메인).
 
 해안선과 NLL·MDL은 개략이며, 모든 표적·센서 배치는 가상 훈련용 데이터입니다.
