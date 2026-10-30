@@ -2593,7 +2593,7 @@ const onRoute = (sh, k) => sh.route === k || (k === 'NSR' && sh.route === 'LNG')
 function arcRouteH() {
   const len = k => { const p = AR.routes[k].pts; let d = 0; for (let i = 1; i < p.length; i++) d += gdist(p[i - 1], p[i]); return d; };
   if (arcPre === 'all') return `<div class="ahd"><h3>북극항로 구분</h3><table class="atab rtab"><thead><tr><th>항로</th><th>통항 시기</th><th>선박</th></tr></thead><tbody>`
-    + Object.keys(ARN).map(k => `<tr data-route="${k}"><td><b class="atx rt ${k}" style="stroke:none">${ARN[k]}</b><small>${esc(AR.routes[k].nm)} · 약 ${Math.round(len(k) / 100) * 100}km</small></td><td><small>${esc(AR.routeInfo[k].season)}</small></td><td>${arcShips.filter(sh => onRoute(sh, k)).length}척</td></tr>`).join('') + '</tbody></table></div>';
+    + Object.keys(ARN).map(k => `<tr data-route="${k}"><td><b class="atx rt ${k}" style="stroke:none">${({ NSR: '북동항로', NWP: '북서항로', TSR: '북극횡단항로' })[k]}</b><small>${esc(AR.routes[k].nm)} · 약 ${Math.round(len(k) / 100) * 100}km</small></td><td><small>${esc(AR.routeInfo[k].season)}</small></td><td>${arcShips.filter(sh => onRoute(sh, k)).length}척</td></tr>`).join('') + '</tbody></table></div>';
   const k = arcPre, ri = AR.routeInfo[k], ships = arcShips.filter(sh => onRoute(sh, k));
   const near = arcShips.filter(sh => !onRoute(sh, k) && AR.routes[k].pts.some(q => q[1] >= 58 && gdist(q, sh.pos) < 300));
   return `<div class="ahd"><h3>${ARN[k]} 상세</h3><b>${esc(AR.routes[k].nm)}</b> <small class="empty">약 ${Math.round(len(k) / 100) * 100}km (표시 구간)</small>
