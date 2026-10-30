@@ -7,7 +7,7 @@
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&family=Black+Han+Sans&display=swap">
 <style>
 /* 레이아웃: 해도를 가운데 두고 위(우주·항공), 왼쪽(지상), 오른쪽(수상), 아래(수중)에 출처별 센서 칸을 두르며, 맨 오른쪽 열은 MDA 순환·이상징후·일지. 밝은 해도 단일 테마. */
 :root {
@@ -56,6 +56,8 @@
   --k-unk: #d4a400;
   --font-ui: "IBM Plex Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", system-ui, sans-serif;
   --font-data: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  /* 정보칸 제목: HY헤드라인M(설치된 PC) → 웹 글꼴 Black Han Sans */
+  --font-head: "HY헤드라인M", "HYHeadLine M", "HYHeadLine-Medium", "Black Han Sans", var(--font-ui);
 }
 *, *::before, *::after { box-sizing: border-box; }
 html, body { height: 100%; }
@@ -138,6 +140,11 @@ button { font: inherit; color: inherit; }
 .box[data-dom="under"] { --c: var(--l-under); }
 .mapwrap.nobox .srcpanel { display: none; }
 /* 접을 수 있는 정보칸: 접으면 제목줄만 남기고 지도가 화면 폭 전체를 쓴다 */
+/* 한반도 해역 정보칸의 대표 제목: 한 포인트(약 1.3px) 키우고 헤드라인체로 */
+#srcpanel > h2 { font-family: var(--font-head); font-weight: 400; font-size: 14.8px; letter-spacing: .01em; }
+#srcpanel .bh h2 { font-family: var(--font-head); font-weight: 400; font-size: 14.8px; letter-spacing: .01em; }
+#srcpanel .clsum h3, #srcpanel .box h3 { font-family: var(--font-head); font-weight: 400; font-size: 12.3px; color: var(--fg); letter-spacing: .01em; }
+#srcpanel .prio h4, #srcpanel .tfbox h4 { font-family: var(--font-head); font-weight: 400; font-size: 12.3px; letter-spacing: .01em; }
 .srcpanel > h2.fh { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .pfold { flex: none; font: inherit; font-size: 11.5px; font-weight: 600; color: var(--fg); background: var(--bg); border: 1px solid var(--line); border-radius: 4px; padding: 2px 7px; cursor: pointer; }
 .srcpanel.fold { width: auto; overflow: hidden; } .srcpanel.fold > :not(h2) { display: none; } .srcpanel.fold > h2 { border-bottom: 0; } .srcpanel.fold > h2 > span { display: none; }
@@ -526,10 +533,10 @@ textarea.report { width: 100%; min-height: 150px; font: 12px/1.5 var(--font-data
   /* 좁은 화면에서도 큰 상자는 해도 오른쪽에 두고, 출처별로 이름과 탐지 수만 보이다가 누르면 펼친다 */
   .mapwrap { height: auto; aspect-ratio: 3 / 4; max-width: 100%; }
   .srcpanel { width: calc(54% - 8px); }
-  .srcpanel > h2 { font-size: 12px; padding: 5px 8px; }
+  .srcpanel > h2 { font-size: 12px; padding: 5px 8px; } #srcpanel > h2 { font-size: 13.3px; }
   .box { padding: 4px 7px 5px; cursor: pointer; }
   .box .bh { margin-bottom: 2px; gap: 4px; }
-  .box .bh h2 { font-size: 12px; }
+  .box .bh h2 { font-size: 12px; } #srcpanel .bh h2 { font-size: 13.3px; }
   .box .bh small, .box .assets, .box .feed { display: none; }
   .ktab { font-size: 10.5px; } .ktab th { font-size: 9.5px; padding-left: 3px; } .ktab td { padding-left: 3px; }
   .clsum .kgrid { grid-template-columns: 1fr; font-size: 10.5px; }
@@ -672,7 +679,7 @@ textarea.report { width: 100%; min-height: 150px; font: 12px/1.5 var(--font-data
       </div>
     </section>
     <section>
-      <h2>MDA 순환</h2>
+      <h2>해양영역인식(MDA) 표적정보 처리현황</h2>
       <div class="cycle" id="cycle"></div>
       <div class="icls" id="icls"></div>
     </section>
@@ -829,11 +836,11 @@ const USV_R = 30, HELI_R = 60, DIP_R = 9, SHIP_R = 40, SHIP_AIR_R = 150, SONAR_R
 const SN = { ais: 'AIS', vpass: 'V-PASS', lrit: 'LRIT', vts: '해경 VTS', sar: 'SAR 위성', eo: 'EO/IR 위성', msi: '다분광 위성', hsi: '초분광 위성', rf: 'RF 위성 군집', radar: '육군 감시대 레이더', nradar: '해군 R/S 레이더', adradar: '방공 레이더', cctv: '해안 CCTV',
   shipradar: '함정 레이더', fixed: '고정형 수중감시', buoy: '소노부이', sonar: '함정 소나', mpa: '해상초계기', uav: 'UAV', usv: 'USV', heli: '해상작전헬기', dip: '디핑소나', link: '전술데이터링크' };
 const DOMS = {
-  space: { nm: '우주정보', sub: '위성 영상·신호', types: [['sar', 'SAR'], ['eo', 'EO/IR'], ['msi', '다분광'], ['hsi', '초분광'], ['rf', 'RF']] },
-  air: { nm: '항공정보', sub: '초계기·헬기·UAV', types: [['mpa', '해상초계기'], ['heli', '해상작전헬기'], ['uav', 'UAV']] },
-  ground: { nm: '지상정보', sub: '해안·방공 레이더', types: [['nradar', '해군 R/S'], ['radar', '육군 감시대'], ['adradar', '방공']] },
-  surface: { nm: '수상정보', sub: 'GICOMS·해경 연계', types: [['ais', 'AIS'], ['vpass', 'V-PASS'], ['lrit', 'LRIT'], ['vts', 'VTS'], ['shipradar', '함정'], ['usv', 'USV'], ['cctv', 'CCTV']] },
-  under: { nm: '수중정보', sub: '음향 탐지', types: [['fixed', '고정형'], ['buoy', '소노부이'], ['dip', '디핑소나'], ['sonar', '함정 소나']] }
+  space: { nm: '우주정보현황', sub: '위성 영상·신호', types: [['sar', 'SAR'], ['eo', 'EO/IR'], ['msi', '다분광'], ['hsi', '초분광'], ['rf', 'RF']] },
+  air: { nm: '항공정보현황', sub: '초계기·헬기·UAV', types: [['mpa', '해상초계기'], ['heli', '해상작전헬기'], ['uav', 'UAV']] },
+  ground: { nm: '지상기반 정보현황', sub: '해안·방공 레이더', types: [['nradar', '해군 R/S'], ['radar', '육군 감시대'], ['adradar', '방공']] },
+  surface: { nm: '해상정보현황', sub: 'GICOMS·해경 연계', types: [['ais', 'AIS'], ['vpass', 'V-PASS'], ['lrit', 'LRIT'], ['vts', 'VTS'], ['shipradar', '함정'], ['usv', 'USV'], ['cctv', 'CCTV']] },
+  under: { nm: '수중정보현황', sub: '음향 탐지', types: [['fixed', '고정형'], ['buoy', '소노부이'], ['dip', '디핑소나'], ['sonar', '함정 소나']] }
 };
 const DOMOF = {}; for (const [k, d] of Object.entries(DOMS)) for (const [t] of d.types) DOMOF[t] = k;
 // 해양영역정보 구분 (오경원 외 2024, Fig. 3): 비자연정보를 수집원에 따라 군사·기관·민간으로 나눈다
@@ -2754,7 +2761,7 @@ function renderAsw() {
   setHTML($('asw'), 'asw', `<h3>대잠 정보 현황</h3>
     <div class="phd"><div class="pk h"><b>${subs.filter(t => !tracks.get(t.id).lost).length}</b>수중 접촉<small> · 소실 ${subs.filter(t => tracks.get(t.id).lost).length}</small></div><div class="pk u"><b>${bs.length + dips}</b>음향 탐색 중<small> · 소노부이 ${bs.length} · 디핑 ${dips}</small></div></div>
     ${rows || '<p class="empty" style="font-size:11px;margin:2px 0">현재 수중 접촉 없음</p>'}
-    <h4 class="u" style="--pc: var(--l-under)">대잠 자산</h4>
+    <h4 class="u" style="--pc: var(--l-under)">대잠전력현황</h4>
     <table class="atab"><tbody><tr><td>고정형 수중감시</td><td>${ARRAYS.length}개소 가동</td></tr><tr><td>소노부이 필드</td><td>${bs.length ? `${bs.length}개 · 잔여 ${Math.round(Math.max(...bs.map(b => b.until - T)))}분` : '없음'}</td></tr>
       <tr><td>해상초계기</td><td>${esc(mpa.task)}</td></tr>${hrow}
       <tr><td>함정 소나</td><td>아군 함정 ${targets.filter(f => f.truth === 'F' && f.cls === 'kn').length}척 (탐지 ${SONAR_R}km)</td></tr></tbody></table>
