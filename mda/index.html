@@ -325,6 +325,10 @@ button { font: inherit; color: inherit; }
 .cdse .st { font-size: 11px; margin: 2px 0 4px; } .cdse .st.live { color: var(--ne); } .cdse .st.sim { color: var(--su); }
 .cdse ul { list-style: none; margin: 0; padding: 0; } .cdse li { border-top: 1px dotted var(--line); padding: 3px 0; font-size: 11px; word-break: break-all; }
 .cdse li small { display: block; color: var(--muted); }
+.cdse li.cql { display: grid; grid-template-columns: 58px 1fr; gap: 6px; align-items: center; }
+.cdse .cqi { display: grid; place-items: center; width: 58px; height: 58px; border-radius: 4px; overflow: hidden; border: 1px solid var(--line); background: var(--panel-2); font-size: 9.5px; line-height: 1.2; text-align: center; color: var(--muted); }
+.cdse .cqi img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.cdse .cqs.sar { background: repeating-linear-gradient(135deg, #6b7c86 0 3px, #8796a0 3px 6px); color: #fff; } .cdse .cqs.opt { background: linear-gradient(160deg, #2f6f8f, #6fa86a 60%, #c9b98a); color: #fff; }
 @media (max-width: 860px) { .pdom { grid-template-columns: 1fr; } }
 .share .el { font: 500 10px var(--font-data); fill: var(--fg); paint-order: stroke; stroke: var(--panel); stroke-width: 3px; }
 .share .arw { fill: var(--faint); }
@@ -3793,7 +3797,7 @@ function cdseSim(c) {
     for (let tt = T; tt > T - 1440 && out.length < 8; tt -= 2) {
       const q = satPos(o, tt); if (q[1] < s0 || q[1] > n || q[0] < w || q[0] > e || last - tt < 30) continue;
       last = tt; const ck = clock(tt);
-      out.push({ name: `${o.name.replace('Sentinel-', 'S')}_${key === 'Sentinel-1' ? 'IW_GRDH' : 'MSIL1C'}_${ck.date.replace(/-/g, '')}T${ck.hm.replace(':', '')}00 (모의)`, t: `${ck.date} ${ck.hm} KST` });
+      out.push({ name: `${o.name.replace('Sentinel-', 'S')}_${key === 'Sentinel-1' ? 'IW_GRDH' : 'MSIL1C'}_${ck.date.replace(/-/g, '')}T${ck.hm.replace(':', '')}00 (모의)`, t: `${ck.date} ${ck.hm} KST`, sim: key });
     }
   }
   return out.sort((a, b) => (a.t < b.t ? 1 : -1)).slice(0, 8);
@@ -3803,14 +3807,15 @@ async function cdseQuery(c, box, nm, rerender) {
   const [w, s0, e, n] = box, poly = `POLYGON((${w} ${s0},${e} ${s0},${e} ${n},${w} ${n},${w} ${s0}))`;
   const since = new Date(Date.now() - 3 * 864e5).toISOString();
   const f = `Collection/Name eq '${c.mis}' and OData.CSC.Intersects(area=geography'SRID=4326;${poly}') and ContentDate/Start gt ${since}`;
-  const url = `${CDSE_API}?$filter=${encodeURIComponent(f)}&$orderby=${encodeURIComponent('ContentDate/Start desc')}&$top=8&$expand=Attributes`;
+  const url = `${CDSE_API}?$filter=${encodeURIComponent(f)}&$orderby=${encodeURIComponent('ContentDate/Start desc')}&$top=8&$expand=Attributes&$expand=Assets`;
   try {
     const ctl = new AbortController(), tm = setTimeout(() => ctl.abort(), 12000);
     const r = await fetch(url, { signal: ctl.signal }); clearTimeout(tm);
     if (!r.ok) throw new Error('HTTP ' + r.status);
     const j = await r.json();
     c.items = (j.value || []).map(v => ({ name: v.Name, id: v.Id, t: (v.ContentDate && v.ContentDate.Start || '').replace('T', ' ').slice(0, 16) + ' UTC',
-      cloud: ((v.Attributes || []).find(a => a.Name === 'cloudCover') || {}).Value }));
+      cloud: ((v.Attributes || []).find(a => a.Name === 'cloudCover') || {}).Value,
+      ql: ((v.Assets || []).find(a => /quicklook/i.test(a.Type || '')) || {}).DownloadLink || null }));   // 미리보기(퀵룩) 그림 주소
     c.st = 'live';
   } catch (err) {
     c.st = 'sim'; c.err = err.name === 'AbortError' ? '응답 시간 초과' : (err.message || String(err)); c.items = cdseSim(c);
@@ -3818,12 +3823,18 @@ async function cdseQuery(c, box, nm, rerender) {
   c.at = new Date(); rerender();
 }
 const cdseCount = c => (c.st === 'live' || c.st === 'sim' ? c.items.length : '–');
+// 영상 미리보기(퀵룩): 실제 조회는 CDSE 퀵룩 그림(누르면 크게 보기), 불러오지 못하면 안내 문구, 모의 목록은 모의 미리보기 칸
+function cqlThumb(it) {
+  if (it.ql) return `<a class="cqi" href="${esc(it.ql)}" target="_blank" rel="noopener" title="미리보기 크게 보기"><img src="${esc(it.ql)}" alt="${esc(it.name)} 미리보기" loading="lazy" referrerpolicy="no-referrer" onerror="this.parentNode.outerHTML='<span class=&quot;cqi cqn&quot;>미리보기<br>접근 불가</span>'"></a>`;
+  if (it.sim) return `<span class="cqi cqs ${it.sim === 'Sentinel-1' ? 'sar' : 'opt'}">모의<br>미리보기</span>`;
+  return '<span class="cqi cqn">미리보기<br>없음</span>';
+}
 function cdseRender(c) {
   const st = c.st === 'idle' ? '<p class="st">조회 단추를 누르면 CDSE 카탈로그에서 선택한 해역의 최근 3일 Sentinel 영상을 찾습니다.</p>'
     : c.st === 'loading' ? '<p class="st">CDSE 카탈로그 조회 중…</p>'
     : c.st === 'live' ? `<p class="st live">● 실시간 연동 · ${esc(c.nm)} · ${c.items.length}건 (${c.at.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })} 조회)</p>`
     : `<p class="st sim">● 연동 실패 (${esc(c.err)}): 이 환경에서 외부 접속이 막혔습니다. 시뮬레이션 궤도 기반 모의 목록을 표시합니다 (${esc(c.nm)}).</p>`;
-  setHTML($(c.out), c.key, st + (c.items.length ? `<ul>${c.items.map(it => `<li>${esc(it.name)}<small>${esc(it.t)}${it.cloud != null ? ` · 구름 ${Math.round(it.cloud)}%` : ''}${it.id ? ` · <a href="${CDSE_API}(${encodeURIComponent(it.id)})" target="_blank" rel="noopener">메타데이터</a>` : ''}</small></li>`).join('')}</ul>
+  setHTML($(c.out), c.key, st + (c.items.length ? `<ul>${c.items.map(it => `<li class="cql">${cqlThumb(it)}<div>${esc(it.name)}<small>${esc(it.t)}${it.cloud != null ? ` · 구름 ${Math.round(it.cloud)}%` : ''}${it.id ? ` · <a href="${CDSE_API}(${encodeURIComponent(it.id)})" target="_blank" rel="noopener">메타데이터</a>` : ''}</small></div></li>`).join('')}</ul>
     <p class="st"><a href="https://browser.dataspace.copernicus.eu/" target="_blank" rel="noopener">Copernicus Browser에서 영상 보기 ↗</a> <small class="empty">(영상 내려받기는 CDSE 무료 회원 로그인 필요)</small></p>` : c.st === 'live' ? '<p class="st">해당 기간·해역에 영상이 없습니다.</p>' : c.st === 'sim' ? '<p class="st">최근 24시간 모의 궤도에서 해당 해역을 지난 영상이 없습니다.</p>' : ''));
 }
 function renderPolar() {
