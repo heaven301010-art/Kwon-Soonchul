@@ -620,7 +620,7 @@ textarea.report { width: 100%; min-height: 150px; font: 12px/1.5 var(--font-data
       <g id="sStatic"></g><g id="sDyn"></g>
     </svg>
     <div class="spre seg" id="apre" hidden role="group" aria-label="북극항로 보기">
-      <button class="btn" type="button" data-ap="all" aria-pressed="true">전체</button><button class="btn" type="button" data-ap="NSR" aria-pressed="false">북극항로(NSR)</button><button class="btn" type="button" data-ap="NWP" aria-pressed="false">북서항로</button><button class="btn" type="button" data-ap="TSR" aria-pressed="false">북극횡단항로</button>
+      <button class="btn" type="button" data-ap="all" aria-pressed="true">전체</button><button class="btn" type="button" data-ap="NSR" aria-pressed="false">북동항로</button><button class="btn" type="button" data-ap="NWP" aria-pressed="false">북서항로</button><button class="btn" type="button" data-ap="TSR" aria-pressed="false">북극횡단항로</button>
     </div>
     <svg id="arc" viewBox="0 0 1000 1000" preserveAspectRatio="xMinYMid meet" hidden role="img" aria-label="북극 해역 상황도 (북극점 중심 투영)">
       <defs><clipPath id="aclip"><circle cx="500" cy="500" r="482"></circle></clipPath></defs>
@@ -2588,7 +2588,7 @@ function drawArc() {
   }
   $('aDyn').innerHTML = h;
 }
-const ARN = { NSR: '북극항로(NSR)', NWP: '북서항로', TSR: '북극횡단항로' };
+const ARN = { NSR: '북동항로', NWP: '북서항로', TSR: '북극횡단항로' };
 const onRoute = (sh, k) => sh.route === k || (k === 'NSR' && sh.route === 'LNG');
 function arcRouteH() {
   const len = k => { const p = AR.routes[k].pts; let d = 0; for (let i = 1; i < p.length; i++) d += gdist(p[i - 1], p[i]); return d; };
@@ -3723,7 +3723,7 @@ function renderSlocPanel() {
 // 코페르니쿠스 CDSE 카탈로그(OData, 공개 검색 API)에서 최신 Sentinel 영상 목록을 받아온다. 접속이 막히면 모의 목록으로 대체한다.
 const CDSE_API = 'https://catalogue.dataspace.copernicus.eu/odata/v1/Products';
 const CDSE_AREA = { all: [30, 66, 180, 82], NSR: [30, 66, 180, 82], NWP: [-170, 66, -60, 80], TSR: [-15, 77, 25, 84] };
-const CDSE_NM = { all: '북극 (북극항로(NSR) 해역)', NSR: '북극항로(NSR) 해역', NWP: '북서항로 해역', TSR: '북극횡단항로 (프람 해협)' };
+const CDSE_NM = { all: '북극 (북동항로 해역)', NSR: '북동항로 해역', NWP: '북서항로 해역', TSR: '북극횡단항로 (프람 해협)' };
 // 화면별 조회 상태: 북극항로(cdseA)와 원해 SLOC(cdseS)
 const cdseA = { st: 'idle', items: [], at: null, err: '', mis: 'SENTINEL-1', box: CDSE_AREA.all, nm: CDSE_NM.all, sel: 'cdseMis', out: 'cdseOut', key: 'cdseOut' };
 const cdseS = { st: 'idle', items: [], at: null, err: '', mis: 'SENTINEL-1', box: null, nm: '', sel: 'scdseMis', out: 'scdseOut', key: 'scdseOut' };
