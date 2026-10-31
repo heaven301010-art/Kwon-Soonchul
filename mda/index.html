@@ -1331,6 +1331,8 @@ function mpaNext() {
 function mpaHome() { mpa.datum = false; mpa.ci = 0; mpa.np = 0; mpaPattern(MPA_BOX.east, '동해 NLL'); }
 // 해상초계기는 KADIZ 밖으로 나가지 않는다: KADIZ 밖 지점은 안쪽 중심을 향해 끌어와 경계에서 약 5km 안에 둔다
 const KC = [127.6, 36.2];
+// 우군 무인기가 갈 수 있는 지점: NLL 이남·KADIZ 안
+const airOk = p => kadizIn(southOfNll(p));
 function kadizIn(p) {
   if (inKadiz(p)) return p;
   let lo = 0, hi = 1; const at = t => [KC[0] + (p[0] - KC[0]) * t, KC[1] + (p[1] - KC[1]) * t];
@@ -1357,8 +1359,10 @@ function uav2Step(dt) {
   if (uav2.respId) { moveAir(uav2, dt); return; }   // 현장 대응 중
   if (!uav2.wps.length) {
     uav2.pk = (uav2.pk + 1) % PATS.length; const t = PATS[uav2.pk], pts = cleanPath(patternPts(MPA_BOX.south, t));
-    uav2.wps = [...seaRoute(uav2.pos, pts[0]), ...pts.slice(1)]; uav2.task = `남해 해상 초계 · ${PATNM[t]}`;
+    uav2.wps = [...seaRoute(uav2.pos, pts[0]), ...pts.slice(1)].map(airOk); uav2.task = `남해 해상 초계 · ${PATNM[t]}`;
   }
+  // 경유점이 KADIZ 밖이면 비행 위치를 KADIZ 안으로 되돌리는 처리와 맞물려 제자리를 맴돌므로, 경유점도 KADIZ 안으로 당긴다
+  const w = airOk(uav2.wps[0]); if (w !== uav2.wps[0]) uav2.wps[0] = w;
   if (moveToward(uav2, uav2.wps[0], uav2.spd, dt)) uav2.wps.shift();
 }
 function nllUavStep(a, dt) {
@@ -1386,7 +1390,7 @@ function moveAir(a, dt) {
   if (a === mpa) { mpaMove(dt); return; }
   if (a.follow) { let g = a.follow(); if (g) { g = kadizIn(g); a.dest = g; if (a.mode === 'orbit') a.center = g; } }
   if (a.mode === 'orbit') orbit(a, dt);
-  else if (moveToward(a, advance(a.dest, a.ph, a.destR), a.spd, dt)) {
+  else if (moveToward(a, [uav, uav2, ...nllUavs].includes(a) ? airOk(advance(a.dest, a.ph, a.destR)) : advance(a.dest, a.ph, a.destR), a.spd, dt)) {
     a.mode = 'orbit'; a.center = a.dest; a.r = a.destR; a.task = a.arriveTask;
     if (a.onArrive) { const f = a.onArrive; a.onArrive = null; f(); }
   }
