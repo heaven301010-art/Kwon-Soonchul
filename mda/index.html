@@ -317,7 +317,7 @@ button { font: inherit; color: inherit; }
 .share .pkc { fill: color-mix(in srgb, var(--fc) 72%, #fff); stroke: color-mix(in srgb, var(--fc) 80%, #000); stroke-width: .6; stroke-opacity: .55; }
 .share .pki { fill: #fff; opacity: .7; }
 .share .lgb { fill: #fff; opacity: .9; } .share .ng-navy .lgb { opacity: 1; }
-.share .nd.nmda { fill: #e8772e; stroke: #b4531a; stroke-width: 1.4; }   /* 국가 MDA 플랫폼: 주황 상자·흰 글자 */
+.share .nd.nmda { fill: #e8772e; stroke: #b4531a; stroke-width: 1.4; }   /* 흐름도 가운데 통합 상자(국가 MDA 플랫폼·통합 극지정보체계·관심해역 해양정보통합체계): 주황 상자·흰 글자 */
 .share .ng-hub.nmda .nt { fill: #fff; }
 .share .ng-navy .nd { fill: #1f3c74; stroke: #0b2a5e; stroke-width: 1.4; }
 .share .ng-navy .nt { fill: #fff; } .share .ng-navy .ns { fill: #c6d4f0; }
@@ -4049,7 +4049,7 @@ function renderPolar() {
   gf += flowDots('M152,158 C152,205 120,200 120,238', '#6f86bf') + flowDots('M188,158 C188,205 228,200 228,238', '#5fa8b3');
   L.forEach(([a, b], i) => { g += node(0, 6 + i * 44, 114, a, b, 'ext2'); });
   R.forEach(([a, b, c], i) => { g += node(226, 6 + i * 52, 114, a, b, c); });
-  g += node(128, 98, 84, '통합 극지', '정보체계', 'hub', 60);
+  g += node(128, 98, 84, '통합 극지', '정보체계', 'hub nmda', 60);
   g += node(12, 238, 140, '해군 MDA 상황도', '북극항로 표적관리', 'navy') + node(188, 238, 140, '북극항로 운항 선박', 'S-AIS·위성통신 전파');
   g += lab(170, 196, `선박 ${arcShips.length}척`) + lab(170, 209, `위성 ${polar}기`) + lab(276, 166, `Sentinel ${nSent}건`, 'middle');
   setFlow('polarSvg', gf, g);
@@ -4077,7 +4077,7 @@ function renderSlocInfo() {
   gf += flowDots('M152,158 C152,205 120,200 120,238', '#6f86bf') + flowDots('M188,158 C188,205 228,200 228,238', '#5fa8b3');
   L.forEach(([a, b], i) => { g += node(0, 6 + i * 44, 114, a, b, 'ext2'); });
   R.forEach(([a, b, c], i) => { g += node(226, 6 + i * 44, 114, a, b, c); });
-  g += node(122, 98, 96, '관심해역', '해양정보통합체계', 'hub', 60);
+  g += node(122, 98, 96, '관심해역', '해양정보통합체계', 'hub nmda', 60);
   g += node(12, 238, 140, '청해부대·해군 MDA', '원해 SLOC 상황도', 'navy') + node(188, 238, 140, '우리 선박 (선사)', '위협 경보·항로 권고');
   g += lab(166, 196, `우리 선박 ${kr.length}척`) + lab(166, 209, `위성 ${inA}기`);
   setFlow('slocSvg', gf, g);
