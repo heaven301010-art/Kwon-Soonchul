@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8">
+<link href="https://fonts.googleapis.com/css2?family=Hahmlet:wght@300;500;700&family=Gothic+A1:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+:root{--oat:#D9CDBB;--ivory:#F2EDE4;--paper:#FBF8F2;--greige:#9A8F7E;--ink:#2E2620;--wine:#6E2B33}
+*{box-sizing:border-box}
+html,body{margin:0;width:1080px;height:1920px;overflow:hidden;background:var(--oat)}
+#stage{position:absolute;inset:0;overflow:hidden;
+ background:
+  repeating-linear-gradient(90deg,rgba(255,255,255,.07) 0 7px,rgba(0,0,0,.035) 7px 14px),
+  radial-gradient(90% 60% at 50% 30%,#E3D9CA 0%,var(--oat) 70%,#CFC2AE 100%);
+ font-family:'Gothic A1',sans-serif;color:var(--ink)}
+.layer{position:absolute;inset:0;opacity:0}
+.serif{font-family:'Hahmlet',serif}
+
+/* intro */
+#logo{position:absolute;left:50%;top:560px;width:300px;height:300px;margin-left:-150px;border-radius:50%;overflow:hidden;box-shadow:0 18px 40px rgba(60,45,30,.18)}
+#logo img{width:100%;height:100%;display:block}
+.intro-line{position:absolute;left:0;right:0;text-align:center}
+#i1{top:930px;font:500 84px/1.2 'Hahmlet';letter-spacing:-1px}
+#i2{top:1050px;font:600 38px 'Gothic A1';color:#5B4F43;letter-spacing:2px}
+.mask{display:inline-block;overflow:hidden;vertical-align:top}
+.mask>span{display:inline-block}
+
+/* product */
+.photo{position:absolute;left:60px;top:200px;width:900px;height:900px;overflow:hidden;background:#ccc;box-shadow:0 24px 50px rgba(60,45,30,.22)}
+.photo img{width:100%;height:100%;object-fit:cover;display:block}
+.string{position:absolute;width:2px;background:#7A6E60;transform-origin:top center}
+.tag{position:absolute;width:400px;transform-origin:200px 0;filter:drop-shadow(0 16px 22px rgba(50,35,20,.25))}
+.tag .body{position:relative;margin-top:0;background:var(--paper);padding:84px 40px 40px;
+ clip-path:polygon(22% 0,78% 0,100% 9%,100% 100%,0 100%,0 9%)}
+.tag .hole{position:absolute;left:186px;top:28px;width:28px;height:28px;border-radius:50%;background:var(--oat);box-shadow:inset 0 0 0 5px #E6DDCF}
+.tag .name{font:700 40px/1.3 'Hahmlet';letter-spacing:-.5px}
+.tag .sub{margin-top:10px;font:400 26px/1.45 'Gothic A1';color:#6B5F52}
+.tag .rule{margin:26px 0 20px;border-top:2px dashed #CDBFAB}
+.tag .was{font:400 30px 'Gothic A1';color:#8E8274;text-decoration:line-through}
+.tag .now{margin-top:4px;font:800 66px 'Gothic A1';color:var(--wine);letter-spacing:-1px}
+.tag .now small{font-size:36px;margin-left:4px}
+.tag .rate{margin-top:14px;font:600 26px 'Gothic A1';color:#5B4F43}
+.cap{position:absolute;left:72px;width:540px;top:1170px;font:500 64px/1.32 'Hahmlet';letter-spacing:-1px}
+.cap2{position:absolute;left:72px;width:540px;top:1370px;font:400 34px/1.55 'Gothic A1';color:#4E443A}
+
+/* lookbook */
+.look{position:absolute;overflow:hidden;box-shadow:0 22px 46px rgba(60,45,30,.22)}
+.look img{width:100%;height:100%;object-fit:cover;display:block}
+
+/* outro */
+#o-logo{position:absolute;left:72px;top:330px;width:200px;height:200px;border-radius:50%;overflow:hidden}
+#o-logo img{width:100%;height:100%}
+#o1{position:absolute;left:72px;right:120px;top:600px;font:700 104px/1.16 'Hahmlet';letter-spacing:-2px}
+#o2{position:absolute;left:72px;right:150px;top:880px;font:400 38px/1.55 'Gothic A1';color:#4E443A}
+#search{position:absolute;left:72px;right:130px;top:1060px;height:124px;background:var(--paper);border:3px solid var(--ink);border-radius:62px;display:flex;align-items:center;padding:0 44px;font:600 46px 'Gothic A1'}
+#search svg{margin-right:26px;flex:none}
+#caret{display:inline-block;width:3px;height:52px;background:var(--ink);margin-left:6px;vertical-align:middle}
+#bell{position:absolute;left:72px;right:130px;top:1220px;height:110px;border-radius:55px;background:var(--ink);color:var(--paper);display:flex;align-items:center;justify-content:center;font:600 38px 'Gothic A1'}
+#bell svg{margin-right:16px}
+#o3{position:absolute;left:72px;top:1370px;font:400 30px 'Gothic A1';color:#5B4F43}
+</style></head>
+<body><div id="stage">
+
+<section class="layer" id="L0">
+  <div id="logo"><img src="img/logo_2x.jpg" alt=""></div>
+  <div class="intro-line" id="i1"><span class="mask"><span id="i1s">클래식한 데일리 룩</span></span></div>
+  <div class="intro-line" id="i2"><span id="i2s">에르나 쇼핑몰</span></div>
+</section>
+
+<section class="layer" id="L1">
+  <div class="photo" id="ph1"><img src="img/p1_sq.jpg" alt=""></div>
+  <div class="string" id="st1"></div>
+  <div class="tag" id="tg1"><div class="body"><div class="hole"></div>
+    <div class="name">밴딩 와이드팬츠</div>
+    <div class="sub">체형커버 편한 데일리 팬츠</div>
+    <div class="rule"></div>
+    <div class="was">38,000원</div>
+    <div class="now">35,000<small>원</small></div>
+    <div class="rate">★ 4.8  리뷰 10개</div>
+  </div></div>
+  <div class="cap" id="c1">허리는 편하게,<br>핏은 길고 곧게</div>
+  <div class="cap2" id="d1">밴딩 허리에 와이드 핏으로<br>하루 종일 입어도 편해요</div>
+</section>
+
+<section class="layer" id="L2">
+  <div class="photo" id="ph2"><img src="img/p2_sq.jpg" alt=""></div>
+  <div class="string" id="st2"></div>
+  <div class="tag" id="tg2"><div class="body"><div class="hole"></div>
+    <div class="name">로로 니트 패딩</div>
+    <div class="sub">니트 소매를 단 경량 패딩</div>
+    <div class="rule"></div>
+    <div class="was">135,000원</div>
+    <div class="now">129,000<small>원</small></div>
+  </div></div>
+  <div class="cap" id="c2">가볍게 걸치는<br>겨울 한 벌</div>
+  <div class="cap2" id="d2">니트 소매가 손목까지 감싸<br>바람이 덜 들어요</div>
+</section>
+
+<section class="layer" id="L3">
+  <div class="look" id="lk1" style="left:60px;top:240px;width:760px;height:499px"><img src="img/p3_2x.jpg" alt=""></div>
+  <div class="look" id="lk2" style="left:260px;top:680px;width:760px;height:624px"><img src="img/p4_2x.jpg" alt=""></div>
+  <div class="cap" id="c3" style="top:1380px;width:auto;right:150px">아이보리 니트로<br>채운 이번 시즌</div>
+</section>
+
+<section class="layer" id="L4">
+  <div id="o-logo"><img src="img/logo_2x.jpg" alt=""></div>
+  <div id="o1">오늘 입을 옷,<br>에르나에서</div>
+  <div id="o2">네이버에서 검색하고 알림을 받으면<br>새 상품 소식을 먼저 볼 수 있어요</div>
+  <div id="search"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#2E2620" stroke-width="2.4" stroke-linecap="round"><circle cx="10.5" cy="10.5" r="7"/><path d="M16 16l5 5"/></svg><span id="q"></span><span id="caret"></span></div>
+  <div id="bell"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#FBF8F2" stroke-width="2" stroke-linecap="round"><path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15z"/><path d="M10 20.5a2 2 0 0 0 4 0"/></svg>알림받기</div>
+  <div id="o3">관심고객 574명이 알림을 받고 있어요</div>
+</section>
+
+</div>
+<script>
+const $=id=>document.getElementById(id);
+const clamp=(x,a=0,b=1)=>Math.min(b,Math.max(a,x));
+const eo=t=>1-Math.pow(1-clamp(t),3);            // ease out cubic
+const eio=t=>{t=clamp(t);return t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2};
+const seg=(t,a,b)=>clamp((t-a)/(b-a));
+// scene windows [start,end] seconds
+const W=[[0,3.3],[3.1,8.1],[7.9,12.9],[12.7,15.9],[15.7,20]];
+const FADE=.3;
+function vis(t,[a,b],first,last){
+  let o=1; if(!first) o=Math.min(o,seg(t,a,a+FADE)); if(!last) o=Math.min(o,1-seg(t,b-FADE,b)); return (t<a||t>b)?0:o;
+}
+function swing(t){ // damped pendulum, degrees
+  if(t<0) return -28; return 24*Math.exp(-2.2*t)*Math.cos(6.2*t+0.4)*-1;
+}
+function product(t,n,tagX,tagY){
+  const ph=$('ph'+n), tg=$('tg'+n), st=$('st'+n);
+  const p=eo(seg(t,0,.7));
+  ph.style.transform=`translateY(${(1-p)*80}px) scale(${1.04-0.04*p})`;
+  ph.style.opacity=p;
+  // slow push in on photo
+  ph.querySelector('img').style.transform=`scale(${1+0.06*seg(t,0,5)})`;
+  // tag drops from above, then swings
+  const dt=t-.12, drop=eo(seg(dt,0,.5));
+  const y=tagY-(1-drop)*1150;
+  const ang=dt<0?0:swing(dt);
+  tg.style.left=tagX+'px'; tg.style.top=y+'px';
+  tg.style.transform=`rotate(${ang}deg)`;
+  // string from top edge (anchor x) to hole
+  const ax=tagX+200, holeY=y+42;
+  st.style.left=ax+'px'; st.style.top='-10px'; st.style.height=(holeY+10)+'px';
+  st.style.transform=`rotate(${ang*0.18}deg)`;
+  const c=$('c'+n), d=$('d'+n), cp=eo(seg(t,1.0,1.7)), dp=eo(seg(t,1.4,2.1));
+  c.style.opacity=cp; c.style.transform=`translateY(${(1-cp)*30}px)`;
+  d.style.opacity=dp; d.style.transform=`translateY(${(1-dp)*24}px)`;
+}
+window.render=function(t){
+  W.forEach((w,i)=>$('L'+i).style.opacity=vis(t,w,i==0,i==W.length-1));
+  // intro
+  {const lt=t;
+   const lp=eo(seg(lt,.1,.9)); $('logo').style.transform=`scale(${.85+.15*lp})`; $('logo').style.opacity=lp;
+   const a=eo(seg(lt,.7,1.5)); $('i1s').style.transform=`translateY(${(1-a)*110}%)`;
+   const b=eo(seg(lt,1.2,1.9)); $('i2s').style.opacity=b; $('i2').style.letterSpacing=(2+6*(1-b))+'px';}
+  product(t-W[1][0],1,630,830);
+  product(t-W[2][0],2,630,830);
+  {const lt=t-W[3][0];
+   const a=eo(seg(lt,0,.7)), b=eo(seg(lt,.35,1.05)), c=eo(seg(lt,.9,1.6));
+   $('lk1').style.transform=`translateX(${(1-a)*-120}px) rotate(${-2+2*a}deg)`; $('lk1').style.opacity=a;
+   $('lk2').style.transform=`translateX(${(1-b)*120}px) rotate(${2-1*b}deg)`; $('lk2').style.opacity=b;
+   $('lk1').querySelector('img').style.transform=`scale(${1.08-0.06*seg(lt,0,3)})`;
+   $('lk2').querySelector('img').style.transform=`scale(${1+0.06*seg(lt,0,3)})`;
+   $('c3').style.opacity=c; $('c3').style.transform=`translateY(${(1-c)*30}px)`;}
+  {const lt=t-W[4][0];
+   const a=eo(seg(lt,0,.6)); $('o-logo').style.opacity=a; $('o-logo').style.transform=`scale(${.9+.1*a})`;
+   const b=eo(seg(lt,.2,.9)); $('o1').style.opacity=b; $('o1').style.transform=`translateY(${(1-b)*30}px)`;
+   const c=eo(seg(lt,.5,1.1)); $('o2').style.opacity=c;
+   const d=eo(seg(lt,.8,1.3)); $('search').style.opacity=d;
+   const q='에르나 쇼핑몰', k=Math.floor(clamp((lt-1.2)/1.0)*q.length+0.0001); $('q').textContent=q.slice(0,k);
+   $('caret').style.opacity=(Math.floor(lt*2.5)%2)?0:1;
+   const e=eo(seg(lt,2.4,2.9)); $('bell').style.opacity=e; $('bell').style.transform=`translateY(${(1-e)*20}px)`;
+   const f=eo(seg(lt,2.8,3.3)); $('o3').style.opacity=f;}
+};
+window.DURATION=20;
+render(0);
+</script>
+</body></html>
