@@ -316,6 +316,7 @@ button { font: inherit; color: inherit; }
 .share .pkh { fill: var(--fc); opacity: .16; }
 .share .pkc { fill: color-mix(in srgb, var(--fc) 72%, #fff); stroke: color-mix(in srgb, var(--fc) 80%, #000); stroke-width: .6; stroke-opacity: .55; }
 .share .pki { fill: #fff; opacity: .7; }
+.share .lgb { fill: #fff; opacity: .9; } .share .ng-navy .lgb { opacity: 1; }
 .share .ng-navy .nd { fill: #1f3c74; stroke: #0b2a5e; stroke-width: 1.4; }
 .share .ng-navy .nt { fill: #fff; } .share .ng-navy .ns { fill: #c6d4f0; }
 .rgsum { background: color-mix(in srgb, var(--fr) 4%, var(--panel)); }
@@ -2750,11 +2751,15 @@ function loadLogos() {
     tryExt(0);
   }
 }
+// 기관명 폭 재기 (로고 자리를 빼고 남은 폭에 맞추기 위해)
+const ntW = (() => { const c = document.createElement('canvas').getContext('2d'); c.font = '600 11.5px "IBM Plex Sans KR", sans-serif'; return t => c.measureText(t).width; })();
 function flowNode(x, y, w, t1, t2, cls, hh, dy) {
-  const lg = LOGO[LOGO_OF[t1]], sh = lg ? 7 : 0;
+  const lg = LOGO[LOGO_OF[t1]];
+  // 로고가 있으면 왼쪽 위 22px을 비우고 나머지 폭 가운데에 기관명을 둔다. 그래도 길면 글자 간격·폭을 줄여 맞춘다
+  const av = lg ? w - 26 : w - 8, cx = lg ? x + 22 + av / 2 : x + w / 2, fit = ntW(t1) > av ? ` textLength="${av}" lengthAdjust="spacingAndGlyphs"` : '';
   return `<g class="ng-${cls}"><rect class="nd ${cls}" x="${x}" y="${y}" width="${w}" height="${hh}" rx="5"/>`
-    + (lg ? `<image class="lg" href="${lg}" x="${x + 3}" y="${y + 3}" width="13" height="13" preserveAspectRatio="xMidYMid meet"/>` : '')
-    + `<text class="nt" x="${x + w / 2 + sh}" y="${y + hh / 2 + dy}" text-anchor="middle">${t1}</text><text class="${cls === 'hub' ? 'nt' : 'ns'}" x="${x + w / 2}" y="${y + hh / 2 + 13}" text-anchor="middle">${t2}</text></g>`;
+    + (lg ? `<rect class="lgb" x="${x + 2.5}" y="${y + 2.5}" width="18" height="18" rx="3.5"/><image class="lg" href="${lg}" x="${x + 3.5}" y="${y + 3.5}" width="16" height="16" preserveAspectRatio="xMidYMid meet"/>` : '')
+    + `<text class="nt" x="${cx}" y="${y + hh / 2 + dy}" text-anchor="middle"${fit}>${t1}</text><text class="${cls === 'hub' ? 'nt' : 'ns'}" x="${x + w / 2}" y="${y + hh / 2 + 13}" text-anchor="middle">${t2}</text></g>`;
 }
 function setFlow(id, flows, rest) {
   const el = $(id); if (!el.querySelector(':scope > g.fl')) { el.innerHTML = '<g class="fl"></g><g class="nl"></g>'; elCache.delete(id + 'F'); elCache.delete(id + 'N'); }
