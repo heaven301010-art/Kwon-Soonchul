@@ -4009,7 +4009,7 @@ function renderPolar() {
   const node = (x, y, w, t1, t2, cls = '', hh = 36) => `<g class="ng-${cls}"><rect class="nd ${cls}" x="${x}" y="${y}" width="${w}" height="${hh}" rx="5"/><text class="nt" x="${x + w / 2}" y="${y + hh / 2 - 2}" text-anchor="middle">${t1}</text><text class="${cls === 'hub' ? 'nt' : 'ns'}" x="${x + w / 2}" y="${y + hh / 2 + 13}" text-anchor="middle">${t2}</text></g>`;
   const lab = (x, y, t, a = 'middle') => `<text class="el" x="${x}" y="${y}" text-anchor="${a}">${t}</text>`;
   const L = [['극지연구소', '아라온·다산기지 관측'], ['기상청', '극지 기상·해빙 예보'], ['해양수산부', '북극항로 운항 관리'], ['국립해양조사원', '극지 해도·해양관측'], ['한국해양수산개발원', '북극 물류·정책 분석']];
-  const R = [['코페르니쿠스 CDSE', 'Sentinel-1·2·3 (EU)', 'ext'], ['우리 극궤도 위성', '아리랑·군 정찰위성', ''], ['국제 협력', '북극이사회·NAVAREA', 'ext']];
+  const R = [['코페르니쿠스 CDSE', 'Sentinel-1·2·3 (EU)', 'ext'], ['국가-군 극궤도 위성', '아리랑·군 정찰위성', ''], ['국제 협력', '북극이사회·NAVAREA', 'ext']];
   let g = '', gf = '';
   L.forEach((_, i) => { const y = 6 + i * 44; gf += flowDots(`M114,${y + 18} C122,${y + 18} 122,128 128,128`, FLOWC[i]); });
   R.forEach((_, i) => { const y = 6 + i * 52; gf += flowDots(`M226,${y + 18} C218,${y + 18} 218,128 212,128`, FLOWC[5 + i]); });
