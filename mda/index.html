@@ -2731,6 +2731,31 @@ function flowDots(d, col, hot = true) {
 }
 // 흐름도 그리기: 흐름(선·동그라미)과 상자·글자를 다른 층에 두고, 흐름 층은 내용이 바뀔 때만 다시 그린다
 // (숫자가 매초 바뀌어도 이동 중인 동그라미를 새로 만들지 않아 깜빡이지 않는다)
+// 흐름도 상자: 기관 로고 파일(mda/logos/<이름>.png 또는 .svg)이 있으면 상자 왼쪽 위에 작게 넣고 기관명을 조금 오른쪽으로 민다
+// 로고 파일이 없는 기관은 로고 없이 그대로 그린다
+const LOGO_OF = {
+  '해양수산부': 'mof', '해양경찰청': 'kcg', '기상청': 'kma', 'KIOST·KHOA': 'kiost', '해군 MDA 상황도': 'navy', '청해부대·해군 MDA': 'navy',
+  '극지연구소': 'kopri', '국립해양조사원': 'khoa', '한국해양수산개발원': 'kmi', '코페르니쿠스 CDSE': 'copernicus',
+  '외교부': 'mofa', '합참·해군작전사': 'jcs', '선사·해운협회': 'ksa', 'UKMTO·MSCHOA': 'ukmto', 'CMF·IMSC (바레인)': 'cmf', 'IFC-IOR·싱가포르 IFC': 'ifc', '해외 IFC': 'ifc'
+};
+const LOGO = {};
+function loadLogos() {
+  for (const k of new Set(Object.values(LOGO_OF))) {
+    const exts = ['png', 'svg'], tryExt = i => {
+      if (i >= exts.length) return;
+      const im = new Image(), url = `logos/${k}.${exts[i]}`;
+      im.onload = () => { LOGO[k] = url; renderPanel(); if (arcView) renderPolar(); if (slocView) renderSlocInfo(); };
+      im.onerror = () => tryExt(i + 1); im.src = url;
+    };
+    tryExt(0);
+  }
+}
+function flowNode(x, y, w, t1, t2, cls, hh, dy) {
+  const lg = LOGO[LOGO_OF[t1]], sh = lg ? 7 : 0;
+  return `<g class="ng-${cls}"><rect class="nd ${cls}" x="${x}" y="${y}" width="${w}" height="${hh}" rx="5"/>`
+    + (lg ? `<image class="lg" href="${lg}" x="${x + 3}" y="${y + 3}" width="13" height="13" preserveAspectRatio="xMidYMid meet"/>` : '')
+    + `<text class="nt" x="${x + w / 2 + sh}" y="${y + hh / 2 + dy}" text-anchor="middle">${t1}</text><text class="${cls === 'hub' ? 'nt' : 'ns'}" x="${x + w / 2}" y="${y + hh / 2 + 13}" text-anchor="middle">${t2}</text></g>`;
+}
 function setFlow(id, flows, rest) {
   const el = $(id); if (!el.querySelector(':scope > g.fl')) { el.innerHTML = '<g class="fl"></g><g class="nl"></g>'; elCache.delete(id + 'F'); elCache.delete(id + 'N'); }
   setHTML(el.children[0], id + 'F', flows); setHTML(el.children[1], id + 'N', rest);
@@ -2982,7 +3007,7 @@ function renderPanel() {
     const sum = ks => ks.reduce((a, k) => a + det[k], 0);
     const recent = to => shares.some(x => T - x.t <= 15 && x.to.includes(to));
     const nIFC = alerts.filter(a => a.to.includes('해외 IFC')).length, nKCG = alerts.filter(a => a.to.includes('해경')).length;
-    const node = (x, y, w, t1, t2, cls = '', hh = 40) => `<g class="ng-${cls}"><rect class="nd ${cls}" x="${x}" y="${y}" width="${w}" height="${hh}" rx="5"/><text class="nt" x="${x + w / 2}" y="${y + hh / 2 - 3}" text-anchor="middle">${t1}</text><text class="${cls === 'hub' ? 'nt' : 'ns'}" x="${x + w / 2}" y="${y + hh / 2 + 13}" text-anchor="middle">${t2}</text></g>`;
+    const node = (x, y, w, t1, t2, cls = '', hh = 40) => flowNode(x, y, w, t1, t2, cls, hh, -3);
     const lab = (x, y, t, a = 'middle') => `<text class="el" x="${x}" y="${y}" text-anchor="${a}">${t}</text>`;
     setFlow('shareSvg',
       // 기관 → 국가 MDA 플랫폼 → 해군·해외 IFC. 최근 15분 안에 공유가 오간 흐름은 동그라미가 많고 빠르다
@@ -4006,7 +4031,7 @@ function renderPolar() {
   const north = arcShips.filter(sh => sh.pos[1] > AR.geoLimit).length, sst = (-1.2 + 0.3 * Math.sin(T / 90)).toFixed(1), vis = Math.round(6 + 4 * Math.sin(T / 70));
   const nSent = cdseCount(cdseA);
   // 흐름도: 왼쪽 국내 기관, 오른쪽 위성·국제 정보, 가운데 통합 체계, 아래 활용
-  const node = (x, y, w, t1, t2, cls = '', hh = 36) => `<g class="ng-${cls}"><rect class="nd ${cls}" x="${x}" y="${y}" width="${w}" height="${hh}" rx="5"/><text class="nt" x="${x + w / 2}" y="${y + hh / 2 - 2}" text-anchor="middle">${t1}</text><text class="${cls === 'hub' ? 'nt' : 'ns'}" x="${x + w / 2}" y="${y + hh / 2 + 13}" text-anchor="middle">${t2}</text></g>`;
+  const node = (x, y, w, t1, t2, cls = '', hh = 36) => flowNode(x, y, w, t1, t2, cls, hh, -2);
   const lab = (x, y, t, a = 'middle') => `<text class="el" x="${x}" y="${y}" text-anchor="${a}">${t}</text>`;
   const L = [['극지연구소', '아라온·다산기지 관측'], ['기상청', '극지 기상·해빙 예보'], ['해양수산부', '북극항로 운항 관리'], ['국립해양조사원', '극지 해도·해양관측'], ['한국해양수산개발원', '북극 물류·정책 분석']];
   const R = [['코페르니쿠스 CDSE', 'Sentinel-1·2·3 (EU)', 'ext'], ['국가-군 극궤도 위성', '아리랑·군 정찰위성', ''], ['국제 협력', '북극이사회·NAVAREA', 'ext']];
@@ -4034,7 +4059,7 @@ function renderSlocInfo() {
   const lrit = kr.filter(sh => T - sh.rep.t <= 60).length, chd = sById('CH1');
   const [w, s0, e, n] = SBOX[slocPre], inA = SATS.filter(o => { const q = satPos(o, T); return o.use && q[0] >= w && q[0] <= e && q[1] >= s0 && q[1] <= n; }).length;
   const navyN = slocShips.filter(sh => NAVY.has(sh.cls) && sh.rep.t > -1).length, thr = slocShips.filter(sh => ['ir', 'pir', 'cn', 'ccg', 'mil'].includes(sh.cls) && sh.rep.t > -1 && T - sh.rep.t <= 60).length;
-  const node = (x, y, w2, t1, t2, cls = '', hh = 36) => `<g class="ng-${cls}"><rect class="nd ${cls}" x="${x}" y="${y}" width="${w2}" height="${hh}" rx="5"/><text class="nt" x="${x + w2 / 2}" y="${y + hh / 2 - 2}" text-anchor="middle">${t1}</text><text class="${cls === 'hub' ? 'nt' : 'ns'}" x="${x + w2 / 2}" y="${y + hh / 2 + 13}" text-anchor="middle">${t2}</text></g>`;
+  const node = (x, y, w2, t1, t2, cls = '', hh = 36) => flowNode(x, y, w2, t1, t2, cls, hh, -2);
   const lab = (x, y, t, a = 'middle') => `<text class="el" x="${x}" y="${y}" text-anchor="${a}">${t}</text>`;
   const L = [['해양수산부', 'LRIT·해적위험해역 관리'], ['외교부', '재외국민·현지 정세'], ['합참·해군작전사', '청해부대 작전 지휘'], ['한국해양수산개발원', '해운 물류·위험 분석'], ['선사·해운협회', '선박 보고·운항 계획']];
   const R = [['UKMTO·MSCHOA', '선박 보고·경보', 'ext'], ['CMF·IMSC (바레인)', '연합해군 정보 공유', 'ext'], ['IFC-IOR·싱가포르 IFC', 'ReCAAP 해적 정보', 'ext'], ['코페르니쿠스 CDSE', 'Sentinel 영상 (EU)', 'ext']];
@@ -4322,6 +4347,7 @@ function frame(now) {
   requestAnimationFrame(frame);
 }
 
+loadLogos();
 init(); drawStatic(); drawArcStatic(); drawSlocStatic(); setPlay(); fitView(); renderPanel();
 requestAnimationFrame(frame);
 })();
