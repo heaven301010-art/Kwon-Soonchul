@@ -319,6 +319,8 @@ button { font: inherit; color: inherit; }
 .share .lgb { fill: #fff; opacity: .9; } .share .ng-navy .lgb { opacity: 1; }
 .share .nd.nmda { fill: #e8772e; stroke: #b4531a; stroke-width: 1.4; }   /* 흐름도 가운데 통합 상자(국가 MDA 플랫폼·통합 극지정보체계·관심해역 해양정보통합체계): 주황 상자·흰 글자 */
 .share .ng-hub.nmda .nt { fill: #fff; }
+.share .nd.ifc { fill: #6a4fc4; stroke: #4b3596; stroke-width: 1.4; stroke-dasharray: none; }   /* 해외 IFC: 보라 상자·흰 글자 */
+.share .ng-ext.ifc .nt { fill: #fff; } .share .ng-ext.ifc .ns { fill: #ddd3fa; }
 .share .ng-navy .nd { fill: #1f3c74; stroke: #0b2a5e; stroke-width: 1.4; }
 .share .ng-navy .nt { fill: #fff; } .share .ng-navy .ns { fill: #c6d4f0; }
 .rgsum { background: color-mix(in srgb, var(--fr) 4%, var(--panel)); }
@@ -3025,7 +3027,7 @@ function renderPanel() {
       node(5, 8, 130, '해양수산부', 'GICOMS · AIS · LRIT') + node(185, 8, 130, '해양경찰청', 'V-PASS · VTS · 경비함')
       + node(0, 111, 86, '기상청', '해양기상', 'ext2') + node(234, 111, 86, 'KIOST·KHOA', '관측·예측', 'ext2')
       + node(102, 106, 116, '국가 MDA 플랫폼', '해수부 · K-IFC(가칭)', 'hub nmda', 50)
-      + node(5, 214, 130, '해군 MDA 상황도', '군사정보 · 비밀 분리', 'navy') + node(185, 214, 130, '해외 IFC', 'IFC-SG · IFC-IOR 등', 'ext')
+      + node(5, 214, 130, '해군 MDA 상황도', '군사정보 · 비밀 분리', 'navy') + node(185, 214, 130, '해외 IFC', 'IFC-SG · IFC-IOR 등', 'ext ifc')
       // 수치는 곡선과 겹치지 않게 바깥쪽 여백(상자 사이)에 둔다
       + lab(4, 66, `AIS ${det.ais}`, 'start') + lab(4, 79, `LRIT ${det.lrit}`, 'start')
       + lab(316, 66, `V-PASS ${det.vpass}`, 'end') + lab(316, 79, `VTS ${det.vts}`, 'end') + lab(316, 92, `해경 인계 ${nKCG}건`, 'end')
