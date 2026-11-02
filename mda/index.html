@@ -310,7 +310,8 @@ button { font: inherit; color: inherit; }
 .share .nt { font: 600 11.5px var(--font-ui); fill: var(--fg); }
 .share .ns { font: 10px var(--font-ui); fill: var(--muted); }
 .share .eg { stroke: var(--faint); stroke-width: 1.3; fill: none; }
-.share .eg.hot { stroke: var(--fr); stroke-width: 2; stroke-dasharray: 6 4; animation: flow 1.2s linear infinite; }
+.share .eg.on { stroke: color-mix(in srgb, var(--fc) 45%, var(--faint)); stroke-width: 1.8; }
+.share .pk { stroke: var(--panel); stroke-width: 1; }
 .rgsum { background: color-mix(in srgb, var(--fr) 4%, var(--panel)); }
 .rgsum .rgt { display: inline-flex; gap: 4px; margin: 3px 4px 0 0; padding: 2px 6px; font: inherit; font-size: 11px; border: 1px solid var(--line); border-radius: 4px; background: var(--panel); cursor: pointer; color: var(--muted); }
 .rgsum .rgt b.H { color: var(--ho); } .rgsum .rgt b.U { color: var(--un); } .rgsum .rgt b.S { color: var(--su); }
@@ -338,8 +339,6 @@ button { font: inherit; color: inherit; }
 @media (max-width: 860px) { .pdom { grid-template-columns: 1fr; } }
 .share .el { font: 500 10px var(--font-data); fill: var(--fg); paint-order: stroke; stroke: var(--panel); stroke-width: 3px; }
 .share .arw { fill: var(--faint); }
-@keyframes flow { to { stroke-dashoffset: -20; } }
-@media (prefers-reduced-motion: reduce) { .share .eg.hot { animation: none; } }
 #shareLog { max-height: 110px; }
 .alerts, .reqs { display: flex; flex-direction: column; gap: 8px; }
 .al { border: 1px solid var(--line); border-left: 4px solid var(--k); background: var(--panel-2); border-radius: 4px; padding: 7px 9px; display: grid; gap: 3px; }
@@ -2712,6 +2711,16 @@ function renderArcPanel() {
 
 // ── 패널 ────────────────────────────────────────────
 const elCache = new Map();
+// 정보 흐름도: 데이터를 담은 동그라미가 선을 따라 이동한다 (출처별 색). hot이면 동그라미가 더 많고 빠르다
+// SMIL 이동은 문서 시간 기준이라 그림을 다시 그려도 끊기지 않는다. 움직임 줄이기 설정이면 선 가운데에 멈춰 둔다
+const RMOT = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const FLOWC = ['#0b7285', '#e8590c', '#1c7ed6', '#2b8a3e', '#ae3ec9', '#b08900', '#7048e8', '#c2255c'];
+function flowDots(d, col, hot = true) {
+  const n = hot ? 3 : 1, dur = hot ? 1.8 : 3.6, r = hot ? 3.4 : 2.6;
+  let h = `<path class="eg${hot ? ' on' : ''}" d="${d}" style="--fc:${col}"/>`;
+  for (let i = 0; i < n; i++) h += `<circle class="pk" r="${r}" fill="${col}"${hot ? '' : ' opacity=".75"'}>${RMOT ? `<animateMotion dur="1s" path="${d}" keyPoints="0.5;0.5" keyTimes="0;1" fill="freeze"/>` : `<animateMotion dur="${dur}s" begin="${(-dur * i / n).toFixed(2)}s" repeatCount="indefinite" path="${d}"/>`}</circle>`;
+  return h;
+}
 function setHTML(el, key, html) { if (elCache.get(key) === html) return; elCache.set(key, html); el.innerHTML = html; }
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const $ = id => document.getElementById(id);
@@ -2960,12 +2969,12 @@ function renderPanel() {
     const recent = to => shares.some(x => T - x.t <= 15 && x.to.includes(to));
     const nIFC = alerts.filter(a => a.to.includes('해외 IFC')).length, nKCG = alerts.filter(a => a.to.includes('해경')).length;
     const node = (x, y, w, t1, t2, cls = '', hh = 40) => `<rect class="nd ${cls}" x="${x}" y="${y}" width="${w}" height="${hh}" rx="5"/><text class="nt" x="${x + w / 2}" y="${y + hh / 2 - 3}" text-anchor="middle">${t1}</text><text class="${cls === 'hub' ? 'nt' : 'ns'}" x="${x + w / 2}" y="${y + hh / 2 + 13}" text-anchor="middle">${t2}</text>`;
-    const edge = (d, hot) => `<path class="eg${hot ? ' hot' : ''}" d="${d}"/>`;
     const lab = (x, y, t, a = 'middle') => `<text class="el" x="${x}" y="${y}" text-anchor="${a}">${t}</text>`;
     setHTML($('shareSvg'), 'share',
-      edge('M70,48 L132,106', recent('해수부')) + edge('M250,48 L188,106', recent('해경'))
-      + edge('M86,131 L102,131', false) + edge('M234,131 L218,131', false)
-      + edge('M70,214 L132,156', false) + edge('M188,156 L250,214', recent('해외 IFC'))
+      // 기관 → 국가 MDA 플랫폼 → 해군·해외 IFC. 최근 15분 안에 공유가 오간 흐름은 동그라미가 많고 빠르다
+      flowDots('M70,48 L132,106', FLOWC[0], recent('해수부')) + flowDots('M250,48 L188,106', FLOWC[1], recent('해경'))
+      + flowDots('M86,131 L102,131', FLOWC[2], false) + flowDots('M234,131 L218,131', FLOWC[3], false)
+      + flowDots('M132,156 L70,214', '#0b3d91', shares.some(x => T - x.t <= 15)) + flowDots('M188,156 L250,214', FLOWC[6], recent('해외 IFC'))
       + node(5, 8, 130, '해양수산부', 'GICOMS · AIS · LRIT') + node(185, 8, 130, '해양경찰청', 'V-PASS · VTS · 경비함')
       + node(0, 111, 86, '기상청', '해양기상', 'ext2') + node(234, 111, 86, 'KIOST·KHOA', '관측·예측', 'ext2')
       + node(102, 106, 116, '국가 MDA 플랫폼', '해수부 · K-IFC(가칭)', 'hub', 50)
@@ -3983,13 +3992,13 @@ function renderPolar() {
   const nSent = cdseCount(cdseA);
   // 흐름도: 왼쪽 국내 기관, 오른쪽 위성·국제 정보, 가운데 통합 체계, 아래 활용
   const node = (x, y, w, t1, t2, cls = '', hh = 36) => `<rect class="nd ${cls}" x="${x}" y="${y}" width="${w}" height="${hh}" rx="5"/><text class="nt" x="${x + w / 2}" y="${y + hh / 2 - 2}" text-anchor="middle">${t1}</text><text class="${cls === 'hub' ? 'nt' : 'ns'}" x="${x + w / 2}" y="${y + hh / 2 + 13}" text-anchor="middle">${t2}</text>`;
-  const edge = d => `<path class="eg hot" d="${d}"/>`, lab = (x, y, t, a = 'middle') => `<text class="el" x="${x}" y="${y}" text-anchor="${a}">${t}</text>`;
+  const lab = (x, y, t, a = 'middle') => `<text class="el" x="${x}" y="${y}" text-anchor="${a}">${t}</text>`;
   const L = [['극지연구소', '아라온·다산기지 관측'], ['기상청', '극지 기상·해빙 예보'], ['해양수산부', '북극항로 운항 관리'], ['국립해양조사원', '극지 해도·해양관측'], ['한국해양수산개발원', '북극 물류·정책 분석']];
   const R = [['코페르니쿠스 CDSE', 'Sentinel-1·2·3 (EU)', 'ext'], ['우리 극궤도 위성', '아리랑·군 정찰위성', ''], ['국제 협력', '북극이사회·NAVAREA', 'ext']];
   let g = '';
-  L.forEach(([a, b], i) => { const y = 6 + i * 44; g += edge(`M114,${y + 18} C122,${y + 18} 122,128 128,128`); });
-  R.forEach(([a, b], i) => { const y = 6 + i * 52; g += edge(`M226,${y + 18} C218,${y + 18} 218,128 212,128`); });
-  g += edge('M152,158 L82,238') + edge('M188,158 L258,238');
+  L.forEach((_, i) => { const y = 6 + i * 44; g += flowDots(`M114,${y + 18} C122,${y + 18} 122,128 128,128`, FLOWC[i]); });
+  R.forEach((_, i) => { const y = 6 + i * 52; g += flowDots(`M226,${y + 18} C218,${y + 18} 218,128 212,128`, FLOWC[5 + i]); });
+  g += flowDots('M152,158 L82,238', '#0b3d91') + flowDots('M188,158 L258,238', '#0b7285');
   L.forEach(([a, b], i) => { g += node(0, 6 + i * 44, 114, a, b, 'ext2'); });
   R.forEach(([a, b, c], i) => { g += node(226, 6 + i * 52, 114, a, b, c); });
   g += node(128, 98, 84, '통합 극지', '정보체계', 'hub', 60);
@@ -4011,13 +4020,13 @@ function renderSlocInfo() {
   const [w, s0, e, n] = SBOX[slocPre], inA = SATS.filter(o => { const q = satPos(o, T); return o.use && q[0] >= w && q[0] <= e && q[1] >= s0 && q[1] <= n; }).length;
   const navyN = slocShips.filter(sh => NAVY.has(sh.cls) && sh.rep.t > -1).length, thr = slocShips.filter(sh => ['ir', 'pir', 'cn', 'ccg', 'mil'].includes(sh.cls) && sh.rep.t > -1 && T - sh.rep.t <= 60).length;
   const node = (x, y, w2, t1, t2, cls = '', hh = 36) => `<rect class="nd ${cls}" x="${x}" y="${y}" width="${w2}" height="${hh}" rx="5"/><text class="nt" x="${x + w2 / 2}" y="${y + hh / 2 - 2}" text-anchor="middle">${t1}</text><text class="${cls === 'hub' ? 'nt' : 'ns'}" x="${x + w2 / 2}" y="${y + hh / 2 + 13}" text-anchor="middle">${t2}</text>`;
-  const edge = d => `<path class="eg hot" d="${d}"/>`, lab = (x, y, t, a = 'middle') => `<text class="el" x="${x}" y="${y}" text-anchor="${a}">${t}</text>`;
+  const lab = (x, y, t, a = 'middle') => `<text class="el" x="${x}" y="${y}" text-anchor="${a}">${t}</text>`;
   const L = [['해양수산부', 'LRIT·해적위험해역 관리'], ['외교부', '재외국민·현지 정세'], ['합참·해군작전사', '청해부대 작전 지휘'], ['한국해양수산개발원', '해운 물류·위험 분석'], ['선사·해운협회', '선박 보고·운항 계획']];
   const R = [['UKMTO·MSCHOA', '선박 보고·경보', 'ext'], ['CMF·IMSC (바레인)', '연합해군 정보 공유', 'ext'], ['IFC-IOR·싱가포르 IFC', 'ReCAAP 해적 정보', 'ext'], ['코페르니쿠스 CDSE', 'Sentinel 영상 (EU)', 'ext']];
   let g = '';
-  L.forEach((_, i) => { const y = 6 + i * 44; g += edge(`M114,${y + 18} C122,${y + 18} 122,128 128,128`); });
-  R.forEach((_, i) => { const y = 6 + i * 44; g += edge(`M226,${y + 18} C218,${y + 18} 218,128 212,128`); });
-  g += edge('M152,158 L82,238') + edge('M188,158 L258,238');
+  L.forEach((_, i) => { const y = 6 + i * 44; g += flowDots(`M114,${y + 18} C122,${y + 18} 122,128 128,128`, FLOWC[i]); });
+  R.forEach((_, i) => { const y = 6 + i * 44; g += flowDots(`M226,${y + 18} C218,${y + 18} 218,128 212,128`, FLOWC[(5 + i) % FLOWC.length]); });
+  g += flowDots('M152,158 L82,238', '#0b3d91') + flowDots('M188,158 L258,238', '#0b7285');
   L.forEach(([a, b], i) => { g += node(0, 6 + i * 44, 114, a, b, 'ext2'); });
   R.forEach(([a, b, c], i) => { g += node(226, 6 + i * 44, 114, a, b, c); });
   g += node(122, 98, 96, '관심해역', '해양정보통합체계', 'hub', 60);
