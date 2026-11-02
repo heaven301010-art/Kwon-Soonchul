@@ -2735,9 +2735,10 @@ function flowDots(d, col, hot = true) {
 // 흐름도 상자: 기관 로고 파일(mda/logos/<이름>.png 또는 .svg)이 있으면 상자 왼쪽 위에 작게 넣고 기관명을 조금 오른쪽으로 민다
 // 로고 파일이 없는 기관은 로고 없이 그대로 그린다
 const LOGO_OF = {
-  '해양수산부': 'mof', '해양경찰청': 'kcg', '기상청': 'kma', 'KIOST·KHOA': 'kiost', '해군 MDA 상황도': 'navy', '청해부대·해군 MDA': 'navy',
-  '극지연구소': 'kopri', '국립해양조사원': 'khoa', '한국해양수산개발원': 'kmi', '코페르니쿠스 CDSE': 'copernicus',
-  '외교부': 'mofa', '합참·해군작전사': 'jcs', '선사·해운협회': 'ksa', 'UKMTO·MSCHOA': 'ukmto', 'CMF·IMSC (바레인)': 'cmf', 'IFC-IOR·싱가포르 IFC': 'ifc', '해외 IFC': 'ifc'
+  // 정부기관(부·처·청과 소속기관)은 정부상징 하나로 통일
+  '해양수산부': 'gov', '해양경찰청': 'gov', '기상청': 'gov', '국립해양조사원': 'gov', '외교부': 'gov',
+  'KIOST·KHOA': 'kiost', '해군 MDA 상황도': 'navy', '청해부대·해군 MDA': 'navy',
+  '극지연구소': 'kopri', '한국해양수산개발원': 'kmi', '코페르니쿠스 CDSE': 'copernicus', '합참·해군작전사': 'jcs', '선사·해운협회': 'ksa', 'UKMTO·MSCHOA': 'ukmto', 'CMF·IMSC (바레인)': 'cmf', 'IFC-IOR·싱가포르 IFC': 'ifc', '해외 IFC': 'ifc'
 };
 const LOGO = {};
 function loadLogos() {
