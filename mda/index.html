@@ -310,8 +310,14 @@ button { font: inherit; color: inherit; }
 .share .nt { font: 600 11.5px var(--font-ui); fill: var(--fg); }
 .share .ns { font: 10px var(--font-ui); fill: var(--muted); }
 .share .eg { stroke: var(--faint); stroke-width: 1.3; fill: none; }
-.share .eg.on { stroke: color-mix(in srgb, var(--fc) 45%, var(--faint)); stroke-width: 1.8; }
-.share .pk { stroke: var(--panel); stroke-width: 1; }
+.share .eg.on { stroke: color-mix(in srgb, var(--fc) 35%, var(--faint)); stroke-width: 1.6; }
+.share .pk { animation: pkin .35s ease-out; }   /* 새로 그려진 동그라미가 이동 위치를 잡기 전 한 장면이 보이지 않게 */
+@keyframes pkin { from { opacity: 0; } }
+.share .pkh { fill: var(--fc); opacity: .16; }
+.share .pkc { fill: color-mix(in srgb, var(--fc) 72%, #fff); stroke: color-mix(in srgb, var(--fc) 80%, #000); stroke-width: .6; stroke-opacity: .55; }
+.share .pki { fill: #fff; opacity: .7; }
+.share .ng-navy .nd { fill: #1f3c74; stroke: #0b2a5e; stroke-width: 1.4; }
+.share .ng-navy .nt { fill: #fff; } .share .ng-navy .ns { fill: #c6d4f0; }
 .rgsum { background: color-mix(in srgb, var(--fr) 4%, var(--panel)); }
 .rgsum .rgt { display: inline-flex; gap: 4px; margin: 3px 4px 0 0; padding: 2px 6px; font: inherit; font-size: 11px; border: 1px solid var(--line); border-radius: 4px; background: var(--panel); cursor: pointer; color: var(--muted); }
 .rgsum .rgt b.H { color: var(--ho); } .rgsum .rgt b.U { color: var(--un); } .rgsum .rgt b.S { color: var(--su); }
@@ -2714,12 +2720,20 @@ const elCache = new Map();
 // 정보 흐름도: 데이터를 담은 동그라미가 선을 따라 이동한다 (출처별 색). hot이면 동그라미가 더 많고 빠르다
 // SMIL 이동은 문서 시간 기준이라 그림을 다시 그려도 끊기지 않는다. 움직임 줄이기 설정이면 선 가운데에 멈춰 둔다
 const RMOT = matchMedia('(prefers-reduced-motion: reduce)').matches;
-const FLOWC = ['#0b7285', '#e8590c', '#1c7ed6', '#2b8a3e', '#ae3ec9', '#b08900', '#7048e8', '#c2255c'];
+// 차분한 파스텔 계열: 진한 원색 대신 채도를 낮춘 색으로 은은하게
+const FLOWC = ['#5fa8b3', '#e3a074', '#7fa6d6', '#7fb68d', '#b593c9', '#cfb36f', '#9c92dc', '#d48ba6'];
+// 데이터 동그라미: 옅은 빛 번짐(후광) + 위쪽이 밝은 진주빛 알맹이 + 가는 테두리
 function flowDots(d, col, hot = true) {
-  const n = hot ? 3 : 1, dur = hot ? 1.8 : 3.6, r = hot ? 3.4 : 2.6;
+  const n = hot ? 3 : 1, dur = hot ? 2.2 : 4.2, r = hot ? 3.2 : 2.6;
   let h = `<path class="eg${hot ? ' on' : ''}" d="${d}" style="--fc:${col}"/>`;
-  for (let i = 0; i < n; i++) h += `<circle class="pk" r="${r}" fill="${col}"${hot ? '' : ' opacity=".75"'}>${RMOT ? `<animateMotion dur="1s" path="${d}" keyPoints="0.5;0.5" keyTimes="0;1" fill="freeze"/>` : `<animateMotion dur="${dur}s" begin="${(-dur * i / n).toFixed(2)}s" repeatCount="indefinite" path="${d}"/>`}</circle>`;
+  for (let i = 0; i < n; i++) h += `<g class="pk" style="--fc:${col}"${hot ? '' : ' opacity=".8"'}><circle class="pkh" r="${(r * 2.1).toFixed(1)}"/><circle class="pkc" r="${r}"/><circle class="pki" r="${(r * .42).toFixed(1)}" cx="${(-r * .3).toFixed(1)}" cy="${(-r * .3).toFixed(1)}"/>${RMOT ? `<animateMotion dur="1s" path="${d}" keyPoints="0.5;0.5" keyTimes="0;1" fill="freeze"/>` : `<animateMotion dur="${dur}s" begin="${(-dur * i / n).toFixed(2)}s" repeatCount="indefinite" path="${d}"/>`}</g>`;
   return h;
+}
+// 흐름도 그리기: 흐름(선·동그라미)과 상자·글자를 다른 층에 두고, 흐름 층은 내용이 바뀔 때만 다시 그린다
+// (숫자가 매초 바뀌어도 이동 중인 동그라미를 새로 만들지 않아 깜빡이지 않는다)
+function setFlow(id, flows, rest) {
+  const el = $(id); if (!el.querySelector(':scope > g.fl')) { el.innerHTML = '<g class="fl"></g><g class="nl"></g>'; elCache.delete(id + 'F'); elCache.delete(id + 'N'); }
+  setHTML(el.children[0], id + 'F', flows); setHTML(el.children[1], id + 'N', rest);
 }
 function setHTML(el, key, html) { if (elCache.get(key) === html) return; elCache.set(key, html); el.innerHTML = html; }
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -2968,17 +2982,17 @@ function renderPanel() {
     const sum = ks => ks.reduce((a, k) => a + det[k], 0);
     const recent = to => shares.some(x => T - x.t <= 15 && x.to.includes(to));
     const nIFC = alerts.filter(a => a.to.includes('해외 IFC')).length, nKCG = alerts.filter(a => a.to.includes('해경')).length;
-    const node = (x, y, w, t1, t2, cls = '', hh = 40) => `<rect class="nd ${cls}" x="${x}" y="${y}" width="${w}" height="${hh}" rx="5"/><text class="nt" x="${x + w / 2}" y="${y + hh / 2 - 3}" text-anchor="middle">${t1}</text><text class="${cls === 'hub' ? 'nt' : 'ns'}" x="${x + w / 2}" y="${y + hh / 2 + 13}" text-anchor="middle">${t2}</text>`;
+    const node = (x, y, w, t1, t2, cls = '', hh = 40) => `<g class="ng-${cls}"><rect class="nd ${cls}" x="${x}" y="${y}" width="${w}" height="${hh}" rx="5"/><text class="nt" x="${x + w / 2}" y="${y + hh / 2 - 3}" text-anchor="middle">${t1}</text><text class="${cls === 'hub' ? 'nt' : 'ns'}" x="${x + w / 2}" y="${y + hh / 2 + 13}" text-anchor="middle">${t2}</text></g>`;
     const lab = (x, y, t, a = 'middle') => `<text class="el" x="${x}" y="${y}" text-anchor="${a}">${t}</text>`;
-    setHTML($('shareSvg'), 'share',
+    setFlow('shareSvg',
       // 기관 → 국가 MDA 플랫폼 → 해군·해외 IFC. 최근 15분 안에 공유가 오간 흐름은 동그라미가 많고 빠르다
       flowDots('M70,48 L132,106', FLOWC[0], recent('해수부')) + flowDots('M250,48 L188,106', FLOWC[1], recent('해경'))
       + flowDots('M86,131 L102,131', FLOWC[2], false) + flowDots('M234,131 L218,131', FLOWC[3], false)
-      + flowDots('M132,156 L70,214', '#0b3d91', shares.some(x => T - x.t <= 15)) + flowDots('M188,156 L250,214', FLOWC[6], recent('해외 IFC'))
-      + node(5, 8, 130, '해양수산부', 'GICOMS · AIS · LRIT') + node(185, 8, 130, '해양경찰청', 'V-PASS · VTS · 경비함')
+      + flowDots('M132,156 L70,214', '#6f86bf', shares.some(x => T - x.t <= 15)) + flowDots('M188,156 L250,214', FLOWC[6], recent('해외 IFC')),
+      node(5, 8, 130, '해양수산부', 'GICOMS · AIS · LRIT') + node(185, 8, 130, '해양경찰청', 'V-PASS · VTS · 경비함')
       + node(0, 111, 86, '기상청', '해양기상', 'ext2') + node(234, 111, 86, 'KIOST·KHOA', '관측·예측', 'ext2')
       + node(102, 106, 116, '국가 MDA 플랫폼', '해수부 · K-IFC(가칭)', 'hub', 50)
-      + node(5, 214, 130, '해군 MDA 상황도', '군사정보 · 비밀 분리') + node(185, 214, 130, '해외 IFC', 'IFC-SG · IFC-IOR 등', 'ext')
+      + node(5, 214, 130, '해군 MDA 상황도', '군사정보 · 비밀 분리', 'navy') + node(185, 214, 130, '해외 IFC', 'IFC-SG · IFC-IOR 등', 'ext')
       + lab(100, 68, `AIS ${det.ais} · LRIT ${det.lrit}`, 'end') + lab(220, 68, `V-PASS ${det.vpass} · VTS ${det.vts}`, 'start')
       + lab(220, 83, `해경 인계 ${nKCG}건`, 'start')
       + lab(100, 192, `융합 표적 ${held}`, 'end') + lab(220, 192, `공유 사건 ${nIFC}건`, 'start'));
@@ -3991,20 +4005,20 @@ function renderPolar() {
   const north = arcShips.filter(sh => sh.pos[1] > AR.geoLimit).length, sst = (-1.2 + 0.3 * Math.sin(T / 90)).toFixed(1), vis = Math.round(6 + 4 * Math.sin(T / 70));
   const nSent = cdseCount(cdseA);
   // 흐름도: 왼쪽 국내 기관, 오른쪽 위성·국제 정보, 가운데 통합 체계, 아래 활용
-  const node = (x, y, w, t1, t2, cls = '', hh = 36) => `<rect class="nd ${cls}" x="${x}" y="${y}" width="${w}" height="${hh}" rx="5"/><text class="nt" x="${x + w / 2}" y="${y + hh / 2 - 2}" text-anchor="middle">${t1}</text><text class="${cls === 'hub' ? 'nt' : 'ns'}" x="${x + w / 2}" y="${y + hh / 2 + 13}" text-anchor="middle">${t2}</text>`;
+  const node = (x, y, w, t1, t2, cls = '', hh = 36) => `<g class="ng-${cls}"><rect class="nd ${cls}" x="${x}" y="${y}" width="${w}" height="${hh}" rx="5"/><text class="nt" x="${x + w / 2}" y="${y + hh / 2 - 2}" text-anchor="middle">${t1}</text><text class="${cls === 'hub' ? 'nt' : 'ns'}" x="${x + w / 2}" y="${y + hh / 2 + 13}" text-anchor="middle">${t2}</text></g>`;
   const lab = (x, y, t, a = 'middle') => `<text class="el" x="${x}" y="${y}" text-anchor="${a}">${t}</text>`;
   const L = [['극지연구소', '아라온·다산기지 관측'], ['기상청', '극지 기상·해빙 예보'], ['해양수산부', '북극항로 운항 관리'], ['국립해양조사원', '극지 해도·해양관측'], ['한국해양수산개발원', '북극 물류·정책 분석']];
   const R = [['코페르니쿠스 CDSE', 'Sentinel-1·2·3 (EU)', 'ext'], ['우리 극궤도 위성', '아리랑·군 정찰위성', ''], ['국제 협력', '북극이사회·NAVAREA', 'ext']];
-  let g = '';
-  L.forEach((_, i) => { const y = 6 + i * 44; g += flowDots(`M114,${y + 18} C122,${y + 18} 122,128 128,128`, FLOWC[i]); });
-  R.forEach((_, i) => { const y = 6 + i * 52; g += flowDots(`M226,${y + 18} C218,${y + 18} 218,128 212,128`, FLOWC[5 + i]); });
-  g += flowDots('M152,158 L82,238', '#0b3d91') + flowDots('M188,158 L258,238', '#0b7285');
+  let g = '', gf = '';
+  L.forEach((_, i) => { const y = 6 + i * 44; gf += flowDots(`M114,${y + 18} C122,${y + 18} 122,128 128,128`, FLOWC[i]); });
+  R.forEach((_, i) => { const y = 6 + i * 52; gf += flowDots(`M226,${y + 18} C218,${y + 18} 218,128 212,128`, FLOWC[5 + i]); });
+  gf += flowDots('M152,158 L82,238', '#6f86bf') + flowDots('M188,158 L258,238', '#5fa8b3');
   L.forEach(([a, b], i) => { g += node(0, 6 + i * 44, 114, a, b, 'ext2'); });
   R.forEach(([a, b, c], i) => { g += node(226, 6 + i * 52, 114, a, b, c); });
   g += node(128, 98, 84, '통합 극지', '정보체계', 'hub', 60);
-  g += node(12, 238, 140, '해군 MDA 상황도', '북극항로 표적관리') + node(188, 238, 140, '북극항로 운항 선박', 'S-AIS·위성통신 전파');
+  g += node(12, 238, 140, '해군 MDA 상황도', '북극항로 표적관리', 'navy') + node(188, 238, 140, '북극항로 운항 선박', 'S-AIS·위성통신 전파');
   g += lab(170, 182, `선박 ${arcShips.length}척 · 위성 ${polar}기`) + lab(276, 166, `Sentinel ${nSent}건`, 'middle');
-  setHTML($('polarSvg'), 'polarSvg', g);
+  setFlow('polarSvg', gf, g);
   setHTML($('polarDom'), 'polarDom', `<div class="pdom">
     <div class="sf"><h4>해상</h4><p>추적 <b>${arcShips.length}척</b> (한국 관련 ${kr})</p><p>결빙 정체 <b>${nSt('결빙 정체')}</b> · 호송 <b>${nSt('호송 중')}</b></p><p>S-AIS 최근 1시간 <b>${aisH}척</b></p><p>해빙 가장자리 랍테프해 <b>${f1(iceLat(125))}°N</b> <small>(기상청·극지연)</small></p></div>
     <div class="un"><h4>수중</h4><p>아라온 CTD 축치해 표층 <b>${sst}℃</b> · 염분 <b>31.8psu</b> <small>(모의)</small></p><p>해저지형 <b>국립해양조사원</b> 북극 해저지형 자료</p><p>잠수함 활동 추정 <b>바렌츠·카라해</b> <small>(공개 정보)</small></p><p>해빙 하부: 소음 낮아 원거리 탐지 유리</p></div>
@@ -4019,20 +4033,20 @@ function renderSlocInfo() {
   const lrit = kr.filter(sh => T - sh.rep.t <= 60).length, chd = sById('CH1');
   const [w, s0, e, n] = SBOX[slocPre], inA = SATS.filter(o => { const q = satPos(o, T); return o.use && q[0] >= w && q[0] <= e && q[1] >= s0 && q[1] <= n; }).length;
   const navyN = slocShips.filter(sh => NAVY.has(sh.cls) && sh.rep.t > -1).length, thr = slocShips.filter(sh => ['ir', 'pir', 'cn', 'ccg', 'mil'].includes(sh.cls) && sh.rep.t > -1 && T - sh.rep.t <= 60).length;
-  const node = (x, y, w2, t1, t2, cls = '', hh = 36) => `<rect class="nd ${cls}" x="${x}" y="${y}" width="${w2}" height="${hh}" rx="5"/><text class="nt" x="${x + w2 / 2}" y="${y + hh / 2 - 2}" text-anchor="middle">${t1}</text><text class="${cls === 'hub' ? 'nt' : 'ns'}" x="${x + w2 / 2}" y="${y + hh / 2 + 13}" text-anchor="middle">${t2}</text>`;
+  const node = (x, y, w2, t1, t2, cls = '', hh = 36) => `<g class="ng-${cls}"><rect class="nd ${cls}" x="${x}" y="${y}" width="${w2}" height="${hh}" rx="5"/><text class="nt" x="${x + w2 / 2}" y="${y + hh / 2 - 2}" text-anchor="middle">${t1}</text><text class="${cls === 'hub' ? 'nt' : 'ns'}" x="${x + w2 / 2}" y="${y + hh / 2 + 13}" text-anchor="middle">${t2}</text></g>`;
   const lab = (x, y, t, a = 'middle') => `<text class="el" x="${x}" y="${y}" text-anchor="${a}">${t}</text>`;
   const L = [['해양수산부', 'LRIT·해적위험해역 관리'], ['외교부', '재외국민·현지 정세'], ['합참·해군작전사', '청해부대 작전 지휘'], ['한국해양수산개발원', '해운 물류·위험 분석'], ['선사·해운협회', '선박 보고·운항 계획']];
   const R = [['UKMTO·MSCHOA', '선박 보고·경보', 'ext'], ['CMF·IMSC (바레인)', '연합해군 정보 공유', 'ext'], ['IFC-IOR·싱가포르 IFC', 'ReCAAP 해적 정보', 'ext'], ['코페르니쿠스 CDSE', 'Sentinel 영상 (EU)', 'ext']];
-  let g = '';
-  L.forEach((_, i) => { const y = 6 + i * 44; g += flowDots(`M114,${y + 18} C122,${y + 18} 122,128 128,128`, FLOWC[i]); });
-  R.forEach((_, i) => { const y = 6 + i * 44; g += flowDots(`M226,${y + 18} C218,${y + 18} 218,128 212,128`, FLOWC[(5 + i) % FLOWC.length]); });
-  g += flowDots('M152,158 L82,238', '#0b3d91') + flowDots('M188,158 L258,238', '#0b7285');
+  let g = '', gf = '';
+  L.forEach((_, i) => { const y = 6 + i * 44; gf += flowDots(`M114,${y + 18} C122,${y + 18} 122,128 128,128`, FLOWC[i]); });
+  R.forEach((_, i) => { const y = 6 + i * 44; gf += flowDots(`M226,${y + 18} C218,${y + 18} 218,128 212,128`, FLOWC[(5 + i) % FLOWC.length]); });
+  gf += flowDots('M152,158 L82,238', '#6f86bf') + flowDots('M188,158 L258,238', '#5fa8b3');
   L.forEach(([a, b], i) => { g += node(0, 6 + i * 44, 114, a, b, 'ext2'); });
   R.forEach(([a, b, c], i) => { g += node(226, 6 + i * 44, 114, a, b, c); });
   g += node(122, 98, 96, '관심해역', '해양정보통합체계', 'hub', 60);
-  g += node(12, 238, 140, '청해부대·해군 MDA', '원해 SLOC 상황도') + node(188, 238, 140, '우리 선박 (선사)', '위협 경보·항로 권고');
+  g += node(12, 238, 140, '청해부대·해군 MDA', '원해 SLOC 상황도', 'navy') + node(188, 238, 140, '우리 선박 (선사)', '위협 경보·항로 권고');
   g += lab(170, 182, `우리 선박 ${kr.length}척 · 위성 ${inA}기`);
-  setHTML($('slocSvg'), 'slocSvg', g);
+  setFlow('slocSvg', gf, g);
   setHTML($('slocDom'), 'slocDom', `<div class="pdom">
     <div class="sf"><h4>해상</h4><p>우리 선박 <b>${kr.length}척</b> · 위험 상태 <b>${risk}</b></p><p>LRIT·S-AIS 최근 1시간 <b>${lrit}척</b></p><p>연합·주변국 함정 탐지 <b>${navyN}척</b></p><p>위협 표적 (최근 1시간) <b>${thr}척</b></p></div>
     <div class="un"><h4>수중</h4><p>호르무즈 <b>기뢰 위협</b> 감시 <small>(IRGCN)</small></p><p>홍해 <b>해저케이블</b> 손상 위험 <small>(2024년 사례)</small></p><p>청해부대 <b>선체 소나</b> 대잠 경계</p><p>인도양 수온약층 깊음 → <b>원거리 탐지 유리</b></p></div>
