@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@300;500&family=Noto+Sans+KR:wght@300;500;700&family=Cormorant+Garamond:ital,wght@0,400;0,500;1,400&display=block">
+<style>
+:root{--cream:#F4EEE5;--sand:#E7DCCB;--taupe:#7A6B5C;--ink:#2F2822;--brick:#A4473A}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:1080px;height:1920px;overflow:hidden;background:var(--cream)}
+body{font-family:'Noto Sans KR',sans-serif;color:var(--ink)}
+.scene{position:absolute;inset:0;opacity:0}
+.card{position:absolute;overflow:hidden;border-radius:6px;box-shadow:0 30px 60px rgba(60,45,30,.18)}
+.card img{width:100%;height:100%;object-fit:cover;display:block;transform-origin:50% 40%}
+.kicker{font-family:'Cormorant Garamond',serif;letter-spacing:.32em;font-size:34px;color:var(--taupe);text-transform:uppercase}
+.serif{font-family:'Noto Serif KR',serif;font-weight:500}
+.t{position:absolute;left:0;right:0;text-align:center}
+.num{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:56px;color:var(--taupe)}
+.name{font-size:66px;line-height:1.22;margin:6px auto 0;max-width:880px}
+.sub{font-size:36px;font-weight:300;color:var(--taupe);margin-top:14px;letter-spacing:-.01em}
+.price{margin-top:22px;font-size:54px;font-weight:700;color:var(--brick)}
+.price small{font-size:30px;font-weight:500;margin-left:10px}
+.strike{font-size:34px;font-weight:300;color:#a99d90;text-decoration:line-through;margin-right:14px;vertical-align:middle}
+.meta{margin-top:12px;font-size:32px;color:var(--taupe)}
+.meta b{color:#C9822E}
+.line{width:80px;height:2px;background:var(--taupe);margin:26px auto;opacity:.6}
+.logo{width:260px;height:260px;border-radius:50%;background:var(--sand);border:2px solid #d4c6b1;display:flex;align-items:center;justify-content:center;font-family:'Cormorant Garamond',serif;font-size:50px;letter-spacing:.22em;color:var(--ink);margin:0 auto}
+.pill{display:inline-block;padding:26px 46px;border-radius:999px;background:var(--ink);color:var(--cream);font-size:38px;font-weight:500}
+.grain{position:absolute;inset:0;pointer-events:none;opacity:.05;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence baseFrequency='.9' numOctaves='2'/></filter><rect width='200' height='200' filter='url(%23n)'/></svg>")}
+.badge{display:inline-block;font-weight:700;font-size:26px;letter-spacing:.08em;padding:8px 18px;margin:0 6px;vertical-align:middle}.b-best{background:var(--ink);color:var(--cream)}.b-new{background:var(--brick);color:#fff}
+.cap{position:absolute;left:0;right:0;text-align:center}
+</style></head><body>
+
+<!-- S1 hook -->
+<div class="scene" id="s1">
+  <div class="card" style="left:150px;top:200px;width:780px;height:1040px"><img src="img_d.jpg"></div>
+  <div class="t" style="top:1290px">
+    <div class="kicker" data-a="0.3">Erna · 에르나</div>
+    <div class="serif" style="font-size:88px;line-height:1.25;margin-top:20px">
+      <div data-a="0.5">올겨울,</div><div data-a="0.75">매일 손이 가는 옷</div>
+    </div>
+  </div>
+</div>
+<div class="scene" id="s2">
+  <div class="card" style="left:180px;top:200px;width:720px;height:900px"><img src="img_p2.jpg"></div>
+  <div class="t" style="top:1130px">
+    <div data-a="0.2"><span class="num">01</span> <span class="badge b-best">BEST</span><span class="badge b-new">NEW</span></div>
+    <div class="name serif" data-a="0.35">로로 니트 패딩</div>
+    <div class="sub" data-a="0.5">니트 소매 배색 · 허리 스트링 포인트</div>
+    <div class="price" data-a="0.7"><span class="strike">135,000원</span>129,000원<small>최대할인가</small></div>
+    <div class="meta" data-a="0.85">무료배송</div>
+  </div>
+</div>
+<div class="scene" id="s3">
+  <div class="card" style="left:180px;top:200px;width:720px;height:900px"><img src="img_a.jpg"></div>
+  <div class="t" style="top:1130px">
+    <div data-a="0.2"><span class="num">02</span> <span class="badge b-new">NEW</span></div>
+    <div class="name serif" data-a="0.35">소프트 니트터치<br>와이드 밴딩 팬츠</div>
+    <div class="sub" data-a="0.5">부드러운 니트 터치 · 편안한 밴딩</div>
+    <div class="price" data-a="0.7"><span class="strike">61,000원</span>57,000원<small>최대할인가</small></div>
+    
+  </div>
+</div>
+<div class="scene" id="s4">
+  <div class="card" style="left:180px;top:200px;width:720px;height:900px"><img src="img_p1.jpg"></div>
+  <div class="t" style="top:1130px">
+    <div data-a="0.2"><span class="num">03</span> </div>
+    <div class="name serif" data-a="0.35">밴딩 와이드팬츠</div>
+    <div class="sub" data-a="0.5">체형커버 · 하루 종일 편한 데일리 핏</div>
+    <div class="price" data-a="0.7">35,000원<small>최대할인가</small></div>
+    <div class="meta" data-a="0.85"><b>★ 4.8</b> &nbsp;리뷰 10</div>
+  </div>
+</div>
+<!-- S5 knit -->
+<div class="scene" id="s5">
+  <div class="t" style="top:200px"><div class="kicker" data-a="0.1">New Knit</div></div>
+  <div class="card c4" style="left:110px;top:290px;width:420px;height:525px"><img src="img_c.jpg"></div>
+  <div class="card c4" style="left:550px;top:290px;width:420px;height:525px"><img src="img_d.jpg"></div>
+  <div class="cap" style="top:840px;left:110px;width:420px;right:auto;font-size:30px;line-height:1.4" data-a="0.6">홀가먼트 캐시미어<br>울 혼방 라운드 니트</div>
+  <div class="cap" style="top:840px;left:550px;width:420px;right:auto;font-size:30px;line-height:1.4" data-a="0.75">숄 가디건</div>
+  <div class="t" style="top:1060px">
+    <div class="serif" style="font-size:68px;line-height:1.35">
+      <div data-a="1.0">크림 · 베이지 톤으로</div><div data-a="1.2">완성하는 클래식 룩</div>
+    </div>
+    <div class="sub" style="margin-top:28px" data-a="1.45">FOR YOU 추천 상품 34종</div>
+  </div>
+</div>
+
+<!-- S6 outro -->
+<div class="scene" id="s6">
+  <div class="t" style="top:400px">
+    <div data-a="0.1"><div class="logo">ERNA</div></div>
+    <div class="serif" style="font-size:80px;margin-top:50px" data-a="0.3">에르나 쇼핑몰</div>
+    <div class="sub" style="font-size:40px" data-a="0.45">클래식한 여성 데일리 룩</div>
+    <div class="line" data-a="0.55"></div>
+    <div data-a="0.7" style="margin-top:20px"><span class="pill">네이버에서 ‘에르나 쇼핑몰’ 검색</span></div>
+    <div class="sub" style="font-size:36px;margin-top:40px" data-a="0.9">알림받기 하고 신상 소식 먼저 받아보세요</div>
+    <div class="kicker" style="margin-top:70px;font-size:30px" data-a="1.1">Link in profile</div>
+  </div>
+</div>
+
+<div class="grain"></div>
+<script>
+const scenes=[['s1',0,3],['s2',3,6.2],['s3',6.2,9.4],['s4',9.4,12.6],['s5',12.6,15.6],['s6',15.6,19.01]];
+const XF=0.45, ease=x=>1-Math.pow(1-Math.min(Math.max(x,0),1),3);
+window.render=function(t){
+  for(const [id,a,b] of scenes){
+    const el=document.getElementById(id), lt=t-a;
+    let o=0;
+    if(t>=a-XF&&t<b){ o=a===0?1:ease((t-a+XF)/XF); if(t>b-XF&&id!=='s6') o=Math.min(o,ease((b-t)/XF)); }
+    el.style.opacity=o; el.style.visibility=o>0?'visible':'hidden';
+    el.querySelectorAll('[data-a]').forEach(n=>{const p=ease((lt-+n.dataset.a)/0.6);n.style.opacity=p;n.style.transform=`translateY(${(1-p)*36}px)`;});
+    const img=el.querySelector('.card img');
+    if(img&&id!=='s5'){const p=Math.min(Math.max(lt/(b-a),0),1);img.style.transform=`scale(${1.02+0.08*p})`;}
+    if(id==='s5') el.querySelectorAll('.c4').forEach((c,i)=>{const p=ease((lt-0.1-i*0.15)/0.55);c.style.opacity=p;c.style.transform=`scale(${0.9+0.1*p})`;});
+  }
+};
+render(0);
+</script>
+</body></html>
