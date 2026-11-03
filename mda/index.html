@@ -311,6 +311,8 @@ button { font: inherit; color: inherit; }
 .share .ns { font: 10px var(--font-ui); fill: var(--muted); }
 .share .eg { fill: none; stroke: color-mix(in srgb, var(--fc) 22%, var(--faint)); stroke-width: 1.6; stroke-linecap: round; opacity: .45; }   /* 데이터 관 */
 .share .eg.on { stroke: color-mix(in srgb, var(--fc) 40%, var(--faint)); opacity: .6; }
+.share .sbd { fill: none; stroke: var(--fc); stroke-opacity: .28; stroke-linecap: butt; }   /* 생키형 띠: 굵기 = 데이터 양 */
+.share .sbd:hover { stroke-opacity: .45; }
 .share .egs { fill: none; stroke: var(--fc); stroke-width: .7; stroke-linecap: round; stroke-dasharray: .1 4.4; opacity: .4; animation: egflow 1.8s linear infinite; }   /* 흐르는 잔 점선 */
 .share .egs.on { opacity: .7; animation-duration: 1s; }
 @keyframes egflow { to { stroke-dashoffset: -9; } }
@@ -2734,9 +2736,9 @@ const RMOT = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const FLOWC = ['#5fa8b3', '#e3a074', '#7fa6d6', '#7fb68d', '#b593c9', '#cfb36f', '#9c92dc', '#d48ba6'];
 // 데이터 흐름: 은은한 관(넓고 옅은 선) 위로 잘게 끊긴 점선이 흐름 방향으로 흐르고,
 // 그 위를 빛나는 작은 데이터 동그라미가 꼬리(잔상 2개)를 달고 이동한다. hot이면 더 많이·빠르게·진하게
-function flowDots(d, col, hot = true) {
+function flowDots(d, col, hot = true, pipe = true) {
   const n = hot ? 3 : 2, dur = hot ? 3.8 : 7, r = hot ? 1.3 : 1.1, st = `style="--fc:${col}"`;
-  let h = `<path class="eg${hot ? ' on' : ''}" d="${d}" ${st}/><path class="egs${hot ? ' on' : ''}" d="${d}" ${st}/>`;
+  let h = (pipe ? `<path class="eg${hot ? ' on' : ''}" d="${d}" ${st}/>` : '') + `<path class="egs${hot ? ' on' : ''}" d="${d}" ${st}/>`;
   const mv = b => RMOT ? `<animateMotion dur="1s" path="${d}" keyPoints="0.5;0.5" keyTimes="0;1" fill="freeze"/>` : `<animateMotion dur="${dur}s" begin="${b.toFixed(2)}s" repeatCount="indefinite" path="${d}"/>`;
   for (let i = 0; i < n; i++) {
     const b = -dur * i / n;
@@ -2778,10 +2780,14 @@ function flowNode(x, y, w, t1, t2, cls, hh, dy) {
     + (lg ? `<rect class="lgb" x="${x + 2.5}" y="${y + 2.5}" width="18" height="18" rx="3.5"/><image class="lg" href="${lg}" x="${x + 3.5}" y="${y + 3.5}" width="16" height="16" preserveAspectRatio="xMidYMid meet"/>` : '')
     + `<text class="nt" x="${cx}" y="${y + hh / 2 + dy}" text-anchor="middle"${fit}>${t1}</text><text class="${/\bhub\b/.test(cls) ? 'nt' : 'ns'}" x="${x + w / 2}" y="${y + hh / 2 + 13}" text-anchor="middle">${t2}</text></g>`;
 }
-function setFlow(id, flows, rest) {
-  const el = $(id); if (!el.querySelector(':scope > g.fl')) { el.innerHTML = '<g class="fl"></g><g class="nl"></g>'; elCache.delete(id + 'F'); elCache.delete(id + 'N'); }
-  setHTML(el.children[0], id + 'F', flows); setHTML(el.children[1], id + 'N', rest);
+function setFlow(id, flows, rest, bands = '') {
+  const el = $(id); if (!el.querySelector(':scope > g.bd')) { el.innerHTML = '<g class="bd"></g><g class="fl"></g><g class="nl"></g>'; for (const k of 'BFN') elCache.delete(id + k); }
+  setHTML(el.children[0], id + 'B', bands); setHTML(el.children[1], id + 'F', flows); setHTML(el.children[2], id + 'N', rest);
 }
+// 생키형 띠: 데이터 양에 비례한 굵기의 반투명 띠 (굵기는 0.5 단위로 끊어 매초 다시 그리지 않게 한다)
+const BAND_MAX = 11, BAND_MIN = 1.4;
+const bandW = (v, vmax) => Math.max(BAND_MIN, Math.round(BAND_MAX * v / Math.max(1, vmax) * 2) / 2);
+const flowBand = (d, col, w, tip) => `<path class="sbd" d="${d}" stroke-width="${w}" style="--fc:${col}"><title>${tip}</title></path>`;
 function setHTML(el, key, html) { if (elCache.get(key) === html) return; elCache.set(key, html); el.innerHTML = html; }
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const $ = id => document.getElementById(id);
@@ -3031,11 +3037,19 @@ function renderPanel() {
     const nIFC = alerts.filter(a => a.to.includes('해외 IFC')).length, nKCG = alerts.filter(a => a.to.includes('해경')).length;
     const node = (x, y, w, t1, t2, cls = '', hh = 40) => flowNode(x, y, w, t1, t2, cls, hh, -3);
     const lab = (x, y, t, a = 'middle') => `<text class="el" x="${x}" y="${y}" text-anchor="${a}">${t}</text>`;
+    // 기관 → 국가 MDA 플랫폼 → 해군·해외 IFC. 띠 굵기 = 데이터 양(생키형), 최근 15분 안에 공유가 오간 흐름은 동그라미가 많고 빠르다
+    // 기상청·KIOST·KHOA는 모의 자료 건수(해양기상 관측·예보, 해양관측·예측 자료)
+    const nWx = Math.round(150 + 25 * Math.sin(T / 40)), nOc = Math.round(95 + 18 * Math.sin(T / 55 + 1));
+    const F = [
+      ['M70,48 C70,82 132,72 132,106', FLOWC[0], recent('해수부'), det.ais + det.lrit, `해양수산부 → 플랫폼: AIS ${det.ais} · LRIT ${det.lrit}`],
+      ['M250,48 C250,82 188,72 188,106', FLOWC[1], recent('해경'), det.vpass + det.vts, `해양경찰청 → 플랫폼: V-PASS ${det.vpass} · VTS ${det.vts}`],
+      ['M86,131 C94,131 94,131 102,131', FLOWC[2], false, nWx, `기상청 → 플랫폼: 해양기상 자료 ${nWx}건 (모의)`],
+      ['M234,131 C226,131 226,131 218,131', FLOWC[3], false, nOc, `KIOST·KHOA → 플랫폼: 관측·예측 자료 ${nOc}건 (모의)`],
+      ['M132,156 C132,190 70,180 70,214', '#6f86bf', shares.some(x => T - x.t <= 15), held, `플랫폼 → 해군: 융합 표적 ${held}`],
+      ['M188,156 C188,190 250,180 250,214', FLOWC[6], recent('해외 IFC'), nIFC, `플랫폼 → 해외 IFC: 공유 사건 ${nIFC}건`]
+    ], vmax = Math.max(...F.map(f => f[3]));
     setFlow('shareSvg',
-      // 기관 → 국가 MDA 플랫폼 → 해군·해외 IFC. 최근 15분 안에 공유가 오간 흐름은 동그라미가 많고 빠르다
-      flowDots('M70,48 C70,82 132,72 132,106', FLOWC[0], recent('해수부')) + flowDots('M250,48 C250,82 188,72 188,106', FLOWC[1], recent('해경'))
-      + flowDots('M86,131 C94,131 94,131 102,131', FLOWC[2], false) + flowDots('M234,131 C226,131 226,131 218,131', FLOWC[3], false)
-      + flowDots('M132,156 C132,190 70,180 70,214', '#6f86bf', shares.some(x => T - x.t <= 15)) + flowDots('M188,156 C188,190 250,180 250,214', FLOWC[6], recent('해외 IFC')),
+      F.map(([d, c, hot]) => flowDots(d, c, hot, false)).join(''),
       node(5, 8, 130, '해양수산부', 'GICOMS · AIS · LRIT') + node(185, 8, 130, '해양경찰청', 'V-PASS · VTS · 경비함')
       + node(0, 111, 86, '기상청', '해양기상', 'ext2') + node(234, 111, 86, 'KIOST·KHOA', '관측·예측', 'ext2')
       + node(102, 106, 116, '국가 MDA 플랫폼', '해수부 · K-IFC(가칭)', 'hub nmda', 50)
@@ -3043,7 +3057,9 @@ function renderPanel() {
       // 수치는 곡선과 겹치지 않게 바깥쪽 여백(상자 사이)에 둔다
       + lab(4, 66, `AIS ${det.ais}`, 'start') + lab(4, 79, `LRIT ${det.lrit}`, 'start')
       + lab(316, 66, `V-PASS ${det.vpass}`, 'end') + lab(316, 79, `VTS ${det.vts}`, 'end') + lab(316, 92, `해경 인계 ${nKCG}건`, 'end')
-      + lab(4, 180, `융합 표적 ${held}`, 'start') + lab(316, 180, `공유 사건 ${nIFC}건`, 'end'));
+      + lab(4, 165, `기상 ${nWx}건`, 'start') + lab(316, 165, `관측 ${nOc}건`, 'end')
+      + lab(4, 180, `융합 표적 ${held}`, 'start') + lab(316, 180, `공유 사건 ${nIFC}건`, 'end'),
+      F.map(([d, c, , v, tip]) => flowBand(d, c, bandW(v, vmax), tip)).join(''));
     setHTML($('shareLog'), 'shareLog', shares.length ? shares.slice(0, 6).map(x => `<li><time>${clock(x.t).hm}</time><span>${esc(x.text)}</span></li>`).join('')
       : '<li><time></time><span>이상징후가 공유되면 대상 기관과 함께 여기에 기록됩니다.</span></li>');
   }
