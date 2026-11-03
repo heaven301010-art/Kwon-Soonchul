@@ -4120,7 +4120,7 @@ function renderSlocInfo() {
   const node = (x, y, w2, t1, t2, cls = '', hh = 36) => flowNode(x, y, w2, t1, t2, cls, hh, -2);
   const lab = (x, y, t, a = 'middle') => `<text class="el" x="${x}" y="${y}" text-anchor="${a}">${t}</text>`;
   const L = [['해양수산부', 'LRIT·해적위험해역 관리'], ['외교부', '재외국민·현지 정세'], ['합참·해군작전사', '청해부대 작전 지휘'], ['한국해양수산개발원', '해운 물류·위험 분석'], ['선사·해운협회', '선박 보고·운항 계획']];
-  const R = [['UKMTO·MSCHOA', '선박 보고·경보', 'ext'], ['CMF·IMSC (바레인)', '연합해군 정보 공유', 'ext'], ['해외 정보융합센터(IFC)', 'IFC-IOR·IFC-SG·ReCAAP', 'ext'], ['코페르니쿠스 CDSE', 'Sentinel 영상 (EU)', 'ext']];
+  const R = [['UKMTO·MSCHOA', '선박 보고·경보', 'ext'], ['CMF·IMSC (바레인)', '연합해군 정보 공유', 'ext'], ['해외 정보융합센터(IFC)', 'IFC-IOR·IFC-SG·ReCAAP', 'ext ifc'], ['코페르니쿠스 CDSE', 'Sentinel 영상 (EU)', 'ext']];
   let g = '';
   // 생키형 띠: 기관별 시간당 자료 건수(모의, 우리 선박·위협·위성 수에 따라 변함). 통합 뒤 청해부대·해군 55%·우리 선박 전파 45%
   const sw = (a, b, p) => Math.round(a + b * Math.sin(T / p));
