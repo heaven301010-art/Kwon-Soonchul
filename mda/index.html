@@ -320,8 +320,8 @@ button { font: inherit; color: inherit; }
 @media (prefers-reduced-motion: reduce) { .share .egs { animation: none; } }
 .share .pk { animation: pkin .35s ease-out; }   /* 새로 그려진 동그라미가 이동 위치를 잡기 전 한 장면이 보이지 않게 */
 @keyframes pkin { from { opacity: 0; } }
-.share .pkh { fill: var(--fc); opacity: 1; filter: url(#pkglow); }   /* 빛 번짐 */
-.share .pkc { fill: color-mix(in srgb, var(--fc) 15%, #fff); filter: drop-shadow(0 0 1px #fff); }   /* 밝은 알맹이 */
+.share .pkh { fill: color-mix(in srgb, var(--fc) 80%, #fff); opacity: 1; filter: url(#pkglow); }   /* 빛 번짐 */
+.share .pkc { fill: #fff; filter: drop-shadow(0 0 1.2px #fff) drop-shadow(0 0 2px var(--fc)); }   /* 밝은 알맹이 */
 .share .pkt { fill: var(--fc); }
 .share .lgb { fill: #fff; opacity: .9; } .share .ng-navy .lgb { opacity: 1; }
 .share .nd.nmda { fill: #e8772e; stroke: #b4531a; stroke-width: 1.4; }   /* 흐름도 가운데 통합 상자(국가 MDA 플랫폼·통합 극지정보체계·관심해역 해양정보통합체계): 주황 상자·흰 글자 */
@@ -728,7 +728,7 @@ textarea.report { width: 100%; min-height: 150px; font: 12px/1.5 var(--font-data
   </div>
 
   <aside class="mda">
-    <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs><filter id="pkglow" x="-150%" y="-150%" width="400%" height="400%"><feGaussianBlur stdDeviation="1.4"/></filter></defs></svg>
+    <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs><filter id="pkglow" x="-150%" y="-150%" width="400%" height="400%"><feGaussianBlur stdDeviation="1.5"/><feComponentTransfer><feFuncA type="linear" slope="1.6"/></feComponentTransfer></filter></defs></svg>
     <section id="polarSec" hidden>
       <h2>통합 극지정보체계</h2>
       <svg class="share" id="polarSvg" viewBox="0 0 340 300" role="img" aria-label="극지연구소, 기상청, 해양수산부, 국립해양조사원, 한국해양수산개발원과 코페르니쿠스 CDSE 등에서 통합 극지정보체계로 흐르는 정보"></svg>
@@ -2747,7 +2747,7 @@ function flowDots(d, col, hot = true, pipe = true) {
     const b = -dur * i / 2, c = i ? ' pk2' : '';
     // 꼬리: 조금 늦게 출발한(뒤따르는) 더 작고 흐린 점 하나
     if (!RMOT) h += `<g class="pk${c}" ${st}><circle class="pkt" r="${(r * .6).toFixed(2)}" opacity=".35"/>${mv(b + dur * .022)}</g>`;
-    h += `<g class="pk${c}" ${st}><circle class="pkh" r="${(r * 3.2).toFixed(1)}"/><circle class="pkc" r="${r}"/>${mv(b)}</g>`;
+    h += `<g class="pk${c}" ${st}><circle class="pkh" r="${(r * 3.6).toFixed(1)}"/><circle class="pkc" r="${r}"/>${mv(b)}</g>`;
   }
   return h + '</g>';
 }
