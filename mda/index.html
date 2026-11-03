@@ -309,16 +309,16 @@ button { font: inherit; color: inherit; }
 .share .nd.ext2 { fill: color-mix(in srgb, var(--ne) 7%, var(--panel)); }
 .share .nt { font: 600 11.5px var(--font-ui); fill: var(--fg); }
 .share .ns { font: 10px var(--font-ui); fill: var(--muted); }
-.share .eg { fill: none; stroke: color-mix(in srgb, var(--fc) 22%, var(--faint)); stroke-width: 3.2; stroke-linecap: round; opacity: .55; }   /* 데이터 관 */
-.share .eg.on { stroke: color-mix(in srgb, var(--fc) 40%, var(--faint)); opacity: .7; }
-.share .egs { fill: none; stroke: var(--fc); stroke-width: 1; stroke-linecap: round; stroke-dasharray: .1 4.4; opacity: .5; animation: egflow 1.8s linear infinite; }   /* 흐르는 잔 점선 */
-.share .egs.on { opacity: .85; animation-duration: 1s; }
+.share .eg { fill: none; stroke: color-mix(in srgb, var(--fc) 22%, var(--faint)); stroke-width: 1.6; stroke-linecap: round; opacity: .45; }   /* 데이터 관 */
+.share .eg.on { stroke: color-mix(in srgb, var(--fc) 40%, var(--faint)); opacity: .6; }
+.share .egs { fill: none; stroke: var(--fc); stroke-width: .7; stroke-linecap: round; stroke-dasharray: .1 4.4; opacity: .4; animation: egflow 1.8s linear infinite; }   /* 흐르는 잔 점선 */
+.share .egs.on { opacity: .7; animation-duration: 1s; }
 @keyframes egflow { to { stroke-dashoffset: -9; } }
 @media (prefers-reduced-motion: reduce) { .share .egs { animation: none; } }
 .share .pk { animation: pkin .35s ease-out; }   /* 새로 그려진 동그라미가 이동 위치를 잡기 전 한 장면이 보이지 않게 */
 @keyframes pkin { from { opacity: 0; } }
-.share .pkh { fill: var(--fc); opacity: .75; filter: url(#pkglow); }   /* 빛 번짐 */
-.share .pkc { fill: color-mix(in srgb, var(--fc) 35%, #fff); }   /* 밝은 알맹이 */
+.share .pkh { fill: var(--fc); opacity: 1; filter: url(#pkglow); }   /* 빛 번짐 */
+.share .pkc { fill: color-mix(in srgb, var(--fc) 15%, #fff); filter: drop-shadow(0 0 1px #fff); }   /* 밝은 알맹이 */
 .share .pkt { fill: var(--fc); }
 .share .lgb { fill: #fff; opacity: .9; } .share .ng-navy .lgb { opacity: 1; }
 .share .nd.nmda { fill: #e8772e; stroke: #b4531a; stroke-width: 1.4; }   /* 흐름도 가운데 통합 상자(국가 MDA 플랫폼·통합 극지정보체계·관심해역 해양정보통합체계): 주황 상자·흰 글자 */
@@ -2735,14 +2735,14 @@ const FLOWC = ['#5fa8b3', '#e3a074', '#7fa6d6', '#7fb68d', '#b593c9', '#cfb36f',
 // 데이터 흐름: 은은한 관(넓고 옅은 선) 위로 잘게 끊긴 점선이 흐름 방향으로 흐르고,
 // 그 위를 빛나는 작은 데이터 동그라미가 꼬리(잔상 2개)를 달고 이동한다. hot이면 더 많이·빠르게·진하게
 function flowDots(d, col, hot = true) {
-  const n = hot ? 3 : 2, dur = hot ? 3.8 : 7, r = hot ? 1.7 : 1.4, st = `style="--fc:${col}"`;
+  const n = hot ? 3 : 2, dur = hot ? 3.8 : 7, r = hot ? 1.3 : 1.1, st = `style="--fc:${col}"`;
   let h = `<path class="eg${hot ? ' on' : ''}" d="${d}" ${st}/><path class="egs${hot ? ' on' : ''}" d="${d}" ${st}/>`;
   const mv = b => RMOT ? `<animateMotion dur="1s" path="${d}" keyPoints="0.5;0.5" keyTimes="0;1" fill="freeze"/>` : `<animateMotion dur="${dur}s" begin="${b.toFixed(2)}s" repeatCount="indefinite" path="${d}"/>`;
   for (let i = 0; i < n; i++) {
     const b = -dur * i / n;
     // 꼬리: 조금 늦게 출발한(뒤따르는) 더 작고 흐린 점
     if (!RMOT) for (const [k, f, o] of [[2, .45, .25], [1, .7, .45]]) h += `<g class="pk" ${st}><circle class="pkt" r="${(r * f).toFixed(2)}" opacity="${o}"/>${mv(b + dur * .022 * k)}</g>`;
-    h += `<g class="pk" ${st}><circle class="pkh" r="${(r * 2.8).toFixed(1)}"/><circle class="pkc" r="${r}"/>${mv(b)}</g>`;
+    h += `<g class="pk" ${st}><circle class="pkh" r="${(r * 3.2).toFixed(1)}"/><circle class="pkc" r="${r}"/>${mv(b)}</g>`;
   }
   return h;
 }
