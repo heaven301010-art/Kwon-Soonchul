@@ -3069,7 +3069,7 @@ function renderPanel() {
       F.map(([d, c, hot]) => flowDots(d, c, hot, false)).join(''),
       node(5, 8, 130, '해양수산부', 'GICOMS · AIS · LRIT') + node(185, 8, 130, '해양경찰청', 'V-PASS · VTS · 경비함')
       + node(0, 111, 74, '기상청', '해양기상', 'ext2') + node(246, 111, 74, 'KIOST·KHOA', '관측·예측', 'ext2')
-      + node(110, 106, 100, '국가 MDA 플랫폼', '해수부 · K-IFC(가칭)', 'hub nmda', 50)
+      + node(110, 106, 100, '국가 MDA 플랫폼', 'K-IFC(가칭)', 'hub nmda', 50)
       + node(5, 214, 130, '해군 MDA 상황도', '군사정보 · 비밀 분리', 'navy') + node(185, 214, 130, '해외 IFC', 'IFC-SG · IFC-IOR 등', 'ext ifc')
       // 수치는 곡선과 겹치지 않게 바깥쪽 여백(상자 사이)에 둔다
       + lab(4, 66, `AIS ${det.ais}`, 'start') + lab(4, 79, `LRIT ${det.lrit}`, 'start')
