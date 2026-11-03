@@ -2782,10 +2782,10 @@ const LOGO_OF = {
   // 정부기관은 정부상징으로 통일하되, 해양경찰청·국립해양조사원은 고유 엠블럼
   '해양수산부': 'gov', '기상청': 'gov', '외교부': 'gov', '해양경찰청': 'kcg', '국립해양조사원': 'khoa',
   'KIOST·KHOA': 'kiost', '해군 MDA 상황도': 'navy', '청해부대·해군 MDA': 'navy',
-  '극지연구소': 'kopri', '한국해양수산개발원': 'kmi', '코페르니쿠스 CDSE': 'copernicus', '합참·해군작전사': 'jcs', '선사·해운협회': 'ksa', 'UKMTO·MSCHOA': 'ukmto', 'CMF·IMSC (바레인)': 'cmf', '해외 정보융합센터(IFC)': 'ifc', '국가-군 극궤도 위성': 'sat', '우리 선박 (선사)': 'ship'
+  '극지연구소': 'kopri', '한국해양수산개발원': 'kmi', '코페르니쿠스 CDSE': 'copernicus', '합참·해군작전사': 'jcs', '선사·해운협회': 'ksa', 'UKMTO·MSCHOA': 'ukmto', 'CMF·IMSC (바레인)': 'cmf', '해외 정보융합센터(IFC)': 'ifc', '국가-군 극궤도 위성': 'sat', '우리 선박 (선사)': 'ship', '국제 협력': 'arctic'
 };
 const LOGO = {};
-const LOGO_W = { ship: 40 };   // 가로로 긴 그림(선박 사진)은 폭 40·높이 14
+const LOGO_W = { ship: 40, arctic: 26 };   // 가로로 긴 그림(선박 사진·북극이사회)은 높이 14에 폭을 넓게
 function loadLogos() {
   for (const k of new Set(Object.values(LOGO_OF))) {
     const exts = k === 'ship' ? ['jpg', 'png'] : ['png', 'svg'], tryExt = i => {
@@ -2804,7 +2804,7 @@ function flowNode(x, y, w, t1, t2, cls, hh, dy) {
   // 로고가 있으면 왼쪽 위 로고 자리를 비우고 나머지 폭 가운데에 기관명을 둔다. 그래도 길면 글자 간격·폭을 줄여 맞춘다
   const av = lg ? w - lw - 10 : w - 8, cx = lg ? x + lw + 6 + av / 2 : x + w / 2, fit = ntW(t1) > av ? ` textLength="${av}" lengthAdjust="spacingAndGlyphs"` : '';
   return `<g class="ng-${cls}"><rect class="nd ${cls}" x="${x}" y="${y}" width="${w}" height="${hh}" rx="5"/>`
-    + (lg ? `<rect class="lgb" x="${x + 2.5}" y="${y + 2.5}" width="${lw + 2}" height="${lh + 2}" rx="3.5"/><image class="lg" href="${lg}" x="${x + 3.5}" y="${y + 3.5}" width="${lw}" height="${lh}" preserveAspectRatio="xMidYMid ${lw > 16 ? 'slice' : 'meet'}"${lw > 16 ? ` clip-path="inset(0 round 2.5px)"` : ''}/>` : '')
+    + (lg ? `<rect class="lgb" x="${x + 2.5}" y="${y + 2.5}" width="${lw + 2}" height="${lh + 2}" rx="3.5"/><image class="lg" href="${lg}" x="${x + 3.5}" y="${y + 3.5}" width="${lw}" height="${lh}" preserveAspectRatio="xMidYMid ${lk === 'ship' ? 'slice' : 'meet'}"${lk === 'ship' ? ` clip-path="inset(0 round 2.5px)"` : ''}/>` : '')
     + `<text class="nt" x="${cx}" y="${y + hh / 2 + dy}" text-anchor="middle"${fit}>${t1}</text><text class="${/\bhub\b/.test(cls) ? 'nt' : 'ns'}" x="${x + w / 2}" y="${y + hh / 2 + 13}" text-anchor="middle"${ntW(t2) * (/\bhub\b/.test(cls) ? 1 : .87) > w - 8 ? ` textLength="${w - 8}" lengthAdjust="spacingAndGlyphs"` : ''}>${t2}</text></g>`;
 }
 function setFlow(id, flows, rest, bands = '', st = null) {
