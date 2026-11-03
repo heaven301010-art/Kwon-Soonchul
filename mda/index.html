@@ -2756,7 +2756,7 @@ const LOGO_OF = {
   // 정부기관은 정부상징으로 통일하되, 해양경찰청·국립해양조사원은 고유 엠블럼
   '해양수산부': 'gov', '기상청': 'gov', '외교부': 'gov', '해양경찰청': 'kcg', '국립해양조사원': 'khoa',
   'KIOST·KHOA': 'kiost', '해군 MDA 상황도': 'navy', '청해부대·해군 MDA': 'navy',
-  '극지연구소': 'kopri', '한국해양수산개발원': 'kmi', '코페르니쿠스 CDSE': 'copernicus', '합참·해군작전사': 'jcs', '선사·해운협회': 'ksa', 'UKMTO·MSCHOA': 'ukmto', 'CMF·IMSC (바레인)': 'cmf', 'IFC-IOR·싱가포르 IFC': 'ifc', '해외 정보융합센터(IFC)': 'ifc'
+  '극지연구소': 'kopri', '한국해양수산개발원': 'kmi', '코페르니쿠스 CDSE': 'copernicus', '합참·해군작전사': 'jcs', '선사·해운협회': 'ksa', 'UKMTO·MSCHOA': 'ukmto', 'CMF·IMSC (바레인)': 'cmf', '해외 정보융합센터(IFC)': 'ifc'
 };
 const LOGO = {};
 function loadLogos() {
@@ -4120,13 +4120,13 @@ function renderSlocInfo() {
   const node = (x, y, w2, t1, t2, cls = '', hh = 36) => flowNode(x, y, w2, t1, t2, cls, hh, -2);
   const lab = (x, y, t, a = 'middle') => `<text class="el" x="${x}" y="${y}" text-anchor="${a}">${t}</text>`;
   const L = [['해양수산부', 'LRIT·해적위험해역 관리'], ['외교부', '재외국민·현지 정세'], ['합참·해군작전사', '청해부대 작전 지휘'], ['한국해양수산개발원', '해운 물류·위험 분석'], ['선사·해운협회', '선박 보고·운항 계획']];
-  const R = [['UKMTO·MSCHOA', '선박 보고·경보', 'ext'], ['CMF·IMSC (바레인)', '연합해군 정보 공유', 'ext'], ['IFC-IOR·싱가포르 IFC', 'ReCAAP 해적 정보', 'ext'], ['코페르니쿠스 CDSE', 'Sentinel 영상 (EU)', 'ext']];
+  const R = [['UKMTO·MSCHOA', '선박 보고·경보', 'ext'], ['CMF·IMSC (바레인)', '연합해군 정보 공유', 'ext'], ['해외 정보융합센터(IFC)', 'IFC-IOR·IFC-SG·ReCAAP', 'ext'], ['코페르니쿠스 CDSE', 'Sentinel 영상 (EU)', 'ext']];
   let g = '';
   // 생키형 띠: 기관별 시간당 자료 건수(모의, 우리 선박·위협·위성 수에 따라 변함). 통합 뒤 청해부대·해군 55%·우리 선박 전파 45%
   const sw = (a, b, p) => Math.round(a + b * Math.sin(T / p));
   const [gf, gb] = hubSankey(
     [[kr.length * 8, '해양수산부'], [sw(20, 4, 43), '외교부'], [sw(60, 10, 39), '합참·해군작전사'], [sw(25, 5, 57), '한국해양수산개발원'], [kr.length * 5, '선사·해운협회']],
-    [[30 + thr * 5, 'UKMTO·MSCHOA'], [sw(40, 8, 45), 'CMF·IMSC'], [sw(35, 6, 51), 'IFC-IOR·싱가포르 IFC'], [20 + inA * 15, '코페르니쿠스 CDSE']], 44,
+    [[30 + thr * 5, 'UKMTO·MSCHOA'], [sw(40, 8, 45), 'CMF·IMSC'], [sw(35, 6, 51), '해외 정보융합센터(IFC)'], [20 + inA * 15, '코페르니쿠스 CDSE']], 44,
     [[0.55, '청해부대·해군 MDA'], [0.45, '우리 선박 (선사)']], '건/시간 (모의)');
   L.forEach(([a, b], i) => { g += node(0, 6 + i * 44, 104, a, b, 'ext2'); });
   R.forEach(([a, b, c], i) => { g += node(236, 6 + i * 44, 104, a, b, c); });

@@ -20,6 +20,6 @@
 | `copernicus` | 코페르니쿠스 CDSE |
 | `ukmto` | UKMTO·MSCHOA |
 | `cmf` | CMF·IMSC (바레인) |
-| `ifc` | IFC-IOR·싱가포르 IFC / 해외 IFC |
+| `ifc` | 해외 정보융합센터(IFC) (공유상황도·원해 SLOC) |
 
 예: 극지연구소 로고는 `kopri.png`, 한국해양수산개발원 로고는 `kmi.svg`
