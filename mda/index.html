@@ -315,11 +315,10 @@ button { font: inherit; color: inherit; }
 .share .sbd:hover { stroke-opacity: .45; }
 .share .egs { fill: none; stroke: var(--fc); stroke-width: .7; stroke-linecap: round; stroke-dasharray: .1 4.4; opacity: .4; animation: egflow 4s linear infinite; }   /* 흐르는 잔 점선 */
 .share .fw.on .egs { opacity: .7; }
-.share .fw:not(.on) .pk2 { display: none; }   /* 평시에는 동그라미 1개 */
+.share .fw.idle .egs { animation-play-state: paused; opacity: .18; }   /* 유통 없음: 점선 멈춤·흐리게 */
+.share .fw.idle .pk { opacity: .45; }
 @keyframes egflow { to { stroke-dashoffset: -9; } }
 @media (prefers-reduced-motion: reduce) { .share .egs { animation: none; } }
-.share .pk { animation: pkin .35s ease-out; }   /* 새로 그려진 동그라미가 이동 위치를 잡기 전 한 장면이 보이지 않게 */
-@keyframes pkin { from { opacity: 0; } }
 .share .pkh { fill: color-mix(in srgb, var(--fc) 80%, #fff); opacity: 1; filter: url(#pkglow); }   /* 빛 번짐 */
 .share .pkc { fill: #fff; filter: drop-shadow(0 0 1.2px #fff) drop-shadow(0 0 2px var(--fc)); }   /* 밝은 알맹이 */
 .share .pkt { fill: var(--fc); }
@@ -2735,22 +2734,46 @@ const elCache = new Map();
 const RMOT = matchMedia('(prefers-reduced-motion: reduce)').matches;
 // 차분한 파스텔 계열: 진한 원색 대신 채도를 낮춘 색으로 은은하게
 const FLOWC = ['#5fa8b3', '#e3a074', '#7fa6d6', '#7fb68d', '#b593c9', '#cfb36f', '#9c92dc', '#d48ba6'];
-// 데이터 흐름: 은은한 관(넓고 옅은 선) 위로 잘게 끊긴 점선이 흐름 방향으로 흐르고,
-// 그 위를 빛나는 작은 데이터 동그라미가 꼬리(잔상 1개)를 달고 이동한다. hot이면 더 많이·빠르게·진하게
+// 데이터 흐름: 은은한 관 위로 잘게 끊긴 점선이 흐르고, 빛나는 데이터 동그라미가 꼬리를 달고 이동한다.
+// 동그라미는 화면이 직접 위치를 계산해 움직인다(flowTick): 흐름마다 데이터 양에 따라 개수(1~3)·크기·속도가 다르고,
+// 자료 유통이 없는 흐름은 그 자리에 멈춘다. 상태는 setFlow의 st로만 바꿔 흐름 층을 다시 그리지 않는다
 function flowDots(d, col, hot = true, pipe = true) {
-  // 흐름 하나 = 묶음(g.fw). 활성 여부는 묶음의 'on' 클래스로만 바꿔(setFlow의 hots) 이동 중인 동그라미를 새로 만들지 않는다.
-  // 평시 동그라미 1개, 활성이면 2번째 동그라미가 보이고 관·점선이 진해진다
-  const dur = 8, r = 1.3, st = `style="--fc:${col}"`;
-  const mv = b => RMOT ? `<animateMotion dur="1s" path="${d}" keyPoints="0.5;0.5" keyTimes="0;1" fill="freeze"/>` : `<animateMotion dur="${dur}s" begin="${b.toFixed(2)}s" repeatCount="indefinite" path="${d}"/>`;
+  const st = `style="--fc:${col}"`;
   let h = `<g class="fw${hot ? ' on' : ''}">` + (pipe ? `<path class="eg" d="${d}" ${st}/>` : '') + `<path class="egs" d="${d}" ${st}/>`;
-  for (let i = 0; i < 2; i++) {
-    const b = -dur * i / 2, c = i ? ' pk2' : '';
-    // 꼬리: 조금 늦게 출발한(뒤따르는) 더 작고 흐린 점 하나
-    if (!RMOT) h += `<g class="pk${c}" ${st}><circle class="pkt" r="${(r * .6).toFixed(2)}" opacity=".35"/>${mv(b + dur * .022)}</g>`;
-    h += `<g class="pk${c}" ${st}><circle class="pkh" r="${(r * 3.6).toFixed(1)}"/><circle class="pkc" r="${r}"/>${mv(b)}</g>`;
-  }
+  for (let k = 0; k < 3; k++) h += `<g class="pk" ${st}><circle class="pkt" r=".8" opacity=".35"/><g class="pkm"><circle class="pkh" r="4.7"/><circle class="pkc" r="1.3"/></g></g>`;
   return h + '</g>';
 }
+const FLOW = {};   // svg id → [{ ph: 진행(0~1), sp: 초당 진행, n: 동그라미 수, sc: 크기 }]
+function flowState(id, st) {
+  const el = $(id), gs = el ? [...el.querySelector(':scope > g.fl').children] : [], F = FLOW[id] = FLOW[id] || [];
+  gs.forEach((g, i) => {
+    const s0 = st[i] || {}, f = F[i] = F[i] || { ph: Math.random() }, q = Math.max(0, Math.min(1, s0.q ?? .5));
+    // 데이터 양(q, 0~1)이 많을수록 동그라미가 많고 크고 빠르다. 최근 공유(hot)는 더 빠르게, 유통 없음(idle)은 멈춤
+    f.n = 1 + Math.round(q * 2); f.sc = .65 + q * .4; f.sp = s0.idle ? 0 : (1 / 11) * (.55 + q * .9) * (s0.hot ? 1.5 : 1);
+    g.classList.toggle('on', !!s0.hot); g.classList.toggle('idle', !!s0.idle);
+    [...g.querySelectorAll(':scope > g.pk')].forEach((p, k) => { p.style.display = k < f.n ? '' : 'none'; p.querySelector('.pkm').setAttribute('transform', `scale(${f.sc.toFixed(2)})`); });
+  });
+}
+let flowLast = 0;
+function flowTick(now) {
+  const dt = flowLast ? Math.min(.1, (now - flowLast) / 1000) : 0; flowLast = now;
+  for (const id in FLOW) {
+    const el = $(id); if (!el || !el.getClientRects().length) continue;   // 보이지 않는 흐름도는 건너뛴다
+    [...el.querySelector(':scope > g.fl').children].forEach((g, i) => {
+      const f = FLOW[id][i]; if (!f) return;
+      const path = g.querySelector('.egs'), len = path.getTotalLength(); if (!RMOT) f.ph = (f.ph + f.sp * dt) % 1;
+      [...g.querySelectorAll(':scope > g.pk')].forEach((p, k) => {
+        if (k >= f.n) return;
+        const u = RMOT ? .5 : (f.ph + k / f.n) % 1, a = path.getPointAtLength(u * len), b = path.getPointAtLength(Math.max(0, u - .025) * len);
+        p.querySelector('.pkm').setAttribute('transform', `translate(${a.x.toFixed(1)},${a.y.toFixed(1)}) scale(${f.sc.toFixed(2)})`);
+        p.querySelector('.pkt').setAttribute('transform', `translate(${b.x.toFixed(1)},${b.y.toFixed(1)})`);
+        p.querySelector('.pkt').style.display = u < .03 || f.sp === 0 ? 'none' : '';
+      });
+    });
+  }
+  requestAnimationFrame(flowTick);
+}
+requestAnimationFrame(flowTick);
 // 흐름도 그리기: 흐름(선·동그라미)과 상자·글자를 다른 층에 두고, 흐름 층은 내용이 바뀔 때만 다시 그린다
 // (숫자가 매초 바뀌어도 이동 중인 동그라미를 새로 만들지 않아 깜빡이지 않는다)
 // 흐름도 상자: 기관 로고 파일(mda/logos/<이름>.png 또는 .svg)이 있으면 상자 왼쪽 위에 작게 넣고 기관명을 조금 오른쪽으로 민다
@@ -2759,7 +2782,7 @@ const LOGO_OF = {
   // 정부기관은 정부상징으로 통일하되, 해양경찰청·국립해양조사원은 고유 엠블럼
   '해양수산부': 'gov', '기상청': 'gov', '외교부': 'gov', '해양경찰청': 'kcg', '국립해양조사원': 'khoa',
   'KIOST·KHOA': 'kiost', '해군 MDA 상황도': 'navy', '청해부대·해군 MDA': 'navy',
-  '극지연구소': 'kopri', '한국해양수산개발원': 'kmi', '코페르니쿠스 CDSE': 'copernicus', '합참·해군작전사': 'jcs', '선사·해운협회': 'ksa', 'UKMTO·MSCHOA': 'ukmto', 'CMF·IMSC (바레인)': 'cmf', '해외 정보융합센터(IFC)': 'ifc'
+  '극지연구소': 'kopri', '한국해양수산개발원': 'kmi', '코페르니쿠스 CDSE': 'copernicus', '합참·해군작전사': 'jcs', '선사·해운협회': 'ksa', 'UKMTO·MSCHOA': 'ukmto', 'CMF·IMSC (바레인)': 'cmf', '해외 정보융합센터(IFC)': 'ifc', '국가-군 극궤도 위성': 'sat'
 };
 const LOGO = {};
 function loadLogos() {
@@ -2783,11 +2806,11 @@ function flowNode(x, y, w, t1, t2, cls, hh, dy) {
     + (lg ? `<rect class="lgb" x="${x + 2.5}" y="${y + 2.5}" width="18" height="18" rx="3.5"/><image class="lg" href="${lg}" x="${x + 3.5}" y="${y + 3.5}" width="16" height="16" preserveAspectRatio="xMidYMid meet"/>` : '')
     + `<text class="nt" x="${cx}" y="${y + hh / 2 + dy}" text-anchor="middle"${fit}>${t1}</text><text class="${/\bhub\b/.test(cls) ? 'nt' : 'ns'}" x="${x + w / 2}" y="${y + hh / 2 + 13}" text-anchor="middle"${ntW(t2) * (/\bhub\b/.test(cls) ? 1 : .87) > w - 8 ? ` textLength="${w - 8}" lengthAdjust="spacingAndGlyphs"` : ''}>${t2}</text></g>`;
 }
-function setFlow(id, flows, rest, bands = '', hots = null) {
+function setFlow(id, flows, rest, bands = '', st = null) {
   const el = $(id); if (!el.querySelector(':scope > g.bd')) { el.innerHTML = '<g class="bd"></g><g class="fl"></g><g class="nl"></g>'; for (const k of 'BFN') elCache.delete(id + k); }
   setHTML(el.children[0], id + 'B', bands); setHTML(el.children[1], id + 'F', flows); setHTML(el.children[2], id + 'N', rest);
-  // 활성 흐름 표시는 클래스만 바꾼다 (흐름 층을 다시 그리지 않음)
-  if (hots) [...el.children[1].children].forEach((g, i) => g.classList.toggle('on', !!hots[i]));
+  // 흐름별 상태(양·최근 공유·유통 없음)는 클래스·속도 값만 바꾼다 (흐름 층을 다시 그리지 않음)
+  if (st) flowState(id, st);
 }
 // 생키형 띠: 데이터 양에 비례한 굵기의 반투명 띠 (굵기는 0.5 단위로 끊어 매초 다시 그리지 않게 한다)
 const BAND_MAX = 7, BAND_MIN = 1.2;
@@ -2807,7 +2830,10 @@ function hubSankey(L, R, ry, outs, unit) {
   // 나가는 두 띠는 많은 쪽이 굵기 7 (한 화면 안에서 기관 사이의 많고 적음이 잘 보이게)
   const nIn = L.length + R.length, mIn = Math.max(...D.slice(0, nIn).map(f => f[2])), mOut = Math.max(...D.slice(nIn).map(f => f[2]));
   const wd = (v, m, mx) => Math.max(BAND_MIN, Math.round(mx * v / Math.max(1, m) * 2) / 2);
-  return [D.map(([d, c]) => flowDots(d, c, true, false)).join(''), D.map(([d, c, v, tip], i) => flowBand(d, c, i < nIn ? wd(v, mIn, 5) : wd(v, mOut, 7), tip)).join('')];
+  // 기관 자료는 주기적으로 묶여 들어온다(모의): 기관마다 주기·보내는 시간이 달라 쉬는 동안은 띠 위 동그라미가 멈춘다
+  const sendOn = i => { const per = 40 + i * 7; return (T + i * 23) % per < per * (.6 + (i * 13 % 3) * .1); };   // 주기의 60~80% 동안 전송
+  const st = D.map((f, i) => i < nIn ? { q: f[2] / Math.max(1, mIn), idle: !sendOn(i) } : { q: f[2] / Math.max(1, mOut), idle: !D.slice(0, nIn).some((_, k) => sendOn(k)) });
+  return [D.map(([d, c]) => flowDots(d, c, false, false)).join(''), D.map(([d, c, v, tip], i) => flowBand(d, c, i < nIn ? wd(v, mIn, 5) : wd(v, mOut, 7), tip) .replace('</title>', `${st[i].idle ? ' · 대기 (유통 없음)' : ''}</title>`)).join(''), st];
 }
 const flowBand = (d, col, w, tip) => `<path class="sbd" d="${d}" stroke-width="${w}" style="--fc:${col}"><title>${tip}</title></path>`;
 function setHTML(el, key, html) { if (elCache.get(key) === html) return; elCache.set(key, html); el.innerHTML = html; }
@@ -3070,6 +3096,8 @@ function renderPanel() {
       ['M132,156 C132,190 70,180 70,214', '#6f86bf', shares.some(x => T - x.t <= 15), held, `플랫폼 → 해군: 융합 표적 ${held}`],
       ['M188,156 C188,190 250,180 250,214', FLOWC[6], recent('해외 IFC'), nIFC, `플랫폼 → 해외 정보융합센터(IFC): 공유 사건 ${nIFC}건`]
     ], vmax = Math.max(...F.map(f => f[3]));
+    // 유통 없음(동그라미 멈춤): 기상청·KIOST는 자료를 주기적으로 묶어 보낸다(모의), 해외 IFC는 최근 15분 공유가 없을 때
+    const KIDLE = [false, false, T % 60 >= 25, (T + 20) % 90 >= 35, held === 0, !recent('해외 IFC')];
     setFlow('shareSvg',
       F.map(([d, c]) => flowDots(d, c, false, false)).join(''),
       node(5, 8, 130, '해양수산부', 'GICOMS · AIS · LRIT') + node(185, 8, 130, '해양경찰청', 'V-PASS · VTS · 경비함')
@@ -3081,7 +3109,8 @@ function renderPanel() {
       + lab(316, 66, `V-PASS ${det.vpass}`, 'end') + lab(316, 79, `VTS ${det.vts}`, 'end') + lab(316, 92, `해경 인계 ${nKCG}건`, 'end')
       + lab(4, 165, `기상 ${nWx}건`, 'start') + lab(316, 165, `관측 ${nOc}건`, 'end')
       + lab(4, 180, `융합 표적 ${held}`, 'start') + lab(316, 180, `공유 사건 ${nIFC}건`, 'end'),
-      F.map(([d, c, , v, tip]) => flowBand(d, c, bandW(v, vmax), tip)).join(''), F.map(f => f[2]));
+      F.map(([d, c, , v, tip], i) => flowBand(d, c, bandW(v, vmax), tip + (KIDLE[i] ? ' · 대기 (유통 없음)' : ''))).join(''),
+      F.map(([, , hot, v], i) => ({ q: v / vmax, hot, idle: KIDLE[i] })));
     setHTML($('shareLog'), 'shareLog', shares.length ? shares.slice(0, 6).map(x => `<li><time>${clock(x.t).hm}</time><span>${esc(x.text)}</span></li>`).join('')
       : '<li><time></time><span>이상징후가 공유되면 대상 기관과 함께 여기에 기록됩니다.</span></li>');
   }
@@ -4098,7 +4127,7 @@ function renderPolar() {
   let g = '';
   // 생키형 띠: 기관별 시간당 자료 건수(모의, 선박·위성 수에 따라 변함). 통합 뒤 해군 60%·운항 선박 전파 40%
   const sw = (a, b, p) => Math.round(a + b * Math.sin(T / p));
-  const [gf, gb] = hubSankey(
+  const [gf, gb, gs] = hubSankey(
     [[sw(40, 8, 37), '극지연구소'], [sw(120, 20, 41), '기상청'], [arcShips.length * 6, '해양수산부'], [sw(35, 6, 53), '국립해양조사원'], [sw(15, 3, 61), '한국해양수산개발원']],
     [[typeof nSent === 'number' ? 20 + nSent * 8 : 40, '코페르니쿠스 CDSE'], [20 + polar * 12, '국가-군 극궤도 위성'], [sw(30, 5, 47), '국제 협력']], 52,
     [[0.6, '해군 MDA 상황도'], [0.4, '북극항로 운항 선박']], '건/시간 (모의)');
@@ -4107,7 +4136,7 @@ function renderPolar() {
   g += node(128, 98, 84, '통합 극지', '정보체계', 'hub nmda', 60);
   g += node(12, 238, 140, '해군 MDA 상황도', '북극항로 표적관리', 'navy') + node(188, 238, 140, '북극항로 운항 선박', 'S-AIS·위성통신 전파');
   g += lab(170, 196, `선박 ${arcShips.length}척`) + lab(170, 209, `위성 ${polar}기`) + lab(276, 166, `Sentinel ${nSent}건`, 'middle');
-  setFlow('polarSvg', gf, g, gb);
+  setFlow('polarSvg', gf, g, gb, gs);
   setHTML($('polarDom'), 'polarDom', `<div class="pdom">
     <div class="sf"><h4>해상</h4><p>추적 <b>${arcShips.length}척</b> (한국 관련 ${kr})</p><p>결빙 정체 <b>${nSt('결빙 정체')}</b> · 호송 <b>${nSt('호송 중')}</b></p><p>S-AIS 최근 1시간 <b>${aisH}척</b></p><p>해빙 가장자리 랍테프해 <b>${f1(iceLat(125))}°N</b> <small>(기상청·극지연)</small></p></div>
     <div class="un"><h4>수중</h4><p>아라온 CTD 축치해 표층 <b>${sst}℃</b> · 염분 <b>31.8psu</b> <small>(모의)</small></p><p>해저지형 <b>국립해양조사원</b> 북극 해저지형 자료</p><p>잠수함 활동 추정 <b>바렌츠·카라해</b> <small>(공개 정보)</small></p><p>해빙 하부: 소음 낮아 원거리 탐지 유리</p></div>
@@ -4129,7 +4158,7 @@ function renderSlocInfo() {
   let g = '';
   // 생키형 띠: 기관별 시간당 자료 건수(모의, 우리 선박·위협·위성 수에 따라 변함). 통합 뒤 청해부대·해군 55%·우리 선박 전파 45%
   const sw = (a, b, p) => Math.round(a + b * Math.sin(T / p));
-  const [gf, gb] = hubSankey(
+  const [gf, gb, gs] = hubSankey(
     [[kr.length * 8, '해양수산부'], [sw(20, 4, 43), '외교부'], [sw(60, 10, 39), '합참·해군작전사'], [sw(25, 5, 57), '한국해양수산개발원'], [kr.length * 5, '선사·해운협회']],
     [[30 + thr * 5, 'UKMTO·MSCHOA'], [sw(40, 8, 45), 'CMF·IMSC'], [sw(35, 6, 51), '해외 정보융합센터(IFC)'], [20 + inA * 15, '코페르니쿠스 CDSE']], 44,
     [[0.55, '청해부대·해군 MDA'], [0.45, '우리 선박 (선사)']], '건/시간 (모의)');
@@ -4138,7 +4167,7 @@ function renderSlocInfo() {
   g += node(128, 98, 84, '관심해역', '해양정보통합체계', 'hub nmda', 60);
   g += node(12, 238, 140, '청해부대·해군 MDA', '원해 SLOC 상황도', 'navy') + node(188, 238, 140, '우리 선박 (선사)', '위협 경보·항로 권고');
   g += lab(166, 196, `우리 선박 ${kr.length}척`) + lab(166, 209, `위성 ${inA}기`);
-  setFlow('slocSvg', gf, g, gb);
+  setFlow('slocSvg', gf, g, gb, gs);
   setHTML($('slocDom'), 'slocDom', `<div class="pdom">
     <div class="sf"><h4>해상</h4><p>우리 선박 <b>${kr.length}척</b> · 위험 상태 <b>${risk}</b></p><p>LRIT·S-AIS 최근 1시간 <b>${lrit}척</b></p><p>연합·주변국 함정 탐지 <b>${navyN}척</b></p><p>위협 표적 (최근 1시간) <b>${thr}척</b></p></div>
     <div class="un"><h4>수중</h4><p>호르무즈 <b>기뢰 위협</b> 감시 <small>(IRGCN)</small></p><p>홍해 <b>해저케이블</b> 손상 위험 <small>(2024년 사례)</small></p><p>청해부대 <b>선체 소나</b> 대잠 경계</p><p>인도양 수온약층 깊음 → <b>원거리 탐지 유리</b></p></div>
