@@ -2778,7 +2778,7 @@ function flowNode(x, y, w, t1, t2, cls, hh, dy) {
   const av = lg ? w - 26 : w - 8, cx = lg ? x + 22 + av / 2 : x + w / 2, fit = ntW(t1) > av ? ` textLength="${av}" lengthAdjust="spacingAndGlyphs"` : '';
   return `<g class="ng-${cls}"><rect class="nd ${cls}" x="${x}" y="${y}" width="${w}" height="${hh}" rx="5"/>`
     + (lg ? `<rect class="lgb" x="${x + 2.5}" y="${y + 2.5}" width="18" height="18" rx="3.5"/><image class="lg" href="${lg}" x="${x + 3.5}" y="${y + 3.5}" width="16" height="16" preserveAspectRatio="xMidYMid meet"/>` : '')
-    + `<text class="nt" x="${cx}" y="${y + hh / 2 + dy}" text-anchor="middle"${fit}>${t1}</text><text class="${/\bhub\b/.test(cls) ? 'nt' : 'ns'}" x="${x + w / 2}" y="${y + hh / 2 + 13}" text-anchor="middle">${t2}</text></g>`;
+    + `<text class="nt" x="${cx}" y="${y + hh / 2 + dy}" text-anchor="middle"${fit}>${t1}</text><text class="${/\bhub\b/.test(cls) ? 'nt' : 'ns'}" x="${x + w / 2}" y="${y + hh / 2 + 13}" text-anchor="middle"${ntW(t2) * (/\bhub\b/.test(cls) ? 1 : .87) > w - 8 ? ` textLength="${w - 8}" lengthAdjust="spacingAndGlyphs"` : ''}>${t2}</text></g>`;
 }
 function setFlow(id, flows, rest, bands = '') {
   const el = $(id); if (!el.querySelector(':scope > g.bd')) { el.innerHTML = '<g class="bd"></g><g class="fl"></g><g class="nl"></g>'; for (const k of 'BFN') elCache.delete(id + k); }
@@ -2790,9 +2790,11 @@ const bandW = (v, vmax) => Math.max(BAND_MIN, Math.round(BAND_MAX * v / Math.max
 // 허브형 생키: 왼쪽·오른쪽 기관 → 가운데 통합 상자 → 아래 두 수신처. 들어온 양을 수신처 비율대로 나눠 내보낸다
 // L·R: [[건수, 이름], ...], outs: [[비율, 이름], ...]. 반환: [흐름 층, 띠 층]
 function hubSankey(L, R, ry, outs, unit) {
+  // 기관 상자(폭 104)와 가운데 상자(128~212) 사이 24px 통로로 띠를 보내고, 가운데 상자 옆면에 위에서 아래로 나눠 닿게 한다(한 점에 몰려 가리지 않게)
+  const at = (i, n) => n > 1 ? 106 + i * 44 / (n - 1) : 128;
   const D = [
-    ...L.map(([v, nm], i) => { const y = 6 + i * 44; return [`M114,${y + 18} C122,${y + 18} 122,128 128,128`, FLOWC[i], v, `${nm} → 통합체계: ${v}${unit}`]; }),
-    ...R.map(([v, nm], i) => { const y = 6 + i * ry; return [`M226,${y + 18} C218,${y + 18} 218,128 212,128`, FLOWC[(5 + i) % FLOWC.length], v, `${nm} → 통합체계: ${v}${unit}`]; })
+    ...L.map(([v, nm], i) => { const y = 6 + i * 44 + 18, e = at(i, L.length); return [`M104,${y} C118,${y} 114,${e} 128,${e}`, FLOWC[i], v, `${nm} → 통합체계: ${v}${unit}`]; }),
+    ...R.map(([v, nm], i) => { const y = 6 + i * ry + 18, e = at(i, R.length); return [`M236,${y} C222,${y} 226,${e} 212,${e}`, FLOWC[(5 + i) % FLOWC.length], v, `${nm} → 통합체계: ${v}${unit}`]; })
   ];
   const tot = D.reduce((a, f) => a + f[2], 0);
   D.push(...outs.map(([k, nm], i) => [i ? 'M188,158 C188,205 228,200 228,238' : 'M152,158 C152,205 120,200 120,238', i ? '#5fa8b3' : '#6f86bf', Math.round(tot * k), `통합체계 → ${nm}: ${Math.round(tot * k)}${unit}`]));
@@ -4095,8 +4097,8 @@ function renderPolar() {
     [[sw(40, 8, 37), '극지연구소'], [sw(120, 20, 41), '기상청'], [arcShips.length * 6, '해양수산부'], [sw(35, 6, 53), '국립해양조사원'], [sw(15, 3, 61), '한국해양수산개발원']],
     [[typeof nSent === 'number' ? 20 + nSent * 8 : 40, '코페르니쿠스 CDSE'], [20 + polar * 12, '국가-군 극궤도 위성'], [sw(30, 5, 47), '국제 협력']], 52,
     [[0.6, '해군 MDA 상황도'], [0.4, '북극항로 운항 선박']], '건/시간 (모의)');
-  L.forEach(([a, b], i) => { g += node(0, 6 + i * 44, 114, a, b, 'ext2'); });
-  R.forEach(([a, b, c], i) => { g += node(226, 6 + i * 52, 114, a, b, c); });
+  L.forEach(([a, b], i) => { g += node(0, 6 + i * 44, 104, a, b, 'ext2'); });
+  R.forEach(([a, b, c], i) => { g += node(236, 6 + i * 52, 104, a, b, c); });
   g += node(128, 98, 84, '통합 극지', '정보체계', 'hub nmda', 60);
   g += node(12, 238, 140, '해군 MDA 상황도', '북극항로 표적관리', 'navy') + node(188, 238, 140, '북극항로 운항 선박', 'S-AIS·위성통신 전파');
   g += lab(170, 196, `선박 ${arcShips.length}척`) + lab(170, 209, `위성 ${polar}기`) + lab(276, 166, `Sentinel ${nSent}건`, 'middle');
@@ -4126,9 +4128,9 @@ function renderSlocInfo() {
     [[kr.length * 8, '해양수산부'], [sw(20, 4, 43), '외교부'], [sw(60, 10, 39), '합참·해군작전사'], [sw(25, 5, 57), '한국해양수산개발원'], [kr.length * 5, '선사·해운협회']],
     [[30 + thr * 5, 'UKMTO·MSCHOA'], [sw(40, 8, 45), 'CMF·IMSC'], [sw(35, 6, 51), 'IFC-IOR·싱가포르 IFC'], [20 + inA * 15, '코페르니쿠스 CDSE']], 44,
     [[0.55, '청해부대·해군 MDA'], [0.45, '우리 선박 (선사)']], '건/시간 (모의)');
-  L.forEach(([a, b], i) => { g += node(0, 6 + i * 44, 114, a, b, 'ext2'); });
-  R.forEach(([a, b, c], i) => { g += node(226, 6 + i * 44, 114, a, b, c); });
-  g += node(122, 98, 96, '관심해역', '해양정보통합체계', 'hub nmda', 60);
+  L.forEach(([a, b], i) => { g += node(0, 6 + i * 44, 104, a, b, 'ext2'); });
+  R.forEach(([a, b, c], i) => { g += node(236, 6 + i * 44, 104, a, b, c); });
+  g += node(128, 98, 84, '관심해역', '해양정보통합체계', 'hub nmda', 60);
   g += node(12, 238, 140, '청해부대·해군 MDA', '원해 SLOC 상황도', 'navy') + node(188, 238, 140, '우리 선박 (선사)', '위협 경보·항로 권고');
   g += lab(166, 196, `우리 선박 ${kr.length}척`) + lab(166, 209, `위성 ${inA}기`);
   setFlow('slocSvg', gf, g, gb);
