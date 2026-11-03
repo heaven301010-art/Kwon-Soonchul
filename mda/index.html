@@ -2787,6 +2787,21 @@ function setFlow(id, flows, rest, bands = '') {
 // 생키형 띠: 데이터 양에 비례한 굵기의 반투명 띠 (굵기는 0.5 단위로 끊어 매초 다시 그리지 않게 한다)
 const BAND_MAX = 11, BAND_MIN = 1.4;
 const bandW = (v, vmax) => Math.max(BAND_MIN, Math.round(BAND_MAX * v / Math.max(1, vmax) * 2) / 2);
+// 허브형 생키: 왼쪽·오른쪽 기관 → 가운데 통합 상자 → 아래 두 수신처. 들어온 양을 수신처 비율대로 나눠 내보낸다
+// L·R: [[건수, 이름], ...], outs: [[비율, 이름], ...]. 반환: [흐름 층, 띠 층]
+function hubSankey(L, R, ry, outs, unit) {
+  const D = [
+    ...L.map(([v, nm], i) => { const y = 6 + i * 44; return [`M114,${y + 18} C122,${y + 18} 122,128 128,128`, FLOWC[i], v, `${nm} → 통합체계: ${v}${unit}`]; }),
+    ...R.map(([v, nm], i) => { const y = 6 + i * ry; return [`M226,${y + 18} C218,${y + 18} 218,128 212,128`, FLOWC[(5 + i) % FLOWC.length], v, `${nm} → 통합체계: ${v}${unit}`]; })
+  ];
+  const tot = D.reduce((a, f) => a + f[2], 0);
+  D.push(...outs.map(([k, nm], i) => [i ? 'M188,158 C188,205 228,200 228,238' : 'M152,158 C152,205 120,200 120,238', i ? '#5fa8b3' : '#6f86bf', Math.round(tot * k), `통합체계 → ${nm}: ${Math.round(tot * k)}${unit}`]));
+  // 들어오는 띠와 나가는 띠는 따로 비교한다: 들어오는 띠는 가운데 상자 한 점으로 모이므로 가장 많은 기관이 굵기 7,
+  // 나가는 두 띠는 많은 쪽이 굵기 11 (한 화면 안에서 기관 사이의 많고 적음이 잘 보이게)
+  const nIn = L.length + R.length, mIn = Math.max(...D.slice(0, nIn).map(f => f[2])), mOut = Math.max(...D.slice(nIn).map(f => f[2]));
+  const wd = (v, m, mx) => Math.max(BAND_MIN, Math.round(mx * v / Math.max(1, m) * 2) / 2);
+  return [D.map(([d, c]) => flowDots(d, c, true, false)).join(''), D.map(([d, c, v, tip], i) => flowBand(d, c, i < nIn ? wd(v, mIn, 7) : wd(v, mOut, 11), tip)).join('')];
+}
 const flowBand = (d, col, w, tip) => `<path class="sbd" d="${d}" stroke-width="${w}" style="--fc:${col}"><title>${tip}</title></path>`;
 function setHTML(el, key, html) { if (elCache.get(key) === html) return; elCache.set(key, html); el.innerHTML = html; }
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -4073,16 +4088,19 @@ function renderPolar() {
   const lab = (x, y, t, a = 'middle') => `<text class="el" x="${x}" y="${y}" text-anchor="${a}">${t}</text>`;
   const L = [['극지연구소', '아라온·다산기지 관측'], ['기상청', '극지 기상·해빙 예보'], ['해양수산부', '북극항로 운항 관리'], ['국립해양조사원', '극지 해도·해양관측'], ['한국해양수산개발원', '북극 물류·정책 분석']];
   const R = [['코페르니쿠스 CDSE', 'Sentinel-1·2·3 (EU)', 'ext'], ['국가-군 극궤도 위성', '아리랑·군 정찰위성', ''], ['국제 협력', '북극이사회·NAVAREA', 'ext']];
-  let g = '', gf = '';
-  L.forEach((_, i) => { const y = 6 + i * 44; gf += flowDots(`M114,${y + 18} C122,${y + 18} 122,128 128,128`, FLOWC[i]); });
-  R.forEach((_, i) => { const y = 6 + i * 52; gf += flowDots(`M226,${y + 18} C218,${y + 18} 218,128 212,128`, FLOWC[5 + i]); });
-  gf += flowDots('M152,158 C152,205 120,200 120,238', '#6f86bf') + flowDots('M188,158 C188,205 228,200 228,238', '#5fa8b3');
+  let g = '';
+  // 생키형 띠: 기관별 시간당 자료 건수(모의, 선박·위성 수에 따라 변함). 통합 뒤 해군 60%·운항 선박 전파 40%
+  const sw = (a, b, p) => Math.round(a + b * Math.sin(T / p));
+  const [gf, gb] = hubSankey(
+    [[sw(40, 8, 37), '극지연구소'], [sw(120, 20, 41), '기상청'], [arcShips.length * 6, '해양수산부'], [sw(35, 6, 53), '국립해양조사원'], [sw(15, 3, 61), '한국해양수산개발원']],
+    [[typeof nSent === 'number' ? 20 + nSent * 8 : 40, '코페르니쿠스 CDSE'], [20 + polar * 12, '국가-군 극궤도 위성'], [sw(30, 5, 47), '국제 협력']], 52,
+    [[0.6, '해군 MDA 상황도'], [0.4, '북극항로 운항 선박']], '건/시간 (모의)');
   L.forEach(([a, b], i) => { g += node(0, 6 + i * 44, 114, a, b, 'ext2'); });
   R.forEach(([a, b, c], i) => { g += node(226, 6 + i * 52, 114, a, b, c); });
   g += node(128, 98, 84, '통합 극지', '정보체계', 'hub nmda', 60);
   g += node(12, 238, 140, '해군 MDA 상황도', '북극항로 표적관리', 'navy') + node(188, 238, 140, '북극항로 운항 선박', 'S-AIS·위성통신 전파');
   g += lab(170, 196, `선박 ${arcShips.length}척`) + lab(170, 209, `위성 ${polar}기`) + lab(276, 166, `Sentinel ${nSent}건`, 'middle');
-  setFlow('polarSvg', gf, g);
+  setFlow('polarSvg', gf, g, gb);
   setHTML($('polarDom'), 'polarDom', `<div class="pdom">
     <div class="sf"><h4>해상</h4><p>추적 <b>${arcShips.length}척</b> (한국 관련 ${kr})</p><p>결빙 정체 <b>${nSt('결빙 정체')}</b> · 호송 <b>${nSt('호송 중')}</b></p><p>S-AIS 최근 1시간 <b>${aisH}척</b></p><p>해빙 가장자리 랍테프해 <b>${f1(iceLat(125))}°N</b> <small>(기상청·극지연)</small></p></div>
     <div class="un"><h4>수중</h4><p>아라온 CTD 축치해 표층 <b>${sst}℃</b> · 염분 <b>31.8psu</b> <small>(모의)</small></p><p>해저지형 <b>국립해양조사원</b> 북극 해저지형 자료</p><p>잠수함 활동 추정 <b>바렌츠·카라해</b> <small>(공개 정보)</small></p><p>해빙 하부: 소음 낮아 원거리 탐지 유리</p></div>
@@ -4101,16 +4119,19 @@ function renderSlocInfo() {
   const lab = (x, y, t, a = 'middle') => `<text class="el" x="${x}" y="${y}" text-anchor="${a}">${t}</text>`;
   const L = [['해양수산부', 'LRIT·해적위험해역 관리'], ['외교부', '재외국민·현지 정세'], ['합참·해군작전사', '청해부대 작전 지휘'], ['한국해양수산개발원', '해운 물류·위험 분석'], ['선사·해운협회', '선박 보고·운항 계획']];
   const R = [['UKMTO·MSCHOA', '선박 보고·경보', 'ext'], ['CMF·IMSC (바레인)', '연합해군 정보 공유', 'ext'], ['IFC-IOR·싱가포르 IFC', 'ReCAAP 해적 정보', 'ext'], ['코페르니쿠스 CDSE', 'Sentinel 영상 (EU)', 'ext']];
-  let g = '', gf = '';
-  L.forEach((_, i) => { const y = 6 + i * 44; gf += flowDots(`M114,${y + 18} C122,${y + 18} 122,128 128,128`, FLOWC[i]); });
-  R.forEach((_, i) => { const y = 6 + i * 44; gf += flowDots(`M226,${y + 18} C218,${y + 18} 218,128 212,128`, FLOWC[(5 + i) % FLOWC.length]); });
-  gf += flowDots('M152,158 C152,205 120,200 120,238', '#6f86bf') + flowDots('M188,158 C188,205 228,200 228,238', '#5fa8b3');
+  let g = '';
+  // 생키형 띠: 기관별 시간당 자료 건수(모의, 우리 선박·위협·위성 수에 따라 변함). 통합 뒤 청해부대·해군 55%·우리 선박 전파 45%
+  const sw = (a, b, p) => Math.round(a + b * Math.sin(T / p));
+  const [gf, gb] = hubSankey(
+    [[kr.length * 8, '해양수산부'], [sw(20, 4, 43), '외교부'], [sw(60, 10, 39), '합참·해군작전사'], [sw(25, 5, 57), '한국해양수산개발원'], [kr.length * 5, '선사·해운협회']],
+    [[30 + thr * 5, 'UKMTO·MSCHOA'], [sw(40, 8, 45), 'CMF·IMSC'], [sw(35, 6, 51), 'IFC-IOR·싱가포르 IFC'], [20 + inA * 15, '코페르니쿠스 CDSE']], 44,
+    [[0.55, '청해부대·해군 MDA'], [0.45, '우리 선박 (선사)']], '건/시간 (모의)');
   L.forEach(([a, b], i) => { g += node(0, 6 + i * 44, 114, a, b, 'ext2'); });
   R.forEach(([a, b, c], i) => { g += node(226, 6 + i * 44, 114, a, b, c); });
   g += node(122, 98, 96, '관심해역', '해양정보통합체계', 'hub nmda', 60);
   g += node(12, 238, 140, '청해부대·해군 MDA', '원해 SLOC 상황도', 'navy') + node(188, 238, 140, '우리 선박 (선사)', '위협 경보·항로 권고');
   g += lab(166, 196, `우리 선박 ${kr.length}척`) + lab(166, 209, `위성 ${inA}기`);
-  setFlow('slocSvg', gf, g);
+  setFlow('slocSvg', gf, g, gb);
   setHTML($('slocDom'), 'slocDom', `<div class="pdom">
     <div class="sf"><h4>해상</h4><p>우리 선박 <b>${kr.length}척</b> · 위험 상태 <b>${risk}</b></p><p>LRIT·S-AIS 최근 1시간 <b>${lrit}척</b></p><p>연합·주변국 함정 탐지 <b>${navyN}척</b></p><p>위협 표적 (최근 1시간) <b>${thr}척</b></p></div>
     <div class="un"><h4>수중</h4><p>호르무즈 <b>기뢰 위협</b> 감시 <small>(IRGCN)</small></p><p>홍해 <b>해저케이블</b> 손상 위험 <small>(2024년 사례)</small></p><p>청해부대 <b>선체 소나</b> 대잠 경계</p><p>인도양 수온약층 깊음 → <b>원거리 탐지 유리</b></p></div>
