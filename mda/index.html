@@ -315,6 +315,7 @@ button { font: inherit; color: inherit; }
 .share .sbd:hover { stroke-opacity: .45; }
 .share .egs { fill: none; stroke: var(--fc); stroke-width: .7; stroke-linecap: round; stroke-dasharray: .1 4.4; opacity: .4; animation: egflow 4s linear infinite; }   /* 흐르는 잔 점선 */
 .share .fw.on .egs { opacity: .7; }
+.share .fw.rev .egs { animation-direction: reverse; }
 .share .fw.idle .egs { animation-play-state: paused; opacity: .18; }   /* 유통 없음: 점선 멈춤·흐리게 */
 .share .fw.idle .pkm { opacity: .45; }
 @keyframes egflow { to { stroke-dashoffset: -9; } }
@@ -2751,8 +2752,8 @@ function flowState(id, st) {
     // 흐름 층이 새로 그려졌으면 요소를 다시 찾아 둔다(매 프레임 찾지 않게)
     if (f.g !== g) { f.g = g; f.path = g.querySelector('.egs'); f.len = f.path.getTotalLength(); f.dots = [...g.querySelectorAll(':scope > g.pk')].map(pk => ({ pk, m: pk.querySelector('.pkm'), t: pk.querySelector('.pkt') })); }
     // 데이터 양(q, 0~1)이 많을수록 동그라미가 많고 크고 빠르다. 최근 공유(hot)는 더 빠르게, 유통 없음(idle)은 멈춤
-    f.n = 1 + Math.round(q * 2); f.sc = .65 + q * .4; f.sp = s0.idle ? 0 : (1 / 11) * (.55 + q * .9) * (s0.hot ? 1.5 : 1);
-    g.classList.toggle('on', !!s0.hot); g.classList.toggle('idle', !!s0.idle);
+    f.n = 1 + Math.round(q * 2); f.sc = .65 + q * .4; f.sp = s0.idle ? 0 : (1 / 11) * (.55 + q * .9) * (s0.hot ? 1.5 : 1) * (s0.boost || 1); f.rev = !!s0.rev;   // boost: 흐름별 속도 배율, rev: 반대 방향
+    g.classList.toggle('on', !!s0.hot); g.classList.toggle('idle', !!s0.idle); g.classList.toggle('rev', !!s0.rev);
     f.dots.forEach((d, k) => { d.pk.style.display = k < f.n ? '' : 'none'; });   // 위치·크기는 flowTick만 바꾼다
   });
 }
@@ -2767,7 +2768,7 @@ function flowTick(now) {
       f.dots.forEach((d, k) => {
         if (k >= f.n) return;
         // 동그라미 자리는 1/3 간격으로 고정: 개수가 바뀌어도 이미 있던 동그라미가 튀지 않는다
-        const u = RMOT ? .5 : (f.ph + k / 3) % 1, a = f.path.getPointAtLength(u * f.len), b = f.path.getPointAtLength(Math.max(0, u - .025) * f.len);
+        const u = RMOT ? .5 : (f.ph + k / 3) % 1, at = v => f.path.getPointAtLength((f.rev ? 1 - v : v) * f.len), a = at(u), b = at(Math.max(0, u - .025));
         d.m.setAttribute('transform', `translate(${a.x.toFixed(1)},${a.y.toFixed(1)}) scale(${f.sc.toFixed(2)})`);
         d.t.setAttribute('transform', `translate(${b.x.toFixed(1)},${b.y.toFixed(1)})`);
         d.t.style.display = u < .03 || f.sp === 0 ? 'none' : '';
@@ -3100,7 +3101,7 @@ function renderPanel() {
       ['M74,131 C92,131 92,131 110,131', FLOWC[2], false, nWx, `기상청 → 플랫폼: 해양기상 자료 ${nWx}건 (모의)`],
       ['M246,131 C228,131 228,131 210,131', FLOWC[3], false, nOc, `KIOST·KHOA → 플랫폼: 관측·예측 자료 ${nOc}건 (모의)`],
       ['M132,156 C132,190 70,180 70,214', '#6f86bf', shares.some(x => T - x.t <= 15), held, `플랫폼 → 해군: 융합 표적 ${held}`],
-      ['M188,156 C188,190 250,180 250,214', FLOWC[6], recent('해외 IFC'), nIFC, `플랫폼 → 해외 정보융합센터(IFC): 공유 사건 ${nIFC}건`]
+      ['M188,156 C188,190 250,180 250,214', FLOWC[6], recent('해외 IFC'), nIFC, `해외 정보융합센터(IFC) → 플랫폼: 공유 사건 ${nIFC}건`]
     ], vmax = Math.max(...F.map(f => f[3]));
     // 유통 없음(동그라미 멈춤): 기상청·KIOST는 자료를 주기적으로 묶어 보낸다(모의), 해외 IFC는 최근 15분 공유가 없을 때
     const KIDLE = [false, false, T % 60 >= 25, (T + 20) % 90 >= 35, held === 0, !recent('해외 IFC')];
@@ -3116,7 +3117,7 @@ function renderPanel() {
       + lab(4, 165, `기상 ${nWx}건`, 'start') + lab(316, 165, `관측 ${nOc}건`, 'end')
       + lab(4, 180, `융합 표적 ${held}`, 'start') + lab(316, 180, `공유 사건 ${nIFC}건`, 'end'),
       F.map(([d, c, , v, tip], i) => flowBand(d, c, bandW(v, vmax), tip + (KIDLE[i] ? ' · 대기 (유통 없음)' : ''))).join(''),
-      F.map(([, , hot, v], i) => ({ q: v / vmax, hot, idle: KIDLE[i] })));
+      F.map(([, , hot, v], i) => ({ q: v / vmax, hot, idle: KIDLE[i], boost: i === 2 || i === 3 ? 1.8 : 1, rev: i === 5 })));   // 기상청·KIOST는 더 빠르게, 해외 IFC는 IFC → 플랫폼 방향
     setHTML($('shareLog'), 'shareLog', shares.length ? shares.slice(0, 6).map(x => `<li><time>${clock(x.t).hm}</time><span>${esc(x.text)}</span></li>`).join('')
       : '<li><time></time><span>이상징후가 공유되면 대상 기관과 함께 여기에 기록됩니다.</span></li>');
   }
