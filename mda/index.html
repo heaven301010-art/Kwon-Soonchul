@@ -316,7 +316,7 @@ button { font: inherit; color: inherit; }
 .share .egs { fill: none; stroke: var(--fc); stroke-width: .7; stroke-linecap: round; stroke-dasharray: .1 4.4; opacity: .4; animation: egflow 4s linear infinite; }   /* 흐르는 잔 점선 */
 .share .fw.on .egs { opacity: .7; }
 .share .fw.idle .egs { animation-play-state: paused; opacity: .18; }   /* 유통 없음: 점선 멈춤·흐리게 */
-.share .fw.idle .pk { opacity: .45; }
+.share .fw.idle .pkm { opacity: .45; }
 @keyframes egflow { to { stroke-dashoffset: -9; } }
 @media (prefers-reduced-motion: reduce) { .share .egs { animation: none; } }
 .share .pkh { fill: color-mix(in srgb, var(--fc) 80%, #fff); opacity: 1; filter: url(#pkglow); }   /* 빛 번짐 */
@@ -2740,18 +2740,20 @@ const FLOWC = ['#5fa8b3', '#e3a074', '#7fa6d6', '#7fb68d', '#b593c9', '#cfb36f',
 function flowDots(d, col, hot = true, pipe = true) {
   const st = `style="--fc:${col}"`;
   let h = `<g class="fw${hot ? ' on' : ''}">` + (pipe ? `<path class="eg" d="${d}" ${st}/>` : '') + `<path class="egs" d="${d}" ${st}/>`;
-  for (let k = 0; k < 3; k++) h += `<g class="pk" ${st}><circle class="pkt" r=".8" opacity=".35"/><g class="pkm"><circle class="pkh" r="4.7"/><circle class="pkc" r="1.3"/></g></g>`;
+  for (let k = 0; k < 3; k++) h += `<g class="pk" ${st}><circle class="pkt" r=".8" opacity=".35" transform="translate(-99,-99)"/><g class="pkm" transform="translate(-99,-99)"><circle class="pkh" r="4.7"/><circle class="pkc" r="1.3"/></g></g>`;
   return h + '</g>';
 }
-const FLOW = {};   // svg id → [{ ph: 진행(0~1), sp: 초당 진행, n: 동그라미 수, sc: 크기 }]
+const FLOW = {};   // svg id → [{ ph: 진행(0~1), sp: 초당 진행, n: 동그라미 수, sc: 크기, g·path·len·dots: 요소 캐시 }]
 function flowState(id, st) {
   const el = $(id), gs = el ? [...el.querySelector(':scope > g.fl').children] : [], F = FLOW[id] = FLOW[id] || [];
   gs.forEach((g, i) => {
     const s0 = st[i] || {}, f = F[i] = F[i] || { ph: Math.random() }, q = Math.max(0, Math.min(1, s0.q ?? .5));
+    // 흐름 층이 새로 그려졌으면 요소를 다시 찾아 둔다(매 프레임 찾지 않게)
+    if (f.g !== g) { f.g = g; f.path = g.querySelector('.egs'); f.len = f.path.getTotalLength(); f.dots = [...g.querySelectorAll(':scope > g.pk')].map(pk => ({ pk, m: pk.querySelector('.pkm'), t: pk.querySelector('.pkt') })); }
     // 데이터 양(q, 0~1)이 많을수록 동그라미가 많고 크고 빠르다. 최근 공유(hot)는 더 빠르게, 유통 없음(idle)은 멈춤
     f.n = 1 + Math.round(q * 2); f.sc = .65 + q * .4; f.sp = s0.idle ? 0 : (1 / 11) * (.55 + q * .9) * (s0.hot ? 1.5 : 1);
     g.classList.toggle('on', !!s0.hot); g.classList.toggle('idle', !!s0.idle);
-    [...g.querySelectorAll(':scope > g.pk')].forEach((p, k) => { p.style.display = k < f.n ? '' : 'none'; p.querySelector('.pkm').setAttribute('transform', `scale(${f.sc.toFixed(2)})`); });
+    f.dots.forEach((d, k) => { d.pk.style.display = k < f.n ? '' : 'none'; });   // 위치·크기는 flowTick만 바꾼다
   });
 }
 let flowLast = 0;
@@ -2759,17 +2761,20 @@ function flowTick(now) {
   const dt = flowLast ? Math.min(.1, (now - flowLast) / 1000) : 0; flowLast = now;
   for (const id in FLOW) {
     const el = $(id); if (!el || !el.getClientRects().length) continue;   // 보이지 않는 흐름도는 건너뛴다
-    [...el.querySelector(':scope > g.fl').children].forEach((g, i) => {
-      const f = FLOW[id][i]; if (!f) return;
-      const path = g.querySelector('.egs'), len = path.getTotalLength(); if (!RMOT) f.ph = (f.ph + f.sp * dt) % 1;
-      [...g.querySelectorAll(':scope > g.pk')].forEach((p, k) => {
+    for (const f of FLOW[id]) {
+      if (!f || !f.g || !f.g.isConnected) continue;
+      if (!RMOT) f.ph = (f.ph + f.sp * dt) % 1;
+      f.dots.forEach((d, k) => {
         if (k >= f.n) return;
-        const u = RMOT ? .5 : (f.ph + k / f.n) % 1, a = path.getPointAtLength(u * len), b = path.getPointAtLength(Math.max(0, u - .025) * len);
-        p.querySelector('.pkm').setAttribute('transform', `translate(${a.x.toFixed(1)},${a.y.toFixed(1)}) scale(${f.sc.toFixed(2)})`);
-        p.querySelector('.pkt').setAttribute('transform', `translate(${b.x.toFixed(1)},${b.y.toFixed(1)})`);
-        p.querySelector('.pkt').style.display = u < .03 || f.sp === 0 ? 'none' : '';
+        // 동그라미 자리는 1/3 간격으로 고정: 개수가 바뀌어도 이미 있던 동그라미가 튀지 않는다
+        const u = RMOT ? .5 : (f.ph + k / 3) % 1, a = f.path.getPointAtLength(u * f.len), b = f.path.getPointAtLength(Math.max(0, u - .025) * f.len);
+        d.m.setAttribute('transform', `translate(${a.x.toFixed(1)},${a.y.toFixed(1)}) scale(${f.sc.toFixed(2)})`);
+        d.t.setAttribute('transform', `translate(${b.x.toFixed(1)},${b.y.toFixed(1)})`);
+        d.t.style.display = u < .03 || f.sp === 0 ? 'none' : '';
+        // 선의 시작·끝에서는 서서히 나타나고 사라진다(끝에서 처음으로 돌아갈 때 깜빡이지 않게)
+        d.pk.style.opacity = RMOT ? '' : Math.min(1, u / .06, (1 - u) / .06).toFixed(2);
       });
-    });
+    }
   }
   requestAnimationFrame(flowTick);
 }
