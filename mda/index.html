@@ -2785,7 +2785,7 @@ function setFlow(id, flows, rest, bands = '') {
   setHTML(el.children[0], id + 'B', bands); setHTML(el.children[1], id + 'F', flows); setHTML(el.children[2], id + 'N', rest);
 }
 // 생키형 띠: 데이터 양에 비례한 굵기의 반투명 띠 (굵기는 0.5 단위로 끊어 매초 다시 그리지 않게 한다)
-const BAND_MAX = 11, BAND_MIN = 1.4;
+const BAND_MAX = 7, BAND_MIN = 1.2;
 const bandW = (v, vmax) => Math.max(BAND_MIN, Math.round(BAND_MAX * v / Math.max(1, vmax) * 2) / 2);
 // 허브형 생키: 왼쪽·오른쪽 기관 → 가운데 통합 상자 → 아래 두 수신처. 들어온 양을 수신처 비율대로 나눠 내보낸다
 // L·R: [[건수, 이름], ...], outs: [[비율, 이름], ...]. 반환: [흐름 층, 띠 층]
@@ -2798,11 +2798,11 @@ function hubSankey(L, R, ry, outs, unit) {
   ];
   const tot = D.reduce((a, f) => a + f[2], 0);
   D.push(...outs.map(([k, nm], i) => [i ? 'M188,158 C188,205 228,200 228,238' : 'M152,158 C152,205 120,200 120,238', i ? '#5fa8b3' : '#6f86bf', Math.round(tot * k), `통합체계 → ${nm}: ${Math.round(tot * k)}${unit}`]));
-  // 들어오는 띠와 나가는 띠는 따로 비교한다: 들어오는 띠는 가운데 상자 한 점으로 모이므로 가장 많은 기관이 굵기 7,
-  // 나가는 두 띠는 많은 쪽이 굵기 11 (한 화면 안에서 기관 사이의 많고 적음이 잘 보이게)
+  // 들어오는 띠와 나가는 띠는 따로 비교한다: 들어오는 띠는 가장 많은 기관이 굵기 5,
+  // 나가는 두 띠는 많은 쪽이 굵기 7 (한 화면 안에서 기관 사이의 많고 적음이 잘 보이게)
   const nIn = L.length + R.length, mIn = Math.max(...D.slice(0, nIn).map(f => f[2])), mOut = Math.max(...D.slice(nIn).map(f => f[2]));
   const wd = (v, m, mx) => Math.max(BAND_MIN, Math.round(mx * v / Math.max(1, m) * 2) / 2);
-  return [D.map(([d, c]) => flowDots(d, c, true, false)).join(''), D.map(([d, c, v, tip], i) => flowBand(d, c, i < nIn ? wd(v, mIn, 7) : wd(v, mOut, 11), tip)).join('')];
+  return [D.map(([d, c]) => flowDots(d, c, true, false)).join(''), D.map(([d, c, v, tip], i) => flowBand(d, c, i < nIn ? wd(v, mIn, 5) : wd(v, mOut, 7), tip)).join('')];
 }
 const flowBand = (d, col, w, tip) => `<path class="sbd" d="${d}" stroke-width="${w}" style="--fc:${col}"><title>${tip}</title></path>`;
 function setHTML(el, key, html) { if (elCache.get(key) === html) return; elCache.set(key, html); el.innerHTML = html; }
