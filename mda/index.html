@@ -3060,16 +3060,16 @@ function renderPanel() {
     const F = [
       ['M70,48 C70,82 132,72 132,106', FLOWC[0], recent('해수부'), det.ais + det.lrit, `해양수산부 → 플랫폼: AIS ${det.ais} · LRIT ${det.lrit}`],
       ['M250,48 C250,82 188,72 188,106', FLOWC[1], recent('해경'), det.vpass + det.vts, `해양경찰청 → 플랫폼: V-PASS ${det.vpass} · VTS ${det.vts}`],
-      ['M86,131 C94,131 94,131 102,131', FLOWC[2], false, nWx, `기상청 → 플랫폼: 해양기상 자료 ${nWx}건 (모의)`],
-      ['M234,131 C226,131 226,131 218,131', FLOWC[3], false, nOc, `KIOST·KHOA → 플랫폼: 관측·예측 자료 ${nOc}건 (모의)`],
+      ['M74,131 C92,131 92,131 110,131', FLOWC[2], false, nWx, `기상청 → 플랫폼: 해양기상 자료 ${nWx}건 (모의)`],
+      ['M246,131 C228,131 228,131 210,131', FLOWC[3], false, nOc, `KIOST·KHOA → 플랫폼: 관측·예측 자료 ${nOc}건 (모의)`],
       ['M132,156 C132,190 70,180 70,214', '#6f86bf', shares.some(x => T - x.t <= 15), held, `플랫폼 → 해군: 융합 표적 ${held}`],
       ['M188,156 C188,190 250,180 250,214', FLOWC[6], recent('해외 IFC'), nIFC, `플랫폼 → 해외 IFC: 공유 사건 ${nIFC}건`]
     ], vmax = Math.max(...F.map(f => f[3]));
     setFlow('shareSvg',
       F.map(([d, c, hot]) => flowDots(d, c, hot, false)).join(''),
       node(5, 8, 130, '해양수산부', 'GICOMS · AIS · LRIT') + node(185, 8, 130, '해양경찰청', 'V-PASS · VTS · 경비함')
-      + node(0, 111, 86, '기상청', '해양기상', 'ext2') + node(234, 111, 86, 'KIOST·KHOA', '관측·예측', 'ext2')
-      + node(102, 106, 116, '국가 MDA 플랫폼', '해수부 · K-IFC(가칭)', 'hub nmda', 50)
+      + node(0, 111, 74, '기상청', '해양기상', 'ext2') + node(246, 111, 74, 'KIOST·KHOA', '관측·예측', 'ext2')
+      + node(110, 106, 100, '국가 MDA 플랫폼', '해수부 · K-IFC(가칭)', 'hub nmda', 50)
       + node(5, 214, 130, '해군 MDA 상황도', '군사정보 · 비밀 분리', 'navy') + node(185, 214, 130, '해외 IFC', 'IFC-SG · IFC-IOR 등', 'ext ifc')
       // 수치는 곡선과 겹치지 않게 바깥쪽 여백(상자 사이)에 둔다
       + lab(4, 66, `AIS ${det.ais}`, 'start') + lab(4, 79, `LRIT ${det.lrit}`, 'start')
