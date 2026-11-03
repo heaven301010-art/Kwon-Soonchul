@@ -310,11 +310,12 @@ button { font: inherit; color: inherit; }
 .share .nt { font: 600 11.5px var(--font-ui); fill: var(--fg); }
 .share .ns { font: 10px var(--font-ui); fill: var(--muted); }
 .share .eg { fill: none; stroke: color-mix(in srgb, var(--fc) 22%, var(--faint)); stroke-width: 1.6; stroke-linecap: round; opacity: .45; }   /* 데이터 관 */
-.share .eg.on { stroke: color-mix(in srgb, var(--fc) 40%, var(--faint)); opacity: .6; }
+.share .fw.on .eg { stroke: color-mix(in srgb, var(--fc) 40%, var(--faint)); opacity: .6; }
 .share .sbd { fill: none; stroke: var(--fc); stroke-opacity: .28; stroke-linecap: butt; }   /* 생키형 띠: 굵기 = 데이터 양 */
 .share .sbd:hover { stroke-opacity: .45; }
-.share .egs { fill: none; stroke: var(--fc); stroke-width: .7; stroke-linecap: round; stroke-dasharray: .1 4.4; opacity: .4; animation: egflow 1.8s linear infinite; }   /* 흐르는 잔 점선 */
-.share .egs.on { opacity: .7; animation-duration: 1s; }
+.share .egs { fill: none; stroke: var(--fc); stroke-width: .7; stroke-linecap: round; stroke-dasharray: .1 4.4; opacity: .4; animation: egflow 4s linear infinite; }   /* 흐르는 잔 점선 */
+.share .fw.on .egs { opacity: .7; }
+.share .fw:not(.on) .pk2 { display: none; }   /* 평시에는 동그라미 1개 */
 @keyframes egflow { to { stroke-dashoffset: -9; } }
 @media (prefers-reduced-motion: reduce) { .share .egs { animation: none; } }
 .share .pk { animation: pkin .35s ease-out; }   /* 새로 그려진 동그라미가 이동 위치를 잡기 전 한 장면이 보이지 않게 */
@@ -2735,18 +2736,20 @@ const RMOT = matchMedia('(prefers-reduced-motion: reduce)').matches;
 // 차분한 파스텔 계열: 진한 원색 대신 채도를 낮춘 색으로 은은하게
 const FLOWC = ['#5fa8b3', '#e3a074', '#7fa6d6', '#7fb68d', '#b593c9', '#cfb36f', '#9c92dc', '#d48ba6'];
 // 데이터 흐름: 은은한 관(넓고 옅은 선) 위로 잘게 끊긴 점선이 흐름 방향으로 흐르고,
-// 그 위를 빛나는 작은 데이터 동그라미가 꼬리(잔상 2개)를 달고 이동한다. hot이면 더 많이·빠르게·진하게
+// 그 위를 빛나는 작은 데이터 동그라미가 꼬리(잔상 1개)를 달고 이동한다. hot이면 더 많이·빠르게·진하게
 function flowDots(d, col, hot = true, pipe = true) {
-  const n = hot ? 3 : 2, dur = hot ? 3.8 : 7, r = hot ? 1.3 : 1.1, st = `style="--fc:${col}"`;
-  let h = (pipe ? `<path class="eg${hot ? ' on' : ''}" d="${d}" ${st}/>` : '') + `<path class="egs${hot ? ' on' : ''}" d="${d}" ${st}/>`;
+  // 흐름 하나 = 묶음(g.fw). 활성 여부는 묶음의 'on' 클래스로만 바꿔(setFlow의 hots) 이동 중인 동그라미를 새로 만들지 않는다.
+  // 평시 동그라미 1개, 활성이면 2번째 동그라미가 보이고 관·점선이 진해진다
+  const dur = 8, r = 1.3, st = `style="--fc:${col}"`;
   const mv = b => RMOT ? `<animateMotion dur="1s" path="${d}" keyPoints="0.5;0.5" keyTimes="0;1" fill="freeze"/>` : `<animateMotion dur="${dur}s" begin="${b.toFixed(2)}s" repeatCount="indefinite" path="${d}"/>`;
-  for (let i = 0; i < n; i++) {
-    const b = -dur * i / n;
-    // 꼬리: 조금 늦게 출발한(뒤따르는) 더 작고 흐린 점
-    if (!RMOT) for (const [k, f, o] of [[2, .45, .25], [1, .7, .45]]) h += `<g class="pk" ${st}><circle class="pkt" r="${(r * f).toFixed(2)}" opacity="${o}"/>${mv(b + dur * .022 * k)}</g>`;
-    h += `<g class="pk" ${st}><circle class="pkh" r="${(r * 3.2).toFixed(1)}"/><circle class="pkc" r="${r}"/>${mv(b)}</g>`;
+  let h = `<g class="fw${hot ? ' on' : ''}">` + (pipe ? `<path class="eg" d="${d}" ${st}/>` : '') + `<path class="egs" d="${d}" ${st}/>`;
+  for (let i = 0; i < 2; i++) {
+    const b = -dur * i / 2, c = i ? ' pk2' : '';
+    // 꼬리: 조금 늦게 출발한(뒤따르는) 더 작고 흐린 점 하나
+    if (!RMOT) h += `<g class="pk${c}" ${st}><circle class="pkt" r="${(r * .6).toFixed(2)}" opacity=".35"/>${mv(b + dur * .022)}</g>`;
+    h += `<g class="pk${c}" ${st}><circle class="pkh" r="${(r * 3.2).toFixed(1)}"/><circle class="pkc" r="${r}"/>${mv(b)}</g>`;
   }
-  return h;
+  return h + '</g>';
 }
 // 흐름도 그리기: 흐름(선·동그라미)과 상자·글자를 다른 층에 두고, 흐름 층은 내용이 바뀔 때만 다시 그린다
 // (숫자가 매초 바뀌어도 이동 중인 동그라미를 새로 만들지 않아 깜빡이지 않는다)
@@ -2780,9 +2783,11 @@ function flowNode(x, y, w, t1, t2, cls, hh, dy) {
     + (lg ? `<rect class="lgb" x="${x + 2.5}" y="${y + 2.5}" width="18" height="18" rx="3.5"/><image class="lg" href="${lg}" x="${x + 3.5}" y="${y + 3.5}" width="16" height="16" preserveAspectRatio="xMidYMid meet"/>` : '')
     + `<text class="nt" x="${cx}" y="${y + hh / 2 + dy}" text-anchor="middle"${fit}>${t1}</text><text class="${/\bhub\b/.test(cls) ? 'nt' : 'ns'}" x="${x + w / 2}" y="${y + hh / 2 + 13}" text-anchor="middle"${ntW(t2) * (/\bhub\b/.test(cls) ? 1 : .87) > w - 8 ? ` textLength="${w - 8}" lengthAdjust="spacingAndGlyphs"` : ''}>${t2}</text></g>`;
 }
-function setFlow(id, flows, rest, bands = '') {
+function setFlow(id, flows, rest, bands = '', hots = null) {
   const el = $(id); if (!el.querySelector(':scope > g.bd')) { el.innerHTML = '<g class="bd"></g><g class="fl"></g><g class="nl"></g>'; for (const k of 'BFN') elCache.delete(id + k); }
   setHTML(el.children[0], id + 'B', bands); setHTML(el.children[1], id + 'F', flows); setHTML(el.children[2], id + 'N', rest);
+  // 활성 흐름 표시는 클래스만 바꾼다 (흐름 층을 다시 그리지 않음)
+  if (hots) [...el.children[1].children].forEach((g, i) => g.classList.toggle('on', !!hots[i]));
 }
 // 생키형 띠: 데이터 양에 비례한 굵기의 반투명 띠 (굵기는 0.5 단위로 끊어 매초 다시 그리지 않게 한다)
 const BAND_MAX = 7, BAND_MIN = 1.2;
@@ -3066,7 +3071,7 @@ function renderPanel() {
       ['M188,156 C188,190 250,180 250,214', FLOWC[6], recent('해외 IFC'), nIFC, `플랫폼 → 해외 정보융합센터(IFC): 공유 사건 ${nIFC}건`]
     ], vmax = Math.max(...F.map(f => f[3]));
     setFlow('shareSvg',
-      F.map(([d, c, hot]) => flowDots(d, c, hot, false)).join(''),
+      F.map(([d, c]) => flowDots(d, c, false, false)).join(''),
       node(5, 8, 130, '해양수산부', 'GICOMS · AIS · LRIT') + node(185, 8, 130, '해양경찰청', 'V-PASS · VTS · 경비함')
       + node(0, 111, 74, '기상청', '해양기상', 'ext2') + node(246, 111, 74, 'KIOST·KHOA', '관측·예측', 'ext2')
       + node(110, 106, 100, '국가 MDA 플랫폼', 'K-IFC(가칭)', 'hub nmda', 50)
@@ -3076,7 +3081,7 @@ function renderPanel() {
       + lab(316, 66, `V-PASS ${det.vpass}`, 'end') + lab(316, 79, `VTS ${det.vts}`, 'end') + lab(316, 92, `해경 인계 ${nKCG}건`, 'end')
       + lab(4, 165, `기상 ${nWx}건`, 'start') + lab(316, 165, `관측 ${nOc}건`, 'end')
       + lab(4, 180, `융합 표적 ${held}`, 'start') + lab(316, 180, `공유 사건 ${nIFC}건`, 'end'),
-      F.map(([d, c, , v, tip]) => flowBand(d, c, bandW(v, vmax), tip)).join(''));
+      F.map(([d, c, , v, tip]) => flowBand(d, c, bandW(v, vmax), tip)).join(''), F.map(f => f[2]));
     setHTML($('shareLog'), 'shareLog', shares.length ? shares.slice(0, 6).map(x => `<li><time>${clock(x.t).hm}</time><span>${esc(x.text)}</span></li>`).join('')
       : '<li><time></time><span>이상징후가 공유되면 대상 기관과 함께 여기에 기록됩니다.</span></li>');
   }
