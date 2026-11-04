@@ -285,7 +285,7 @@ button { font: inherit; color: inherit; }
 .icls .lbl2 { width: 100%; color: var(--faint); font-size: 11px; }
 .share { width: 100%; max-width: 350px; height: auto; display: block; margin: 0 auto 6px; }
 /* 흐름도 칸만 어두운 배경(터미널형): 칸 안에서만 색 변수를 어둡게 바꾼다 */
-.share { --panel: #0d1622; --panel-2: #142131; --line: #2b3d52; --fg: #e4ecf5; --muted: #8fa3b8; --faint: #3b4e63;
+.share { --panel: #0d1622; --panel-2: #24374d; --line: #4a6380; --fg: #e4ecf5; --muted: #8fa3b8; --faint: #3b4e63;
   background: #0d1622 radial-gradient(rgba(255,255,255,.055) .8px, transparent .9px) 0 0 / 11px 11px; border: 1px solid #1f2e40; border-radius: 8px; padding: 4px; box-sizing: border-box; }
 /* 노트북 화면 (1001~1500px): 해도와 오른쪽 정보칸을 나란히 두고, 정보칸·글자·상단 막대를 비율에 맞게 줄인다 */
 @media (max-width: 1500px) and (min-width: 1001px) {
@@ -309,7 +309,7 @@ button { font: inherit; color: inherit; }
 .share .nd { fill: var(--panel-2); stroke: var(--line); stroke-width: 1; }
 .share .nd.hub { fill: color-mix(in srgb, var(--fr) 8%, var(--panel)); stroke: var(--fr); }
 .share .nd.ext { stroke-dasharray: 4 3; }
-.share .nd.ext2 { fill: color-mix(in srgb, var(--ne) 7%, var(--panel)); }
+.share .nd.ext2 { fill: color-mix(in srgb, var(--ne) 16%, var(--panel-2)); }
 .share .nt { font: 600 11.5px var(--font-ui); fill: var(--fg); }
 .share .ns { font: 10px var(--font-ui); fill: var(--muted); }
 .share .eg { fill: none; stroke: color-mix(in srgb, var(--fc) 22%, var(--faint)); stroke-width: 1.6; stroke-linecap: round; opacity: .45; }   /* 데이터 관 */
