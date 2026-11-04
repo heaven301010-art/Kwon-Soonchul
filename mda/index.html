@@ -326,8 +326,8 @@ button { font: inherit; color: inherit; }
 .share .fw.idle .pkm { opacity: .45; }
 @keyframes egflow { to { stroke-dashoffset: -9; } }
 @media (prefers-reduced-motion: reduce) { .share .egs { animation: none; } }
-.share .pkh { fill: color-mix(in srgb, var(--fc) 65%, #fff); opacity: 1; filter: url(#pkglow); mix-blend-mode: screen; }   /* 빛 번짐 */
-.share .pkc { fill: #fff; filter: drop-shadow(0 0 1.6px #fff) drop-shadow(0 0 3px var(--fc)); }   /* 밝은 알맹이 */
+.share .pkh { fill: color-mix(in srgb, var(--fc) 65%, #fff); opacity: .5; filter: url(#pkglow); mix-blend-mode: screen; }   /* 빛 번짐: 반투명 */   /* 빛 번짐 */
+.share .pkc { fill: #fff; opacity: .9; filter: drop-shadow(0 0 1.4px rgba(255,255,255,.7)) drop-shadow(0 0 2.6px color-mix(in srgb, var(--fc) 60%, transparent)); }   /* 밝은 알맹이 */
 .share .pkt { fill: var(--fc); }
 .share .lgb { fill: #fff; opacity: .9; } .share .ng-navy .lgb { opacity: 1; }
 .share .nd.nmda { fill: #e8772e; stroke: #f6a66a; stroke-width: 1.4; }   /* 흐름도 가운데 통합 상자(국가 MDA 플랫폼·통합 극지정보체계·관심해역 해양정보통합체계): 주황 상자·흰 글자 */
