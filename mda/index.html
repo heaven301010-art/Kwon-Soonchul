@@ -284,6 +284,9 @@ button { font: inherit; color: inherit; }
 .icls .c b { color: var(--ho); }
 .icls .lbl2 { width: 100%; color: var(--faint); font-size: 11px; }
 .share { width: 100%; max-width: 350px; height: auto; display: block; margin: 0 auto 6px; }
+/* 흐름도 칸만 어두운 배경(터미널형): 칸 안에서만 색 변수를 어둡게 바꾼다 */
+.share { --panel: #0d1622; --panel-2: #142131; --line: #2b3d52; --fg: #e4ecf5; --muted: #8fa3b8; --faint: #3b4e63;
+  background: #0d1622 radial-gradient(rgba(255,255,255,.055) .8px, transparent .9px) 0 0 / 11px 11px; border: 1px solid #1f2e40; border-radius: 8px; padding: 4px; box-sizing: border-box; }
 /* 노트북 화면 (1001~1500px): 해도와 오른쪽 정보칸을 나란히 두고, 정보칸·글자·상단 막대를 비율에 맞게 줄인다 */
 @media (max-width: 1500px) and (min-width: 1001px) {
   .grid { grid-template-columns: minmax(0, 1fr) 330px; }
@@ -327,11 +330,11 @@ button { font: inherit; color: inherit; }
 .share .pkc { fill: #fff; filter: drop-shadow(0 0 1.2px #fff) drop-shadow(0 0 2px var(--fc)); }   /* 밝은 알맹이 */
 .share .pkt { fill: var(--fc); }
 .share .lgb { fill: #fff; opacity: .9; } .share .ng-navy .lgb { opacity: 1; }
-.share .nd.nmda { fill: #e8772e; stroke: #b4531a; stroke-width: 1.4; }   /* 흐름도 가운데 통합 상자(국가 MDA 플랫폼·통합 극지정보체계·관심해역 해양정보통합체계): 주황 상자·흰 글자 */
+.share .nd.nmda { fill: #e8772e; stroke: #f6a66a; stroke-width: 1.4; }   /* 흐름도 가운데 통합 상자(국가 MDA 플랫폼·통합 극지정보체계·관심해역 해양정보통합체계): 주황 상자·흰 글자 */
 .share .ng-hub.nmda .nt { fill: #fff; }
-.share .nd.ifc { fill: #6a4fc4; stroke: #4b3596; stroke-width: 1.4; stroke-dasharray: none; }   /* 해외 IFC: 보라 상자·흰 글자 */
+.share .nd.ifc { fill: #6a4fc4; stroke: #a08ae8; stroke-width: 1.4; stroke-dasharray: none; }   /* 해외 IFC: 보라 상자·흰 글자 */
 .share .ng-ext.ifc .nt { fill: #fff; } .share .ng-ext.ifc .ns { fill: #ddd3fa; }
-.share .ng-navy .nd { fill: #1f3c74; stroke: #0b2a5e; stroke-width: 1.4; }
+.share .ng-navy .nd { fill: #1f3c74; stroke: #5a7fc4; stroke-width: 1.4; }
 .share .ng-navy .nt { fill: #fff; } .share .ng-navy .ns { fill: #c6d4f0; }
 .rgsum { background: color-mix(in srgb, var(--fr) 4%, var(--panel)); }
 .rgsum .rgt { display: inline-flex; gap: 4px; margin: 3px 4px 0 0; padding: 2px 6px; font: inherit; font-size: 11px; border: 1px solid var(--line); border-radius: 4px; background: var(--panel); cursor: pointer; color: var(--muted); }
