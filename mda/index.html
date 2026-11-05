@@ -395,6 +395,15 @@ button { font: inherit; color: inherit; }
 .emsall { display: flex; align-items: center; gap: 8px; font-size: 12.5px; margin-bottom: 6px; }
 .etab { width: 100%; border-collapse: collapse; font-size: 11.5px; }
 .etab th { font-weight: 600; color: var(--muted); font-size: 10.5px; text-align: left; padding: 2px 4px 3px 0; border-bottom: 1px solid var(--line); }
+.emio { margin-top: 8px; padding-top: 6px; border-top: 1px solid var(--line); }
+.emio h4 { margin: 0 0 4px; font-size: 12.5px; }
+.emr { padding: 5px 7px; margin-bottom: 5px; border-left: 3px solid var(--su); background: var(--panel-2); border-radius: 0 4px 4px 0; font-size: 11.5px; } .emr.jam { border-left-color: var(--ho); }
+.emr .emt { display: flex; align-items: center; gap: 6px; } .emr .emp { font-family: var(--font-data); font-size: 11px; margin: 2px 0; }
+.emr .ems { display: flex; gap: 3px; margin: 3px 0; } .emr .ems span { flex: 1; text-align: center; font-size: 9.5px; padding: 1px 0; border-radius: 3px; background: color-mix(in srgb, var(--muted) 14%, transparent); color: var(--muted); }
+.emr .ems span.on { background: color-mix(in srgb, var(--su) 22%, transparent); color: var(--fg); font-weight: 600; } .emr.jam .ems span.on { background: color-mix(in srgb, var(--ho) 20%, transparent); }
+.emr small { display: block; color: var(--muted); font-size: 10.5px; }
+.emio-r { fill: none; stroke-width: 1.2; vector-effect: non-scaling-stroke; } .emio-x { fill: none; stroke-width: 1.6; vector-effect: non-scaling-stroke; } .emio-c { stroke: #fff; stroke-width: 1; vector-effect: non-scaling-stroke; }
+.emio-r.gnss, .emio-x.gnss { stroke: var(--su); } .emio-c.gnss { fill: var(--su); } .emio-r.jam, .emio-x.jam { stroke: var(--ho); } .emio-c.jam { fill: var(--ho); }
 .etab td { padding: 3px 4px 3px 0; border-bottom: 1px dotted var(--line); vertical-align: top; }
 .etab td small { display: block; color: var(--muted); font-size: 10.5px; }
 .etab td.n { text-align: right; font-family: var(--font-data); white-space: nowrap; }
@@ -1920,6 +1929,41 @@ function reqDetailHTML(r) {
   }
   return `<ul class="rqd">${h}</ul>`;
 }
+// 교란·재밍 원점 식별: 발생하면 자동으로 단계별 추정
+// 1차 피해 분포 역추적(영향 선박·함정 위치 중심, ±40km대) → 10분 뒤 2차 해안 방향탐지 교차(±20km대) → RF 위성 탐지 시 3차 확정(±10km 이내)
+const EMI = { gnss: { nm: 'GPS 교란', btn: 'RF 교란원 탐지 요청', place: () => SC.gnss.name, c: () => SC.gnss.center, e3: 10, by: () => flags.gnssLocBy, loc: () => flags.gnssLoc, rf: () => flags.gnssRf },
+  jam: { nm: '위성통신 재밍', btn: 'RF 재밍원 탐지 요청', place: () => '옹진반도 일대', c: () => SC.jam.center, e3: 8, by: () => flags.jamLocBy, loc: () => flags.jamLoc, rf: () => flags.jamRf } };
+function emiOrigin() {
+  flags.emi = flags.emi || {};
+  const hit = { gnss: gnssOn() ? [...gnssMis].map(id => byId.get(id)).filter(Boolean) : [],
+    jam: T >= SC.jam.at ? Object.entries(comm).filter(([, c]) => c.inZone && c.status === '두절').map(([id]) => byId.get(id)).filter(Boolean) : [] };
+  for (const k of ['gnss', 'jam']) {
+    const E = EMI[k], o = flags.emi[k];
+    if (!o && hit[k].length >= (k === 'gnss' ? 3 : 1)) {
+      const ps = hit[k].map(t => t.pos), m = [ps.reduce((a, q) => a + q[0], 0) / ps.length, ps.reduce((a, q) => a + q[1], 0) / ps.length];
+      const err = Math.round(Math.min(60, Math.max(30, dist(m, E.c()) + 18)));
+      flags.emi[k] = { st: 1, pos: m, err, at: T, how: `피해 분포 역추적 (${k === 'gnss' ? '위치 오차 선박' : '두절 함정'} ${hit[k].length}척)` };
+      addLog(`${E.nm} 원점 1차 추정: ${fmtPos(m)} (오차 ±${err}km, 피해 분포 역추적).`); feed('space', `${E.nm} 원점 1차 추정 · ±${err}km`);
+    } else if (o && o.st === 1 && T - o.at >= 10) {
+      const c = E.c(); Object.assign(o, { st: 2, pos: [c[0] + .07, c[1] - .05], err: 20, at2: T, how: '해안 방향탐지 교차 (백령도·연평도 R/S 전자전 감시)' });
+      addLog(`${E.nm} 원점 2차 추정: ${E.place()} (오차 ±20km, 방향탐지 교차).`); feed('ground', `${E.nm} 원점 2차 추정 · ${E.place()}`);
+    }
+    if (o && o.st < 3 && E.loc()) { Object.assign(o, { st: 3, pos: E.c().slice(), err: E.e3, at3: T, how: `${E.by() || 'RF 위성'} 신호원 정밀 위치 추정` }); }
+  }
+}
+function emiHTML() {
+  const ks = ['gnss', 'jam'].filter(k => flags.emi && flags.emi[k]);
+  if (!ks.length) return '<div class="emio"><h4>교란·재밍 원점 식별</h4><p class="empty">교란·재밍이 발생하면 원점을 자동으로 추정해 여기에 표시합니다.</p></div>';
+  const STG = ['', '1차 · 피해 분포', '2차 · 방향탐지', '3차 · RF 위성 확정'];
+  return '<div class="emio"><h4>교란·재밍 원점 식별</h4>' + ks.map(k => {
+    const E = EMI[k], o = flags.emi[k], nm = o.st === 3 ? E.place() : o.st === 2 ? `${E.place()} (추정)` : '서해 북부 해상 (개략)';
+    const next = o.st === 3 ? '' : E.rf() ? 'RF 위성 통과 대기 중 · 통과 시 정밀 확정' : `정밀 확정: 지휘결심 지원체계 경보의 '${E.btn}'`;
+    return `<div class="emr ${k}"><div class="emt"><span class="chip ${k === 'gnss' ? 'warn' : 'open'}">${E.nm}</span><b>${esc(nm)}</b></div>`
+      + `<div class="emp">${fmtPos(o.pos)} · 오차 ±${o.err}km</div>`
+      + `<div class="ems">${[1, 2, 3].map(i => `<span class="${i <= o.st ? 'on' : ''}">${STG[i]}</span>`).join('')}</div>`
+      + `<small>${esc(o.how)} · ${clock(o.at3 ?? o.at2 ?? o.at).hm} 식별${next ? ` · ${next}` : ''}</small></div>`;
+  }).join('') + '</div>';
+}
 function addReq(text, status) { const r = { t: T, text, status }; reqs.unshift(r); return r; }
 
 // ── 현장 대응: NLL 근해 북한 함정, 동·서해 제3국(중·러) 함정, 미식별 선박에 가장 가까운 유인(함정·헬기)·무인(UAV·USV) 전력을 보낸다 ──
@@ -2187,7 +2231,7 @@ function scenario(dt = 0) {
     } });
   if (flags.gnssRf && !flags.gnssLoc) {
     const rfo = SATS.find(o => o.use && o.mis === 'rf' && o.cur && dist(satPos(o, T), SC.gnss.center) < 700);
-    if (rfo) { flags.gnssLoc = T; flags.gnssRf.status = '완료'; addLog(`${rfo.name} GPS 교란 신호원 위치 추정: ${SC.gnss.name} (오차 ±10km).`); feed('space', `${rfo.name} GPS 교란원 위치 추정 · ${SC.gnss.name}`); }
+    if (rfo) { flags.gnssLoc = T; flags.gnssLocBy = rfo.name; flags.gnssRf.status = '완료'; addLog(`${rfo.name} GPS 교란 신호원 위치 추정: ${SC.gnss.name} (오차 ±10km).`); feed('space', `${rfo.name} GPS 교란원 위치 추정 · ${SC.gnss.name}`); }
   }
   if (flags.gnssAct != null && !flags.gnssDone && ((flags.gnssLoc && T - flags.gnssAct > 30) || T - flags.gnssAct > 150)) {
     flags.gnssDone = true;
@@ -2201,12 +2245,13 @@ function scenario(dt = 0) {
     } });
   if (flags.jamRf && !flags.jamLoc) {
     const rfo = SATS.find(o => o.use && o.mis === 'rf' && o.cur && dist(satPos(o, T), SC.jam.center) < 700);
-    if (rfo) { flags.jamLoc = T; flags.jamRf.status = '완료'; addLog(`${rfo.name} 재밍 신호원 위치 추정: 옹진반도 일대 (오차 ±8km).`); feed('space', `${rfo.name} 재밍원 위치 추정 · 옹진반도 일대`); }
+    if (rfo) { flags.jamLoc = T; flags.jamLocBy = rfo.name; flags.jamRf.status = '완료'; addLog(`${rfo.name} 재밍 신호원 위치 추정: 옹진반도 일대 (오차 ±8km).`); feed('space', `${rfo.name} 재밍원 위치 추정 · 옹진반도 일대`); }
   }
   if (flags.jamAct != null && !flags.jamDone && ((flags.jamLoc && T - flags.jamAct > 30) || T - flags.jamAct > 150)) {
     flags.jamDone = true;
     closeAlert('jam', flags.jamLoc ? '저궤도 우회로 통신 회복, 재밍원 위치 추정·공유' : '저궤도 우회로 통신 회복 (재밍원 추가 탐지 필요)');
   }
+  emiOrigin();
   // 그림자선단: 의심 유조선 2척 이상이 확인되면
   const sf = SC.shadowFleet.ships.map(([id]) => tracks.get(id)).filter(tr => tr && !tr.lost && tr.affil === 'S');
   if (sf.length >= 2) raise({ id: 'shadow', sev: 'warn', title: '그림자선단 의심 (AIS 위장·환적)', tgt: sf.map(tr => tr.id).join('·'),
@@ -2510,6 +2555,14 @@ function drawDyn() {
   if (alerts.some(al => al.id === 'jam')) {
     h += `<circle class="rg jamz" cx="${f1(X(SC.jam.center[0]))}" cy="${f1(Y(SC.jam.center[1]))}" r="${f1(SC.jam.r * PXKM)}"${dash(z, 6, 4)}/>`;
     h += txt('btx nll', X(SC.jam.center[0]), Y(SC.jam.center[1]) - SC.jam.r * PXKM - 4 * z, 10.5 * z, '위성통신 재밍 의심 구역', 'middle');
+  }
+  // 교란·재밍 원점: 오차 원 + 십자 표시
+  for (const k of ['gnss', 'jam']) {
+    const o = flags.emi && flags.emi[k]; if (!o) continue;
+    const x = X(o.pos[0]), y = Y(o.pos[1]), d = 6 * z, cls = k === 'gnss' ? 'gnss' : 'jam';
+    h += `<circle class="emio-r ${cls}" cx="${f1(x)}" cy="${f1(y)}" r="${f1(o.err * PXKM)}"${dash(z, 2, 3)}/>`
+      + `<path class="emio-x ${cls}" d="M${f1(x - d)},${f1(y)}H${f1(x + d)}M${f1(x)},${f1(y - d)}V${f1(y + d)}"/><circle class="emio-c ${cls}" cx="${f1(x)}" cy="${f1(y)}" r="${f1(2.6 * z)}"/>`
+      + txt(`btx ${k === 'gnss' ? 'gnss' : 'nll'}`, x + 8 * z, y - 6 * z, 10 * z, `${EMI[k].nm} 원점 ${o.st === 3 ? '(확정)' : '(추정)'} ±${o.err}km`);
   }
   // 선택한 우군 함정의 저궤도 통신 링크
   if (sel && comm[sel] && comm[sel].sat) {
@@ -3278,7 +3331,7 @@ function renderPanel() {
     setHTML($('emsInfo'), 'ems', `<div class="emsall">종합 평가 <span class="chip lv${worst}">${LV[worst]}</span><span class="empty">${[gAlert && 'GPS 교란', jAlert && '위성통신 재밍'].filter(Boolean).join(' · ') || '특이사항 없음'}</span></div>
       <table class="etab"><thead><tr><th>대역·체계</th><th>영향</th><th class="n">우군</th><th class="n">민간</th><th>평가</th></tr></thead><tbody>`
       + rows.map(r => `<tr><td>${r[0]}<small>${r[1]}</small></td><td>${r[2]}<small>${r[6]}</small></td><td class="n">${r[3]}</td><td class="n">${r[4]}</td><td><span class="chip lv${r[5]}">${LV[r[5]]}</span></td></tr>`).join('')
-      + '</tbody></table>');
+      + '</tbody></table>' + emiHTML());
   }
   // 우군 함정 위성통신
   {
